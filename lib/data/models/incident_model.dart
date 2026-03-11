@@ -1,115 +1,109 @@
-import 'package:equatable/equatable.dart';
-import 'package:json_annotation/json_annotation.dart';
-
-part 'incident_model.g.dart';
-
-/// Incident model representing a reported incident with media, location, and status
-@JsonSerializable()
-class Incident extends Equatable {
-  final String id;
-  final String type;
-  final String title;
-  final String description;
-  final String locationName;
+/// Report model matching the /reports API (emergency & other incident reports)
+class Report {
+  final int id;
+  final String type; // emergency | other
+  final String status; // pending | in_progress | resolved | closed
+  final String? severity; // low | medium | high | critical
+  final String? title;
+  final String? description;
   final double? latitude;
   final double? longitude;
-  final String severity;
-  final String status;
-  final String reporterId;
-  final String reporterName;
-  final String? assignedToId;
-  final String? assignedToName;
-  final List<String> mediaFilePaths;
+  final String? addressLine;
+  final int? createdBy;
+  final int? reviewedBy;
+  final DateTime? reviewedAt;
   final DateTime createdAt;
   final DateTime updatedAt;
-  final DateTime? resolvedAt;
+  final ReportUser? creator;
+  final ReportUser? reviewer;
 
-  const Incident({
+  const Report({
     required this.id,
     required this.type,
-    required this.title,
-    required this.description,
-    required this.locationName,
+    required this.status,
+    this.severity,
+    this.title,
+    this.description,
     this.latitude,
     this.longitude,
-    required this.severity,
-    required this.status,
-    required this.reporterId,
-    required this.reporterName,
-    this.assignedToId,
-    this.assignedToName,
-    this.mediaFilePaths = const [],
+    this.addressLine,
+    this.createdBy,
+    this.reviewedBy,
+    this.reviewedAt,
     required this.createdAt,
     required this.updatedAt,
-    this.resolvedAt,
+    this.creator,
+    this.reviewer,
   });
 
-  /// Create Incident from JSON
-  factory Incident.fromJson(Map<String, dynamic> json) =>
-      _$IncidentFromJson(json);
+  bool get isEmergency => type == 'emergency';
 
-  /// Convert Incident to JSON
-  Map<String, dynamic> toJson() => _$IncidentToJson(this);
+  String get displayTitle {
+    if (title != null && title!.isNotEmpty) return title!;
+    return isEmergency ? 'بلاغ طوارئ' : 'بلاغ آخر';
+  }
 
-  /// Create a copy with modified fields
-  Incident copyWith({
-    String? id,
-    String? type,
-    String? title,
-    String? description,
-    String? locationName,
-    double? latitude,
-    double? longitude,
-    String? severity,
-    String? status,
-    String? reporterId,
-    String? reporterName,
-    String? assignedToId,
-    String? assignedToName,
-    List<String>? mediaFilePaths,
-    DateTime? createdAt,
-    DateTime? updatedAt,
-    DateTime? resolvedAt,
-  }) {
-    return Incident(
-      id: id ?? this.id,
-      type: type ?? this.type,
-      title: title ?? this.title,
-      description: description ?? this.description,
-      locationName: locationName ?? this.locationName,
-      latitude: latitude ?? this.latitude,
-      longitude: longitude ?? this.longitude,
-      severity: severity ?? this.severity,
-      status: status ?? this.status,
-      reporterId: reporterId ?? this.reporterId,
-      reporterName: reporterName ?? this.reporterName,
-      assignedToId: assignedToId ?? this.assignedToId,
-      assignedToName: assignedToName ?? this.assignedToName,
-      mediaFilePaths: mediaFilePaths ?? this.mediaFilePaths,
-      createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
-      resolvedAt: resolvedAt ?? this.resolvedAt,
+  factory Report.fromJson(Map<String, dynamic> json) {
+    return Report(
+      id: json['id'] as int,
+      type: json['type'] as String? ?? 'other',
+      status: json['status'] as String? ?? 'pending',
+      severity: json['severity'] as String?,
+      title: json['title'] as String?,
+      description: json['description'] as String?,
+      latitude: (json['latitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(),
+      addressLine: json['addressLine'] as String?,
+      createdBy: json['createdBy'] as int?,
+      reviewedBy: json['reviewedBy'] as int?,
+      reviewedAt: json['reviewedAt'] != null
+          ? DateTime.tryParse(json['reviewedAt'].toString())
+          : null,
+      createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ??
+          DateTime.now(),
+      updatedAt: DateTime.tryParse(json['updatedAt']?.toString() ?? '') ??
+          DateTime.now(),
+      creator: json['creator'] != null
+          ? ReportUser.fromJson(json['creator'] as Map<String, dynamic>)
+          : null,
+      reviewer: json['reviewer'] != null
+          ? ReportUser.fromJson(json['reviewer'] as Map<String, dynamic>)
+          : null,
     );
   }
 
-  @override
-  List<Object?> get props => [
-        id,
-        type,
-        title,
-        description,
-        locationName,
-        latitude,
-        longitude,
-        severity,
-        status,
-        reporterId,
-        reporterName,
-        assignedToId,
-        assignedToName,
-        mediaFilePaths,
-        createdAt,
-        updatedAt,
-        resolvedAt,
-      ];
+  Map<String, dynamic> toCreateJson() {
+    return {
+      'type': type,
+      if (severity != null) 'severity': severity,
+      if (title != null) 'title': title,
+      if (description != null) 'description': description,
+      if (latitude != null) 'latitude': latitude,
+      if (longitude != null) 'longitude': longitude,
+      if (addressLine != null) 'addressLine': addressLine,
+    };
+  }
+}
+
+class ReportUser {
+  final int id;
+  final String userName;
+  final String fullName;
+  final String? role;
+
+  const ReportUser({
+    required this.id,
+    required this.userName,
+    required this.fullName,
+    this.role,
+  });
+
+  factory ReportUser.fromJson(Map<String, dynamic> json) {
+    return ReportUser(
+      id: json['id'] as int,
+      userName: json['userName'] as String? ?? '',
+      fullName: json['fullName'] as String? ?? '',
+      role: json['role'] as String?,
+    );
+  }
 }

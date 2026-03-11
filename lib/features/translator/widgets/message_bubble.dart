@@ -30,8 +30,8 @@ class MessageBubble extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
           color: isOriginal
-              ? theme.colorScheme.primary.withOpacity(0.15)
-              : theme.colorScheme.secondary.withOpacity(0.15),
+              ? theme.colorScheme.primary.withValues(alpha: 0.15)
+              : theme.colorScheme.secondary.withValues(alpha: 0.15),
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(16),
             topRight: const Radius.circular(16),
@@ -40,8 +40,8 @@ class MessageBubble extends StatelessWidget {
           ),
           border: Border.all(
             color: isOriginal
-                ? theme.colorScheme.primary.withOpacity(0.3)
-                : theme.colorScheme.secondary.withOpacity(0.3),
+                ? theme.colorScheme.primary.withValues(alpha: 0.3)
+                : theme.colorScheme.secondary.withValues(alpha: 0.3),
             width: 1,
           ),
         ),
@@ -62,7 +62,7 @@ class MessageBubble extends StatelessWidget {
               timeStr,
               style: theme.textTheme.bodySmall?.copyWith(
                 fontSize: 10,
-                color: theme.colorScheme.onSurface.withOpacity(0.5),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
               ),
             ),
           ],

@@ -1,215 +1,261 @@
 import 'package:flutter/material.dart';
 
-/// Incident types for categorizing different kinds of incidents
-enum IncidentType {
-  lostPerson,
-  medical,
-  security,
-  crowdIssue,
+/// Report types matching the API
+enum ReportType {
+  emergency,
   other;
 
-  /// Get Arabic display name for the incident type
   String get displayNameAr {
     switch (this) {
-      case IncidentType.lostPerson:
-        return 'شخص مفقود';
-      case IncidentType.medical:
-        return 'حالة طبية';
-      case IncidentType.security:
-        return 'أمن';
-      case IncidentType.crowdIssue:
-        return 'مشكلة حشود';
-      case IncidentType.other:
+      case ReportType.emergency:
+        return 'طوارئ';
+      case ReportType.other:
         return 'أخرى';
     }
   }
 
-  /// Get icon for the incident type
   IconData get icon {
     switch (this) {
-      case IncidentType.lostPerson:
-        return Icons.person_search;
-      case IncidentType.medical:
-        return Icons.medical_services;
-      case IncidentType.security:
-        return Icons.security;
-      case IncidentType.crowdIssue:
-        return Icons.groups;
-      case IncidentType.other:
+      case ReportType.emergency:
+        return Icons.warning_amber;
+      case ReportType.other:
         return Icons.report_problem;
     }
   }
 
-  /// Convert from string value
-  static IncidentType fromString(String value) {
-    return IncidentType.values.firstWhere(
+  static ReportType fromString(String value) {
+    return ReportType.values.firstWhere(
       (e) => e.name == value,
-      orElse: () => IncidentType.other,
+      orElse: () => ReportType.other,
     );
   }
 }
 
-/// Incident severity levels
-enum IncidentSeverity {
+/// Report severity levels matching the API
+enum ReportSeverity {
   low,
   medium,
   high,
   critical;
 
-  /// Get Arabic display name
   String get displayNameAr {
     switch (this) {
-      case IncidentSeverity.low:
+      case ReportSeverity.low:
         return 'منخفض';
-      case IncidentSeverity.medium:
+      case ReportSeverity.medium:
         return 'متوسط';
-      case IncidentSeverity.high:
+      case ReportSeverity.high:
         return 'عالي';
-      case IncidentSeverity.critical:
+      case ReportSeverity.critical:
         return 'حرج';
     }
   }
 
-  /// Get color for the severity
   Color get color {
     switch (this) {
-      case IncidentSeverity.low:
+      case ReportSeverity.low:
         return Colors.green;
-      case IncidentSeverity.medium:
+      case ReportSeverity.medium:
         return Colors.orange;
-      case IncidentSeverity.high:
+      case ReportSeverity.high:
         return Colors.deepOrange;
-      case IncidentSeverity.critical:
+      case ReportSeverity.critical:
         return Colors.red;
     }
   }
 
-  /// Convert from string value
-  static IncidentSeverity fromString(String value) {
-    return IncidentSeverity.values.firstWhere(
+  static ReportSeverity fromString(String value) {
+    return ReportSeverity.values.firstWhere(
       (e) => e.name == value,
-      orElse: () => IncidentSeverity.medium,
+      orElse: () => ReportSeverity.medium,
     );
   }
 }
 
-/// Incident status values
-enum IncidentStatus {
+/// Report status matching the API
+enum ReportStatus {
   pending,
   inProgress,
   resolved,
   closed;
 
-  /// Get Arabic display name
+  String get apiValue {
+    switch (this) {
+      case ReportStatus.pending:
+        return 'pending';
+      case ReportStatus.inProgress:
+        return 'in_progress';
+      case ReportStatus.resolved:
+        return 'resolved';
+      case ReportStatus.closed:
+        return 'closed';
+    }
+  }
+
   String get displayNameAr {
     switch (this) {
-      case IncidentStatus.pending:
+      case ReportStatus.pending:
         return 'قيد الانتظار';
-      case IncidentStatus.inProgress:
+      case ReportStatus.inProgress:
         return 'قيد المعالجة';
-      case IncidentStatus.resolved:
+      case ReportStatus.resolved:
         return 'تم الحل';
-      case IncidentStatus.closed:
+      case ReportStatus.closed:
         return 'مغلق';
     }
   }
 
-  /// Get color for the status
   Color get color {
     switch (this) {
-      case IncidentStatus.pending:
+      case ReportStatus.pending:
         return Colors.grey;
-      case IncidentStatus.inProgress:
+      case ReportStatus.inProgress:
         return Colors.blue;
-      case IncidentStatus.resolved:
+      case ReportStatus.resolved:
         return Colors.green;
-      case IncidentStatus.closed:
+      case ReportStatus.closed:
         return Colors.blueGrey;
     }
   }
 
-  /// Convert from string value
-  static IncidentStatus fromString(String value) {
-    return IncidentStatus.values.firstWhere(
+  static ReportStatus fromApiString(String value) {
+    switch (value) {
+      case 'pending':
+        return ReportStatus.pending;
+      case 'in_progress':
+        return ReportStatus.inProgress;
+      case 'resolved':
+        return ReportStatus.resolved;
+      case 'closed':
+        return ReportStatus.closed;
+      default:
+        return ReportStatus.pending;
+    }
+  }
+}
+
+/// Alert types matching the API
+enum AlertType {
+  sighting,
+  tip,
+  found,
+  information;
+
+  String get displayNameAr {
+    switch (this) {
+      case AlertType.sighting:
+        return 'مشاهدة';
+      case AlertType.tip:
+        return 'معلومة';
+      case AlertType.found:
+        return 'تم العثور';
+      case AlertType.information:
+        return 'معلومات';
+    }
+  }
+
+  IconData get icon {
+    switch (this) {
+      case AlertType.sighting:
+        return Icons.visibility;
+      case AlertType.tip:
+        return Icons.lightbulb;
+      case AlertType.found:
+        return Icons.check_circle;
+      case AlertType.information:
+        return Icons.info;
+    }
+  }
+
+  Color get color {
+    switch (this) {
+      case AlertType.sighting:
+        return Colors.orange;
+      case AlertType.tip:
+        return Colors.blue;
+      case AlertType.found:
+        return Colors.green;
+      case AlertType.information:
+        return Colors.grey;
+    }
+  }
+
+  static AlertType fromString(String value) {
+    return AlertType.values.firstWhere(
       (e) => e.name == value,
-      orElse: () => IncidentStatus.pending,
+      orElse: () => AlertType.information,
     );
   }
 }
 
-/// Alert severity levels
-enum AlertSeverity {
-  info,
-  warning,
-  urgent,
-  emergency;
+/// Alert status matching the API
+enum AlertStatus {
+  pending,
+  reviewed,
+  verified,
+  rejected;
 
-  /// Get Arabic display name
   String get displayNameAr {
     switch (this) {
-      case AlertSeverity.info:
-        return 'معلومات';
-      case AlertSeverity.warning:
-        return 'تحذير';
-      case AlertSeverity.urgent:
-        return 'عاجل';
-      case AlertSeverity.emergency:
-        return 'طارئ';
+      case AlertStatus.pending:
+        return 'قيد الانتظار';
+      case AlertStatus.reviewed:
+        return 'تمت المراجعة';
+      case AlertStatus.verified:
+        return 'تم التحقق';
+      case AlertStatus.rejected:
+        return 'مرفوض';
     }
   }
 
-  /// Get color for the alert severity
   Color get color {
     switch (this) {
-      case AlertSeverity.info:
+      case AlertStatus.pending:
+        return Colors.grey;
+      case AlertStatus.reviewed:
         return Colors.blue;
-      case AlertSeverity.warning:
-        return Colors.orange;
-      case AlertSeverity.urgent:
-        return Colors.deepOrange;
-      case AlertSeverity.emergency:
+      case AlertStatus.verified:
+        return Colors.green;
+      case AlertStatus.rejected:
         return Colors.red;
     }
   }
 
-  /// Convert from string value
-  static AlertSeverity fromString(String value) {
-    return AlertSeverity.values.firstWhere(
+  static AlertStatus fromString(String value) {
+    return AlertStatus.values.firstWhere(
       (e) => e.name == value,
-      orElse: () => AlertSeverity.info,
+      orElse: () => AlertStatus.pending,
     );
   }
 }
 
-/// Target audience for alerts
-enum AlertTargetAudience {
-  all,
-  security,
-  medical,
-  volunteers,
-  management;
+/// Missing person report status
+enum MissingPersonStatus {
+  missing,
+  found;
 
-  /// Get Arabic display name
   String get displayNameAr {
     switch (this) {
-      case AlertTargetAudience.all:
-        return 'الكل';
-      case AlertTargetAudience.security:
-        return 'الأمن';
-      case AlertTargetAudience.medical:
-        return 'الطاقم الطبي';
-      case AlertTargetAudience.volunteers:
-        return 'المتطوعين';
-      case AlertTargetAudience.management:
-        return 'الإدارة';
+      case MissingPersonStatus.missing:
+        return 'مفقود';
+      case MissingPersonStatus.found:
+        return 'تم العثور';
     }
   }
 
-  /// Convert from string value
-  static AlertTargetAudience fromString(String value) {
-    return AlertTargetAudience.values.firstWhere(
+  Color get color {
+    switch (this) {
+      case MissingPersonStatus.missing:
+        return Colors.red;
+      case MissingPersonStatus.found:
+        return Colors.green;
+    }
+  }
+
+  static MissingPersonStatus fromString(String value) {
+    return MissingPersonStatus.values.firstWhere(
       (e) => e.name == value,
-      orElse: () => AlertTargetAudience.all,
+      orElse: () => MissingPersonStatus.missing,
     );
   }
 }

@@ -1,100 +1,164 @@
-import 'package:equatable/equatable.dart';
-import 'package:json_annotation/json_annotation.dart';
-
-import 'alert_acknowledgment_model.dart';
-
-part 'alert_model.g.dart';
-
-/// Alert model representing a broadcast alert to staff members
-@JsonSerializable()
-class Alert extends Equatable {
-  final String id;
-  final String? incidentId;
-  final String title;
-  final String message;
-  final String severity;
-  final String targetAudience;
-  final DateTime sentAt;
-  final DateTime? expiresAt;
-  final String createdById;
-  final String createdByName;
-  final List<AlertAcknowledgment> acknowledgments;
+/// Alert model matching the /alerts API (sighting / tip / found / information)
+class Alert {
+  final int id;
+  final int missingPersonReportId;
+  final String type; // sighting | tip | found | information
+  final String status; // pending | reviewed | verified | rejected
+  final String reporterName;
+  final String reporterPhone;
+  final int? locationId;
+  final String description;
+  final int? reviewedBy;
+  final DateTime? reviewedAt;
+  final DateTime createdAt;
+  final AlertReportInfo? report;
+  final AlertLocation? location;
+  final AlertReviewer? reviewer;
 
   const Alert({
     required this.id,
-    this.incidentId,
-    required this.title,
-    required this.message,
-    required this.severity,
-    required this.targetAudience,
-    required this.sentAt,
-    this.expiresAt,
-    required this.createdById,
-    required this.createdByName,
-    this.acknowledgments = const [],
+    required this.missingPersonReportId,
+    required this.type,
+    required this.status,
+    required this.reporterName,
+    required this.reporterPhone,
+    this.locationId,
+    required this.description,
+    this.reviewedBy,
+    this.reviewedAt,
+    required this.createdAt,
+    this.report,
+    this.location,
+    this.reviewer,
   });
 
-  /// Create Alert from JSON
-  factory Alert.fromJson(Map<String, dynamic> json) => _$AlertFromJson(json);
-
-  /// Convert Alert to JSON
-  Map<String, dynamic> toJson() => _$AlertToJson(this);
-
-  /// Check if alert is acknowledged by a specific staff member
-  bool isAcknowledgedBy(String staffId) {
-    return acknowledgments.any((ack) => ack.staffId == staffId);
+  String get typeDisplayAr {
+    switch (type) {
+      case 'sighting':
+        return 'مشاهدة';
+      case 'tip':
+        return 'معلومة';
+      case 'found':
+        return 'تم العثور';
+      case 'information':
+        return 'معلومات';
+      default:
+        return type;
+    }
   }
 
-  /// Get acknowledgment count
-  int get acknowledgmentCount => acknowledgments.length;
-
-  /// Check if alert is expired
-  bool get isExpired {
-    if (expiresAt == null) return false;
-    return DateTime.now().isAfter(expiresAt!);
+  String get statusDisplayAr {
+    switch (status) {
+      case 'pending':
+        return 'قيد الانتظار';
+      case 'reviewed':
+        return 'تمت المراجعة';
+      case 'verified':
+        return 'تم التحقق';
+      case 'rejected':
+        return 'مرفوض';
+      default:
+        return status;
+    }
   }
 
-  /// Create a copy with modified fields
-  Alert copyWith({
-    String? id,
-    String? incidentId,
-    String? title,
-    String? message,
-    String? severity,
-    String? targetAudience,
-    DateTime? sentAt,
-    DateTime? expiresAt,
-    String? createdById,
-    String? createdByName,
-    List<AlertAcknowledgment>? acknowledgments,
-  }) {
+  factory Alert.fromJson(Map<String, dynamic> json) {
     return Alert(
-      id: id ?? this.id,
-      incidentId: incidentId ?? this.incidentId,
-      title: title ?? this.title,
-      message: message ?? this.message,
-      severity: severity ?? this.severity,
-      targetAudience: targetAudience ?? this.targetAudience,
-      sentAt: sentAt ?? this.sentAt,
-      expiresAt: expiresAt ?? this.expiresAt,
-      createdById: createdById ?? this.createdById,
-      createdByName: createdByName ?? this.createdByName,
-      acknowledgments: acknowledgments ?? this.acknowledgments,
+      id: json['id'] as int,
+      missingPersonReportId: json['missingPersonReportId'] as int,
+      type: json['type'] as String? ?? 'information',
+      status: json['status'] as String? ?? 'pending',
+      reporterName: json['reporterName'] as String? ?? '',
+      reporterPhone: json['reporterPhone'] as String? ?? '',
+      locationId: json['locationId'] as int?,
+      description: json['description'] as String? ?? '',
+      reviewedBy: json['reviewedBy'] as int?,
+      reviewedAt: json['reviewedAt'] != null
+          ? DateTime.tryParse(json['reviewedAt'].toString())
+          : null,
+      createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ??
+          DateTime.now(),
+      report: json['report'] != null
+          ? AlertReportInfo.fromJson(json['report'] as Map<String, dynamic>)
+          : null,
+      location: json['location'] != null
+          ? AlertLocation.fromJson(json['location'] as Map<String, dynamic>)
+          : null,
+      reviewer: json['reviewer'] != null
+          ? AlertReviewer.fromJson(json['reviewer'] as Map<String, dynamic>)
+          : null,
     );
   }
 
-  @override
-  List<Object?> get props => [
-        id,
-        incidentId,
-        title,
-        message,
-        severity,
-        targetAudience,
-        sentAt,
-        expiresAt,
-        createdById,
-        createdByName,
-        acknowledgments,
-      ];
+  Map<String, dynamic> toCreateJson() {
+    return {
+      'missingPersonReportId': missingPersonReportId,
+      'type': type,
+      'reporterName': reporterName,
+      'reporterPhone': reporterPhone,
+      if (locationId != null) 'locationId': locationId,
+      'description': description,
+    };
+  }
+}
+
+class AlertReportInfo {
+  final int id;
+  final String? personName;
+
+  const AlertReportInfo({required this.id, this.personName});
+
+  factory AlertReportInfo.fromJson(Map<String, dynamic> json) {
+    String? name;
+    if (json['person'] is Map<String, dynamic>) {
+      name = (json['person'] as Map<String, dynamic>)['fullName'] as String?;
+    }
+    return AlertReportInfo(
+      id: json['id'] as int,
+      personName: name,
+    );
+  }
+}
+
+class AlertLocation {
+  final int id;
+  final String? addressLine;
+  final double? latitude;
+  final double? longitude;
+
+  const AlertLocation({
+    required this.id,
+    this.addressLine,
+    this.latitude,
+    this.longitude,
+  });
+
+  factory AlertLocation.fromJson(Map<String, dynamic> json) {
+    return AlertLocation(
+      id: json['id'] as int,
+      addressLine: json['addressLine'] as String?,
+      latitude: (json['latitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(),
+    );
+  }
+}
+
+class AlertReviewer {
+  final int id;
+  final String userName;
+  final String fullName;
+
+  const AlertReviewer({
+    required this.id,
+    required this.userName,
+    required this.fullName,
+  });
+
+  factory AlertReviewer.fromJson(Map<String, dynamic> json) {
+    return AlertReviewer(
+      id: json['id'] as int,
+      userName: json['userName'] as String? ?? '',
+      fullName: json['fullName'] as String? ?? '',
+    );
+  }
 }

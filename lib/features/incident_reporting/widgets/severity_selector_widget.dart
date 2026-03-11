@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../../core/constants/incident_constants.dart';
 
-/// Widget for selecting incident severity with color-coded chips
+/// Widget for selecting report severity with color-coded chips
 class SeveritySelectorWidget extends StatelessWidget {
-  final IncidentSeverity selectedSeverity;
-  final Function(IncidentSeverity) onChanged;
+  final ReportSeverity selectedSeverity;
+  final Function(ReportSeverity) onChanged;
 
   const SeveritySelectorWidget({
     super.key,
@@ -29,7 +29,7 @@ class SeveritySelectorWidget extends StatelessWidget {
         Wrap(
           spacing: 12,
           runSpacing: 12,
-          children: IncidentSeverity.values.map((severity) {
+          children: ReportSeverity.values.map((severity) {
             final isSelected = selectedSeverity == severity;
             return GestureDetector(
               onTap: () => onChanged(severity),
@@ -40,7 +40,7 @@ class SeveritySelectorWidget extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: isSelected
                       ? severity.color
-                      : severity.color.withOpacity(0.1),
+                      : severity.color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
                     color: severity.color,
@@ -49,7 +49,7 @@ class SeveritySelectorWidget extends StatelessWidget {
                   boxShadow: isSelected
                       ? [
                           BoxShadow(
-                            color: severity.color.withOpacity(0.4),
+                            color: severity.color.withValues(alpha: 0.4),
                             blurRadius: 8,
                             offset: const Offset(0, 4),
                           ),

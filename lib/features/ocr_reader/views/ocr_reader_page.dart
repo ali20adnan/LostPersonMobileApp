@@ -96,7 +96,7 @@ class OcrReaderPage extends GetView<OcrReaderController> {
             color: Colors.black87,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: theme.colorScheme.outline.withOpacity(0.3),
+              color: theme.colorScheme.outline.withValues(alpha: 0.3),
               width: 2,
             ),
           ),
@@ -126,20 +126,20 @@ class OcrReaderPage extends GetView<OcrReaderController> {
                           Icon(
                             Icons.document_scanner_outlined,
                             size: 64,
-                            color: Colors.white.withOpacity(0.6),
+                            color: Colors.white.withValues(alpha: 0.6),
                           ),
                           const SizedBox(height: 16),
                           Text(
                             'معاينة الكاميرا',
                             style: theme.textTheme.titleMedium?.copyWith(
-                              color: Colors.white.withOpacity(0.6),
+                              color: Colors.white.withValues(alpha: 0.6),
                             ),
                           ),
                           const SizedBox(height: 8),
                           Text(
                             '(واجهة تجريبية)',
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: Colors.white.withOpacity(0.4),
+                              color: Colors.white.withValues(alpha: 0.4),
                             ),
                           ),
                         ],
@@ -171,7 +171,7 @@ class OcrReaderPage extends GetView<OcrReaderController> {
               backgroundColor: theme.colorScheme.primary,
               foregroundColor: theme.colorScheme.onPrimary,
               disabledBackgroundColor:
-                  theme.colorScheme.primary.withOpacity(0.5),
+                  theme.colorScheme.primary.withValues(alpha: 0.5),
               elevation: 4,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -202,7 +202,7 @@ class OcrReaderPage extends GetView<OcrReaderController> {
             color: theme.colorScheme.surface,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: theme.colorScheme.outline.withOpacity(0.2),
+              color: theme.colorScheme.outline.withValues(alpha: 0.2),
             ),
           ),
           child: controller.scannedText.value.isEmpty
@@ -213,13 +213,13 @@ class OcrReaderPage extends GetView<OcrReaderController> {
                       Icon(
                         Icons.text_fields,
                         size: 48,
-                        color: theme.colorScheme.onSurface.withOpacity(0.3),
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         'النص الممسوح سيظهر هنا',
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurface.withOpacity(0.5),
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                         ),
                       ),
                     ],
@@ -293,7 +293,7 @@ class ScanningOverlayPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.green.withOpacity(0.3)
+      ..color = Colors.green.withValues(alpha: 0.3)
       ..strokeWidth = 2
       ..style = PaintingStyle.stroke;
 

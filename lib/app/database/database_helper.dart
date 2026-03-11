@@ -25,7 +25,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 2,
+      version: 3,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
       onConfigure: _onConfigure,
@@ -43,82 +43,14 @@ class DatabaseHelper {
     debugPrint(
         'DatabaseHelper: Upgrading database from v$oldVersion to v$newVersion');
 
-    if (oldVersion < 2) {
-      // Add incidents table
-      await db.execute('''
-        CREATE TABLE incidents (
-          id TEXT PRIMARY KEY,
-          type TEXT NOT NULL,
-          title TEXT NOT NULL,
-          description TEXT NOT NULL,
-          location_name TEXT NOT NULL,
-          latitude REAL,
-          longitude REAL,
-          severity TEXT NOT NULL,
-          status TEXT NOT NULL,
-          reporter_id TEXT NOT NULL,
-          reporter_name TEXT NOT NULL,
-          assigned_to_id TEXT,
-          assigned_to_name TEXT,
-          media_file_paths TEXT,
-          created_at INTEGER NOT NULL DEFAULT (strftime('%s','now') * 1000),
-          updated_at INTEGER NOT NULL DEFAULT (strftime('%s','now') * 1000),
-          resolved_at INTEGER
-        )
-      ''');
-
-      // Add alerts table
-      await db.execute('''
-        CREATE TABLE alerts (
-          id TEXT PRIMARY KEY,
-          incident_id TEXT,
-          title TEXT NOT NULL,
-          message TEXT NOT NULL,
-          severity TEXT NOT NULL,
-          target_audience TEXT NOT NULL,
-          sent_at INTEGER NOT NULL,
-          expires_at INTEGER,
-          created_by_id TEXT NOT NULL,
-          created_by_name TEXT NOT NULL,
-          FOREIGN KEY (incident_id) REFERENCES incidents(id) ON DELETE CASCADE
-        )
-      ''');
-
-      // Add alert_acknowledgments table
-      await db.execute('''
-        CREATE TABLE alert_acknowledgments (
-          id TEXT PRIMARY KEY,
-          alert_id TEXT NOT NULL,
-          staff_id TEXT NOT NULL,
-          staff_name TEXT NOT NULL,
-          acknowledged_at INTEGER NOT NULL DEFAULT (strftime('%s','now') * 1000),
-          FOREIGN KEY (alert_id) REFERENCES alerts(id) ON DELETE CASCADE
-        )
-      ''');
-
-      // Create indexes for new tables
-      await db.execute(
-          'CREATE INDEX idx_incidents_created_at ON incidents(created_at DESC)');
-      await db.execute(
-          'CREATE INDEX idx_incidents_status ON incidents(status)');
-      await db.execute(
-          'CREATE INDEX idx_incidents_severity ON incidents(severity)');
-      await db.execute(
-          'CREATE INDEX idx_incidents_type ON incidents(type)');
-
-      await db.execute(
-          'CREATE INDEX idx_alerts_sent_at ON alerts(sent_at DESC)');
-      await db.execute(
-          'CREATE INDEX idx_alerts_severity ON alerts(severity)');
-      await db.execute(
-          'CREATE INDEX idx_alerts_target ON alerts(target_audience)');
-
-      await db.execute(
-          'CREATE INDEX idx_alert_acks_alert_id ON alert_acknowledgments(alert_id)');
-      await db.execute(
-          'CREATE INDEX idx_alert_acks_staff_id ON alert_acknowledgments(staff_id)');
-
-      debugPrint('DatabaseHelper: Upgraded to version 2');
+    if (oldVersion < 3) {
+      // Remove incidents, alerts, and alert_acknowledgments tables
+      // These are now managed by the online API
+      await db.execute('DROP TABLE IF EXISTS alert_acknowledgments');
+      await db.execute('DROP TABLE IF EXISTS alerts');
+      await db.execute('DROP TABLE IF EXISTS incidents');
+      debugPrint(
+          'DatabaseHelper: Dropped incidents/alerts/alert_acknowledgments tables (now API-based)');
     }
   }
 
@@ -173,61 +105,6 @@ class DatabaseHelper {
     ''');
     debugPrint('DatabaseHelper: Created settings table');
 
-    // Create incidents table
-    await db.execute('''
-      CREATE TABLE incidents (
-        id TEXT PRIMARY KEY,
-        type TEXT NOT NULL,
-        title TEXT NOT NULL,
-        description TEXT NOT NULL,
-        location_name TEXT NOT NULL,
-        latitude REAL,
-        longitude REAL,
-        severity TEXT NOT NULL,
-        status TEXT NOT NULL,
-        reporter_id TEXT NOT NULL,
-        reporter_name TEXT NOT NULL,
-        assigned_to_id TEXT,
-        assigned_to_name TEXT,
-        media_file_paths TEXT,
-        created_at INTEGER NOT NULL DEFAULT (strftime('%s','now') * 1000),
-        updated_at INTEGER NOT NULL DEFAULT (strftime('%s','now') * 1000),
-        resolved_at INTEGER
-      )
-    ''');
-    debugPrint('DatabaseHelper: Created incidents table');
-
-    // Create alerts table
-    await db.execute('''
-      CREATE TABLE alerts (
-        id TEXT PRIMARY KEY,
-        incident_id TEXT,
-        title TEXT NOT NULL,
-        message TEXT NOT NULL,
-        severity TEXT NOT NULL,
-        target_audience TEXT NOT NULL,
-        sent_at INTEGER NOT NULL,
-        expires_at INTEGER,
-        created_by_id TEXT NOT NULL,
-        created_by_name TEXT NOT NULL,
-        FOREIGN KEY (incident_id) REFERENCES incidents(id) ON DELETE CASCADE
-      )
-    ''');
-    debugPrint('DatabaseHelper: Created alerts table');
-
-    // Create alert_acknowledgments table
-    await db.execute('''
-      CREATE TABLE alert_acknowledgments (
-        id TEXT PRIMARY KEY,
-        alert_id TEXT NOT NULL,
-        staff_id TEXT NOT NULL,
-        staff_name TEXT NOT NULL,
-        acknowledged_at INTEGER NOT NULL DEFAULT (strftime('%s','now') * 1000),
-        FOREIGN KEY (alert_id) REFERENCES alerts(id) ON DELETE CASCADE
-      )
-    ''');
-    debugPrint('DatabaseHelper: Created alert_acknowledgments table');
-
     // Create indexes for performance
     await db.execute(
         'CREATE INDEX idx_translations_conversation_id ON translations(conversation_id)');
@@ -235,30 +112,6 @@ class DatabaseHelper {
         'CREATE INDEX idx_translations_timestamp ON translations(timestamp DESC)');
     await db.execute(
         'CREATE INDEX idx_conversations_start_time ON conversations(start_time DESC)');
-
-    // Create indexes for incidents
-    await db.execute(
-        'CREATE INDEX idx_incidents_created_at ON incidents(created_at DESC)');
-    await db.execute(
-        'CREATE INDEX idx_incidents_status ON incidents(status)');
-    await db.execute(
-        'CREATE INDEX idx_incidents_severity ON incidents(severity)');
-    await db.execute(
-        'CREATE INDEX idx_incidents_type ON incidents(type)');
-
-    // Create indexes for alerts
-    await db.execute(
-        'CREATE INDEX idx_alerts_sent_at ON alerts(sent_at DESC)');
-    await db.execute(
-        'CREATE INDEX idx_alerts_severity ON alerts(severity)');
-    await db.execute(
-        'CREATE INDEX idx_alerts_target ON alerts(target_audience)');
-
-    // Create indexes for alert_acknowledgments
-    await db.execute(
-        'CREATE INDEX idx_alert_acks_alert_id ON alert_acknowledgments(alert_id)');
-    await db.execute(
-        'CREATE INDEX idx_alert_acks_staff_id ON alert_acknowledgments(staff_id)');
 
     debugPrint('DatabaseHelper: Created indexes');
     debugPrint('DatabaseHelper: Database schema created successfully');

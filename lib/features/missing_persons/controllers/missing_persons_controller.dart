@@ -1,136 +1,135 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../data/models/missing_person_report_model.dart';
+import '../../../data/repositories/missing_persons_repository.dart';
+
 class MissingPersonsController extends GetxController {
+  final MissingPersonsRepository _repository = MissingPersonsRepository();
+
   // Observable state
-  final selectedTab = 0.obs; // 0: Report, 1: Search, 2: Found
-  final reportedPersons = <MissingPerson>[].obs;
-  final foundPersons = <MissingPerson>[].obs;
+  final selectedTab = 0.obs;
+  final reportedPersons = <MissingPersonReport>[].obs;
+  final foundPersons = <MissingPersonReport>[].obs;
+  final searchQuery = ''.obs;
+  final isLoading = false.obs;
+  final totalMissing = 0.obs;
+  final totalFound = 0.obs;
+
+  // Pagination
+  int _currentPage = 1;
+  int _totalPages = 1;
+  bool get hasMore => _currentPage < _totalPages;
+
+  List<MissingPersonReport> get filteredReportedPersons {
+    if (searchQuery.value.isEmpty) return reportedPersons.toList();
+    final q = searchQuery.value.toLowerCase();
+    return reportedPersons
+        .where((p) =>
+            (p.fullName?.toLowerCase().contains(q) ?? false) ||
+            (p.description?.toLowerCase().contains(q) ?? false) ||
+            (p.lastSeenAddress?.toLowerCase().contains(q) ?? false))
+        .toList();
+  }
+
+  List<MissingPersonReport> get filteredFoundPersons {
+    if (searchQuery.value.isEmpty) return foundPersons.toList();
+    final q = searchQuery.value.toLowerCase();
+    return foundPersons
+        .where((p) =>
+            (p.fullName?.toLowerCase().contains(q) ?? false) ||
+            (p.description?.toLowerCase().contains(q) ?? false) ||
+            (p.lastSeenAddress?.toLowerCase().contains(q) ?? false))
+        .toList();
+  }
+
+  void updateSearch(String q) {
+    searchQuery.value = q;
+  }
 
   @override
   void onInit() {
     super.onInit();
-    _loadMockData();
+    loadReports();
   }
 
-  /// Change tab
   void changeTab(int index) {
     selectedTab.value = index;
-    debugPrint('MissingPersonsController: Changed to tab $index');
   }
 
-  /// Report a missing person
-  void reportMissingPerson() {
-    Get.snackbar(
-      'بلاغ جديد',
-      'جاري فتح نموذج الإبلاغ عن شخص مفقود',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.blue.withOpacity(0.8),
-      colorText: Colors.white,
-      margin: const EdgeInsets.all(16),
-      borderRadius: 12,
-      duration: const Duration(seconds: 2),
-    );
-    debugPrint('MissingPersonsController: Opening report form');
+  /// Load missing person reports from API
+  Future<void> loadReports({bool refresh = true}) async {
+    try {
+      isLoading.value = true;
+      if (refresh) _currentPage = 1;
+
+      // Load missing persons
+      final missingResult = await _repository.getReports(
+        page: _currentPage,
+        limit: 20,
+        status: ['missing'],
+      );
+      if (refresh) {
+        reportedPersons.value = missingResult.items;
+      } else {
+        reportedPersons.addAll(missingResult.items);
+      }
+      _totalPages = missingResult.totalPages;
+      totalMissing.value = missingResult.totalItems;
+
+      // Load found persons
+      final foundResult = await _repository.getReports(
+        page: 1,
+        limit: 20,
+        status: ['found'],
+      );
+      foundPersons.value = foundResult.items;
+      totalFound.value = foundResult.totalItems;
+
+      isLoading.value = false;
+    } catch (e) {
+      debugPrint('MissingPersonsController: Error loading reports - $e');
+      isLoading.value = false;
+    }
   }
 
-  /// Search for a person
-  void searchPerson(String query) {
-    debugPrint('MissingPersonsController: Searching for: $query');
-    Get.snackbar(
-      'البحث',
-      'جاري البحث عن: $query',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.orange.withOpacity(0.8),
-      colorText: Colors.white,
-      margin: const EdgeInsets.all(16),
-      borderRadius: 12,
-      duration: const Duration(seconds: 2),
-    );
+  /// Load more (pagination)
+  Future<void> loadMore() async {
+    if (!hasMore || isLoading.value) return;
+    _currentPage++;
+    await loadReports(refresh: false);
+  }
+
+  /// Pull to refresh
+  Future<void> refreshReports() async {
+    await loadReports(refresh: true);
   }
 
   /// Mark person as found
-  void markAsFound(MissingPerson person) {
-    reportedPersons.remove(person);
-    foundPersons.add(person);
-    Get.snackbar(
-      'تم العثور',
-      'تم نقل البلاغ إلى قائمة الموجودين',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.green.withOpacity(0.8),
-      colorText: Colors.white,
-      margin: const EdgeInsets.all(16),
-      borderRadius: 12,
-      duration: const Duration(seconds: 2),
-    );
-    debugPrint('MissingPersonsController: Person marked as found');
+  Future<void> markAsFound(MissingPersonReport person) async {
+    final response = await _repository.requestFound(person.id);
+    if (response.isSuccess) {
+      Get.snackbar(
+        'تم',
+        'تم إرسال طلب تأكيد العثور',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green.withValues(alpha: 0.8),
+        colorText: Colors.white,
+      );
+      await loadReports();
+    } else {
+      Get.snackbar(
+        'خطأ',
+        response.errorMessage ?? 'فشل إرسال الطلب',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.withValues(alpha: 0.8),
+        colorText: Colors.white,
+      );
+    }
   }
 
-  /// Load mock data
-  void _loadMockData() {
-    reportedPersons.addAll([
-      MissingPerson(
-        id: '1',
-        name: 'محمد أحمد',
-        age: 65,
-        description: 'يرتدي ثوباً أبيض وعمامة سوداء',
-        lastSeen: 'بالقرب من باب الحرم الرئيسي',
-        country: 'المملكة العربية السعودية',
-        reportTime: DateTime.now().subtract(const Duration(hours: 2)),
-      ),
-      MissingPerson(
-        id: '2',
-        name: 'Ali Hassan',
-        age: 45,
-        description: 'Wearing grey jubba and white cap',
-        lastSeen: 'Near the main prayer hall',
-        country: 'Pakistan',
-        reportTime: DateTime.now().subtract(const Duration(hours: 5)),
-      ),
-      MissingPerson(
-        id: '3',
-        name: 'حسین رضایی',
-        age: 58,
-        description: 'لباس مشکی، سن متوسط',
-        lastSeen: 'نزدیک درب شرقی',
-        country: 'Iran',
-        reportTime: DateTime.now().subtract(const Duration(hours: 8)),
-      ),
-    ]);
-
-    foundPersons.add(
-      MissingPerson(
-        id: '4',
-        name: 'عبدالله محمود',
-        age: 52,
-        description: 'يرتدي ثوباً بنياً',
-        lastSeen: 'بالقرب من المواضئ',
-        country: 'مصر',
-        reportTime: DateTime.now().subtract(const Duration(days: 1)),
-        foundTime: DateTime.now().subtract(const Duration(hours: 3)),
-      ),
-    );
+  /// Search for a person via API
+  void searchPerson(String query) {
+    searchQuery.value = query;
   }
-}
-
-class MissingPerson {
-  final String id;
-  final String name;
-  final int age;
-  final String description;
-  final String lastSeen;
-  final String country;
-  final DateTime reportTime;
-  final DateTime? foundTime;
-
-  MissingPerson({
-    required this.id,
-    required this.name,
-    required this.age,
-    required this.description,
-    required this.lastSeen,
-    required this.country,
-    required this.reportTime,
-    this.foundTime,
-  });
 }

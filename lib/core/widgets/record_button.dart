@@ -69,7 +69,7 @@ class _RecordButtonState extends State<RecordButton>
                 color: color,
                 boxShadow: [
                   BoxShadow(
-                    color: color.withOpacity(0.4),
+                    color: color.withValues(alpha: 0.4),
                     blurRadius: widget.isRecording ? 20 : 10,
                     spreadRadius: widget.isRecording ? 5 : 0,
                   ),

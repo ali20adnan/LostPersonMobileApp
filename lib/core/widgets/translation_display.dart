@@ -93,7 +93,7 @@ class _TranslationDisplayState extends State<TranslationDisplay> {
             style: theme.textTheme.labelMedium?.copyWith(
               color: widget.isTranslation
                   ? theme.colorScheme.primary
-                  : theme.colorScheme.onSurface.withOpacity(0.6),
+                  : theme.colorScheme.onSurface.withValues(alpha: 0.6),
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -110,7 +110,7 @@ class _TranslationDisplayState extends State<TranslationDisplay> {
                             ? 'الترجمة ستظهر هنا...'
                             : 'ابدأ الحديث...',
                         style: theme.textTheme.bodyLarge?.copyWith(
-                          color: theme.colorScheme.onSurface.withOpacity(0.3),
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
                         ),
                       ),
                     )

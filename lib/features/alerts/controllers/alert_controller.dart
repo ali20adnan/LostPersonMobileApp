@@ -1,116 +1,103 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../app/services/storage_service.dart';
 import '../../../data/repositories/alert_repository.dart';
 import '../../../data/models/alert_model.dart';
 import '../../../core/constants/incident_constants.dart';
 
-/// Controller for alerts
+/// Controller for alerts (sighting / tip / found / information)
 class AlertController extends GetxController {
-  // Services
-  late final AlertRepository _alertRepository;
+  final AlertRepository _alertRepository = AlertRepository();
 
   // Observable state
-  final activeAlerts = <Alert>[].obs;
-  final unacknowledgedCount = 0.obs;
+  final alerts = <Alert>[].obs;
+  final unreadCount = 0.obs;
   final isLoading = false.obs;
+  final selectedTypeFilter = Rx<String?>(null);
 
-  // TODO: Get from auth service
-  final String _currentStaffId = 'staff_001';
-  final String _currentStaffName = 'موظف تجريبي';
-  final String _currentStaffRole = 'security'; // or 'all' for general staff
+  // Pagination
+  int _currentPage = 1;
+  int _totalPages = 1;
+  bool get hasMore => _currentPage < _totalPages;
 
   @override
   void onInit() {
     super.onInit();
-    _initializeServices();
-    loadActiveAlerts();
+    loadAlerts();
+    loadUnreadCount();
   }
 
-  /// Initialize services
-  void _initializeServices() {
-    final storageService = StorageService();
-
-    _alertRepository = AlertRepository(
-      storageService: storageService,
-    );
-
-    debugPrint('AlertController: Services initialized');
-  }
-
-  /// Load active alerts
-  Future<void> loadActiveAlerts() async {
+  /// Load alerts from API
+  Future<void> loadAlerts({bool refresh = true}) async {
     try {
       isLoading.value = true;
+      if (refresh) _currentPage = 1;
 
-      final alerts = await _alertRepository.getActiveAlerts(
-        targetAudience: _currentStaffRole,
+      final result = await _alertRepository.getAlerts(
+        page: _currentPage,
+        limit: 20,
+        type: selectedTypeFilter.value,
       );
 
-      activeAlerts.value = alerts;
-
-      // Update unacknowledged count
-      final unacknowledged = alerts
-          .where((alert) => !alert.isAcknowledgedBy(_currentStaffId))
-          .length;
-      unacknowledgedCount.value = unacknowledged;
+      if (refresh) {
+        alerts.value = result.items;
+      } else {
+        alerts.addAll(result.items);
+      }
+      _totalPages = result.totalPages;
 
       isLoading.value = false;
-      debugPrint('AlertController: Loaded ${alerts.length} active alerts');
     } catch (e) {
       debugPrint('AlertController: Error loading alerts - $e');
       isLoading.value = false;
     }
   }
 
-  /// Acknowledge alert
-  Future<void> acknowledgeAlert(String alertId) async {
-    try {
-      final success = await _alertRepository.acknowledgeAlert(
-        alertId,
-        _currentStaffId,
-        _currentStaffName,
-      );
-
-      if (success) {
-        // Reload alerts to update UI
-        await loadActiveAlerts();
-
-        Get.snackbar(
-          'تم',
-          'تم الإقرار بالتنبيه',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.green.withOpacity(0.8),
-          colorText: Colors.white,
-          duration: const Duration(seconds: 1),
-        );
-      }
-    } catch (e) {
-      debugPrint('AlertController: Error acknowledging alert - $e');
-    }
+  /// Load more (pagination)
+  Future<void> loadMore() async {
+    if (!hasMore || isLoading.value) return;
+    _currentPage++;
+    await loadAlerts(refresh: false);
   }
 
-  /// Show alert dialog
+  /// Load unread count
+  Future<void> loadUnreadCount() async {
+    unreadCount.value = await _alertRepository.getUnreadCount();
+  }
+
+  /// Filter by type
+  void filterByType(String? type) {
+    selectedTypeFilter.value = type;
+    loadAlerts();
+  }
+
+  /// Mark alert as read
+  Future<void> markAsRead(int alertId) async {
+    await _alertRepository.markAsRead(alertId);
+    await loadUnreadCount();
+  }
+
+  /// Mark all as read
+  Future<void> markAllAsRead() async {
+    await _alertRepository.markAllAsRead();
+    unreadCount.value = 0;
+  }
+
+  /// Show alert detail dialog
   void showAlertDialog(Alert alert) {
-    final severity = AlertSeverity.fromString(alert.severity);
+    final alertType = AlertType.fromString(alert.type);
 
     Get.dialog(
       AlertDialog(
-        backgroundColor: severity.color.withOpacity(0.1),
         title: Row(
           children: [
-            Icon(
-              _getIconForSeverity(severity),
-              color: severity.color,
-              size: 28,
-            ),
+            Icon(alertType.icon, color: alertType.color, size: 28),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                alert.title,
+                alert.report?.personName ?? 'تنبيه #${alert.id}',
                 style: TextStyle(
-                  color: severity.color,
+                  color: alertType.color,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -121,154 +108,57 @@ class AlertController extends GetxController {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              alert.message,
-              style: const TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'من: ${alert.createdByName}',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[600],
-              ),
-            ),
-            Text(
-              'الوقت: ${_formatTime(alert.sentAt)}',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[600],
-              ),
-            ),
-            if (alert.acknowledgmentCount > 0)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Text(
-                  'تم الإقرار: ${alert.acknowledgmentCount} موظف',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                  ),
-                ),
-              ),
+            _infoRow('النوع', alert.typeDisplayAr),
+            _infoRow('الحالة', alert.statusDisplayAr),
+            _infoRow('الوصف', alert.description),
+            _infoRow('المُبلّغ', alert.reporterName),
+            _infoRow('الهاتف', alert.reporterPhone),
+            if (alert.location?.addressLine != null)
+              _infoRow('الموقع', alert.location!.addressLine!),
+            _infoRow('التاريخ', _formatTime(alert.createdAt)),
           ],
         ),
         actions: [
-          if (!alert.isAcknowledgedBy(_currentStaffId))
-            TextButton(
-              onPressed: () {
-                Get.back();
-                acknowledgeAlert(alert.id);
-              },
-              child: const Text('إقرار'),
-            ),
           ElevatedButton(
-            onPressed: () => Get.back(),
+            onPressed: () {
+              markAsRead(alert.id);
+              Get.back();
+            },
             child: const Text('إغلاق'),
           ),
         ],
       ),
-      barrierDismissible: false,
     );
   }
 
-  /// Broadcast new alert
-  Future<bool> broadcastAlert({
-    required String title,
-    required String message,
-    required AlertSeverity severity,
-    required AlertTargetAudience targetAudience,
-    String? incidentId,
-    Duration? expiresIn,
-  }) async {
-    try {
-      final success = await _alertRepository.broadcastAlert(
-        title: title,
-        message: message,
-        severity: severity.name,
-        targetAudience: targetAudience.name,
-        createdById: _currentStaffId,
-        createdByName: _currentStaffName,
-        incidentId: incidentId,
-        expiresIn: expiresIn,
-      );
-
-      if (success) {
-        Get.snackbar(
-          'تم',
-          'تم إرسال التنبيه بنجاح',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.green.withOpacity(0.8),
-          colorText: Colors.white,
-          duration: const Duration(seconds: 2),
-        );
-
-        // Reload alerts
-        await loadActiveAlerts();
-      }
-
-      return success;
-    } catch (e) {
-      debugPrint('AlertController: Error broadcasting alert - $e');
-      Get.snackbar(
-        'خطأ',
-        'فشل إرسال التنبيه',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.withOpacity(0.8),
-        colorText: Colors.white,
-      );
-      return false;
-    }
-  }
-
-  /// Broadcast emergency alert
-  Future<void> broadcastEmergencyAlert({
-    required String title,
-    required String message,
-    String? incidentId,
-  }) async {
-    await broadcastAlert(
-      title: title,
-      message: message,
-      severity: AlertSeverity.emergency,
-      targetAudience: AlertTargetAudience.all,
-      incidentId: incidentId,
-      expiresIn: const Duration(hours: 1),
+  Widget _infoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('$label: ',
+              style:
+                  const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+          Expanded(child: Text(value, style: const TextStyle(fontSize: 13))),
+        ],
+      ),
     );
   }
 
-  /// Get icon for alert severity
-  IconData _getIconForSeverity(AlertSeverity severity) {
-    switch (severity) {
-      case AlertSeverity.info:
-        return Icons.info_outline;
-      case AlertSeverity.warning:
-        return Icons.warning_amber;
-      case AlertSeverity.urgent:
-        return Icons.priority_high;
-      case AlertSeverity.emergency:
-        return Icons.emergency;
-    }
-  }
-
-  /// Format time
   String _formatTime(DateTime dateTime) {
     final now = DateTime.now();
     final difference = now.difference(dateTime);
 
-    if (difference.inMinutes < 1) {
-      return 'الآن';
-    } else if (difference.inMinutes < 60) {
-      return 'منذ ${difference.inMinutes} دقيقة';
-    } else if (difference.inHours < 24) {
-      return 'منذ ${difference.inHours} ساعة';
-    } else {
-      return 'منذ ${difference.inDays} يوم';
-    }
+    if (difference.inMinutes < 1) return 'الآن';
+    if (difference.inMinutes < 60) return 'منذ ${difference.inMinutes} دقيقة';
+    if (difference.inHours < 24) return 'منذ ${difference.inHours} ساعة';
+    return 'منذ ${difference.inDays} يوم';
   }
 
-  /// Refresh alerts (pull to refresh)
+  /// Pull to refresh
   Future<void> refreshAlerts() async {
-    await loadActiveAlerts();
+    await loadAlerts(refresh: true);
+    await loadUnreadCount();
   }
 }

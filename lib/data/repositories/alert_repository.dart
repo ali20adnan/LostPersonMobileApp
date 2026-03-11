@@ -1,178 +1,133 @@
 import 'package:flutter/foundation.dart';
-import 'package:uuid/uuid.dart';
+import 'package:get/get.dart';
 
-import '../../app/services/storage_service.dart';
+import '../../app/services/api_service.dart';
+import '../../core/constants/api_constants.dart';
 import '../models/alert_model.dart';
 
-/// Repository for managing alert operations
+/// Repository for alerts via API
 class AlertRepository {
-  final StorageService _storageService;
+  final ApiService _api = Get.find<ApiService>();
 
-  AlertRepository({
-    required StorageService storageService,
-  }) : _storageService = storageService;
-
-  /// Broadcast alert to staff
-  Future<bool> broadcastAlert({
-    required String title,
-    required String message,
-    required String severity,
-    required String targetAudience,
-    required String createdById,
-    required String createdByName,
-    String? incidentId,
-    Duration? expiresIn,
+  /// Get paginated list of alerts
+  Future<PaginatedAlerts> getAlerts({
+    int page = 1,
+    int limit = 10,
+    String? type,
+    String? status,
   }) async {
-    try {
-      debugPrint('AlertRepository: Broadcasting alert...');
+    final params = <String, String>{
+      'page': page.toString(),
+      'limit': limit.toString(),
+      if (type != null) 'type': type,
+      if (status != null) 'status': status,
+    };
 
-      // Generate alert ID
-      final alertId = const Uuid().v4();
+    final response = await _api.get(
+      ApiConstants.alerts,
+      queryParams: params,
+    );
 
-      // Calculate expiry time if duration provided
-      DateTime? expiresAt;
-      if (expiresIn != null) {
-        expiresAt = DateTime.now().add(expiresIn);
-      }
-
-      // Create alert model
-      final alert = Alert(
-        id: alertId,
-        incidentId: incidentId,
-        title: title,
-        message: message,
-        severity: severity,
-        targetAudience: targetAudience,
-        sentAt: DateTime.now(),
-        expiresAt: expiresAt,
-        createdById: createdById,
-        createdByName: createdByName,
+    if (response.isSuccess && response.data != null) {
+      final data = response.data as Map<String, dynamic>;
+      final items = (data['items'] as List)
+          .map((e) => Alert.fromJson(e as Map<String, dynamic>))
+          .toList();
+      final pagination = data['pagination'] as Map<String, dynamic>;
+      return PaginatedAlerts(
+        items: items,
+        currentPage: pagination['current_page'] as int,
+        perPage: pagination['per_page'] as int,
+        totalItems: pagination['total_items'] as int,
+        totalPages: pagination['total_pages'] as int,
       );
-
-      // Save to database
-      await _storageService.saveAlert(alert);
-
-      debugPrint('AlertRepository: Alert broadcast successfully - $alertId');
-      return true;
-    } catch (e) {
-      debugPrint('AlertRepository: Error broadcasting alert - $e');
-      return false;
     }
+
+    debugPrint(
+        'AlertRepository: Error fetching alerts - ${response.errorMessage}');
+    return PaginatedAlerts.empty();
   }
 
-  /// Get active alerts for a target audience
-  Future<List<Alert>> getActiveAlerts({String? targetAudience}) async {
-    try {
-      final alerts =
-          await _storageService.getRecentAlerts(targetAudience: targetAudience);
-
-      // Filter out expired alerts
-      final now = DateTime.now();
-      return alerts.where((alert) {
-        if (alert.expiresAt == null) return true;
-        return now.isBefore(alert.expiresAt!);
-      }).toList();
-    } catch (e) {
-      debugPrint('AlertRepository: Error getting active alerts - $e');
-      return [];
+  /// Get a single alert by ID
+  Future<Alert?> getAlert(int id) async {
+    final response = await _api.get('${ApiConstants.alerts}/$id');
+    if (response.isSuccess && response.data != null) {
+      return Alert.fromJson(response.data as Map<String, dynamic>);
     }
+    return null;
   }
 
-  /// Acknowledge alert
-  Future<bool> acknowledgeAlert(
-    String alertId,
-    String staffId,
-    String staffName,
-  ) async {
-    try {
-      await _storageService.acknowledgeAlert(alertId, staffId, staffName);
-      debugPrint('AlertRepository: Alert acknowledged - $alertId');
-      return true;
-    } catch (e) {
-      debugPrint('AlertRepository: Error acknowledging alert - $e');
-      return false;
+  /// Get unread alert count
+  Future<int> getUnreadCount() async {
+    final response = await _api.get('${ApiConstants.alerts}/unread/count');
+    if (response.isSuccess && response.data != null) {
+      return (response.data as Map<String, dynamic>)['count'] as int? ?? 0;
     }
+    return 0;
   }
 
-  /// Get unacknowledged alerts for a staff member
-  Future<List<Alert>> getUnacknowledgedAlerts(
-    String staffId, {
-    String? targetAudience,
+  /// Get alert statistics
+  Future<Map<String, dynamic>?> getStatistics() async {
+    final response = await _api.get('${ApiConstants.alerts}/statistics');
+    if (response.isSuccess && response.data != null) {
+      return response.data as Map<String, dynamic>;
+    }
+    return null;
+  }
+
+  /// Create a new alert
+  Future<ApiResponse> createAlert({
+    required int missingPersonReportId,
+    required String type,
+    required String reporterName,
+    required String reporterPhone,
+    int? locationId,
+    required String description,
   }) async {
-    try {
-      final alerts = await getActiveAlerts(targetAudience: targetAudience);
-
-      // Filter alerts not acknowledged by this staff member
-      return alerts
-          .where((alert) => !alert.isAcknowledgedBy(staffId))
-          .toList();
-    } catch (e) {
-      debugPrint('AlertRepository: Error getting unacknowledged alerts - $e');
-      return [];
-    }
+    return await _api.post(ApiConstants.alerts, body: {
+      'missingPersonReportId': missingPersonReportId,
+      'type': type,
+      'reporterName': reporterName,
+      'reporterPhone': reporterPhone,
+      if (locationId != null) 'locationId': locationId,
+      'description': description,
+    });
   }
 
-  /// Get unacknowledged alert count for a staff member
-  Future<int> getUnacknowledgedCount(
-    String staffId, {
-    String? targetAudience,
-  }) async {
-    final alerts = await getUnacknowledgedAlerts(
-      staffId,
-      targetAudience: targetAudience,
-    );
-    return alerts.length;
+  /// Mark alert as read
+  Future<bool> markAsRead(int alertId) async {
+    final response = await _api.post('${ApiConstants.alerts}/$alertId/read');
+    return response.isSuccess;
   }
 
-  /// Broadcast emergency alert (critical, to all staff)
-  Future<bool> broadcastEmergencyAlert({
-    required String title,
-    required String message,
-    required String createdById,
-    required String createdByName,
-    String? incidentId,
-  }) async {
-    return await broadcastAlert(
-      title: title,
-      message: message,
-      severity: 'emergency',
-      targetAudience: 'all',
-      createdById: createdById,
-      createdByName: createdByName,
-      incidentId: incidentId,
-      expiresIn: const Duration(hours: 1),
-    );
+  /// Mark all alerts as read
+  Future<bool> markAllAsRead() async {
+    final response = await _api.post('${ApiConstants.alerts}/read-all');
+    return response.isSuccess;
   }
+}
 
-  /// Broadcast info alert (informational, to all staff)
-  Future<bool> broadcastInfoAlert({
-    required String title,
-    required String message,
-    required String createdById,
-    required String createdByName,
-    Duration expiresIn = const Duration(hours: 24),
-  }) async {
-    return await broadcastAlert(
-      title: title,
-      message: message,
-      severity: 'info',
-      targetAudience: 'all',
-      createdById: createdById,
-      createdByName: createdByName,
-      expiresIn: expiresIn,
-    );
-  }
+/// Paginated alerts wrapper
+class PaginatedAlerts {
+  final List<Alert> items;
+  final int currentPage;
+  final int perPage;
+  final int totalItems;
+  final int totalPages;
 
-  /// Get alerts for a specific incident
-  Future<List<Alert>> getAlertsForIncident(String incidentId) async {
-    try {
-      final allAlerts = await _storageService.getRecentAlerts();
-      return allAlerts
-          .where((alert) => alert.incidentId == incidentId)
-          .toList();
-    } catch (e) {
-      debugPrint('AlertRepository: Error getting incident alerts - $e');
-      return [];
-    }
-  }
+  const PaginatedAlerts({
+    required this.items,
+    required this.currentPage,
+    required this.perPage,
+    required this.totalItems,
+    required this.totalPages,
+  });
+
+  factory PaginatedAlerts.empty() => const PaginatedAlerts(
+        items: [],
+        currentPage: 1,
+        perPage: 10,
+        totalItems: 0,
+        totalPages: 0,
+      );
 }

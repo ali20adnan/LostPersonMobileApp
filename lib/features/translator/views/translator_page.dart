@@ -60,13 +60,13 @@ class TranslatorPage extends GetView<TranslatorController> {
                                   Icon(
                                     Icons.chat_bubble_outline,
                                     size: 64,
-                                    color: theme.colorScheme.onSurface.withOpacity(0.3),
+                                    color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
                                   ),
                                   const SizedBox(height: 16),
                                   Text(
                                     'ابدأ الحديث لرؤية الترجمة',
                                     style: theme.textTheme.bodyLarge?.copyWith(
-                                      color: theme.colorScheme.onSurface.withOpacity(0.5),
+                                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                                     ),
                                   ),
                                 ],
@@ -140,7 +140,7 @@ class TranslatorPage extends GetView<TranslatorController> {
                     ? 'اضغط للتوقف'
                     : 'اضغط للبدء',
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.6),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
               ),
             ),
@@ -181,7 +181,7 @@ class TranslatorPage extends GetView<TranslatorController> {
             child: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withOpacity(0.1),
+                color: theme.colorScheme.primary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(

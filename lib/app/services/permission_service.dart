@@ -134,7 +134,7 @@ class PermissionService {
       'الإذن مرفوض',
       'يتطلب التطبيق إذن الميكروفون للعمل بشكل صحيح',
       snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.red.withOpacity(0.8),
+      backgroundColor: Colors.red.withValues(alpha: 0.8),
       colorText: Colors.white,
       duration: const Duration(seconds: 3),
     );

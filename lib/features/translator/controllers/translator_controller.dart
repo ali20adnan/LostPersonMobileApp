@@ -13,6 +13,7 @@ import '../../../core/constants/language_constants.dart';
 import '../../../data/models/language_model.dart';
 import '../../../data/models/translation_message_model.dart';
 import '../../../data/repositories/translation_repository.dart';
+import '../views/translation_history_page.dart';
 
 class TranslatorController extends GetxController {
   // Services
@@ -25,6 +26,7 @@ class TranslatorController extends GetxController {
   late final TranslationRepository _translationRepository;
 
   // Observable state
+  final toolMode = 0.obs; // 0 = voice translator, 1 = OCR reader
   final isRecording = false.obs;
   final isInitializing = false.obs;
   final currentTranscription = ''.obs;
@@ -166,7 +168,7 @@ class TranslatorController extends GetxController {
           'خطأ في الاتصال',
           'فشل الاتصال بخدمة الترجمة. يرجى المحاولة مرة أخرى.',
           snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red.withOpacity(0.8),
+          backgroundColor: Colors.red.withValues(alpha: 0.8),
           colorText: Colors.white,
         );
         isInitializing.value = false;
@@ -257,7 +259,7 @@ class TranslatorController extends GetxController {
         'بدأ التسجيل',
         'يتم الآن ترجمة كلامك في الوقت الفعلي',
         snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.green.withOpacity(0.8),
+        backgroundColor: Colors.green.withValues(alpha: 0.8),
         colorText: Colors.white,
         duration: const Duration(seconds: 2),
       );
@@ -272,7 +274,7 @@ class TranslatorController extends GetxController {
         'خطأ',
         'حدث خطأ أثناء بدء التسجيل',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.withOpacity(0.8),
+        backgroundColor: Colors.red.withValues(alpha: 0.8),
         colorText: Colors.white,
       );
     }
@@ -321,7 +323,7 @@ class TranslatorController extends GetxController {
         'توقف التسجيل',
         'تم حفظ المحادثة',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.blue.withOpacity(0.8),
+        backgroundColor: Colors.blue.withValues(alpha: 0.8),
         colorText: Colors.white,
         duration: const Duration(seconds: 2),
       );
@@ -430,7 +432,7 @@ class TranslatorController extends GetxController {
               'انتهى الوقت',
               'توقف التسجيل تلقائياً بعد 30 دقيقة',
               snackPosition: SnackPosition.TOP,
-              backgroundColor: Colors.orange.withOpacity(0.8),
+              backgroundColor: Colors.orange.withValues(alpha: 0.8),
               colorText: Colors.white,
             );
             stopRecording();
@@ -448,7 +450,7 @@ class TranslatorController extends GetxController {
         'تنبيه',
         'يجب إيقاف التسجيل قبل تغيير اللغات',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.orange.withOpacity(0.8),
+        backgroundColor: Colors.orange.withValues(alpha: 0.8),
         colorText: Colors.white,
         margin: const EdgeInsets.all(16),
         borderRadius: 12,
@@ -464,7 +466,7 @@ class TranslatorController extends GetxController {
 
   /// Navigate to history
   void goToHistory() {
-    Get.toNamed('/history');
+    Get.to(() => const TranslationHistoryPage());
   }
 
   /// Navigate to settings

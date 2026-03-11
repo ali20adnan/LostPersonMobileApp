@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../controllers/incidents_list_controller.dart';
 import '../widgets/incident_card_widget.dart';
 import '../../../core/constants/incident_constants.dart';
 
-/// Page displaying list of incidents with filtering
+/// Page displaying list of reports with filtering
 class IncidentsListPage extends GetView<IncidentsListController> {
   const IncidentsListPage({super.key});
 
@@ -15,10 +16,9 @@ class IncidentsListPage extends GetView<IncidentsListController> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('قائمة الحوادث'),
+        title: const Text('قائمة الإبلاغات'),
         centerTitle: true,
         actions: [
-          // Statistics badge
           Obx(() => Padding(
                 padding: const EdgeInsets.only(right: 16),
                 child: Center(
@@ -30,7 +30,7 @@ class IncidentsListPage extends GetView<IncidentsListController> {
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Text(
-                      '${controller.filteredIncidents.length}',
+                      '${controller.filteredReports.length}',
                       style: TextStyle(
                         color: theme.colorScheme.onPrimaryContainer,
                         fontWeight: FontWeight.bold,
@@ -43,29 +43,60 @@ class IncidentsListPage extends GetView<IncidentsListController> {
       ),
       body: Column(
         children: [
-          // Filters section
+          // Search + filter section
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
             decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
-              border: Border(
-                bottom: BorderSide(
-                  color: theme.colorScheme.outline.withOpacity(0.2),
+            color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.25),
+            border: Border(
+              bottom: BorderSide(
+                color: theme.colorScheme.outline.withValues(alpha: 0.15),
                 ),
               ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                TextField(
+                  onChanged: controller.updateSearch,
+                  textDirection: TextDirection.rtl,
+                  decoration: InputDecoration(
+                    hintText: 'ابحث بالعنوان أو الوصف أو الموقع...',
+                    hintTextDirection: TextDirection.rtl,
+                    prefixIcon: const Icon(Icons.search, size: 20),
+                    filled: true,
+                    fillColor: theme.colorScheme.surface,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide.none,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide.none,
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide(
+                        color: theme.colorScheme.primary,
+                        width: 1.5,
+                      ),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      vertical: 11,
+                      horizontal: 16,
+                    ),
+                    isDense: true,
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
                 // Status filters
                 const Text(
                   'الحالة',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 Obx(() => SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: Row(
@@ -74,36 +105,32 @@ class IncidentsListPage extends GetView<IncidentsListController> {
                             context,
                             'الكل',
                             'all',
-                            controller.selectedStatusFilter.value == 'all',
-                            () => controller.filterByStatus('all'),
+                            controller.selectedStatusFilter.value == null,
+                            () => controller.filterByStatus(null),
                           ),
-                          ...IncidentStatus.values.map((status) {
+                          ...ReportStatus.values.map((status) {
                             final isSelected =
-                                controller.selectedStatusFilter.value ==
-                                    status.name;
+                                controller.selectedStatusFilter.value == status;
                             return _buildFilterChip(
                               context,
                               status.displayNameAr,
                               status.name,
                               isSelected,
-                              () => controller.filterByStatus(status.name),
+                              () => controller.filterByStatus(status),
                             );
                           }),
                         ],
                       ),
                     )),
 
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
 
                 // Type filters
                 const Text(
                   'النوع',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 Obx(() => SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: Row(
@@ -112,18 +139,18 @@ class IncidentsListPage extends GetView<IncidentsListController> {
                             context,
                             'الكل',
                             'all',
-                            controller.selectedTypeFilter.value == 'all',
-                            () => controller.filterByType('all'),
+                            controller.selectedTypeFilter.value == null,
+                            () => controller.filterByType(null),
                           ),
-                          ...IncidentType.values.map((type) {
+                          ...ReportType.values.map((type) {
                             final isSelected =
-                                controller.selectedTypeFilter.value == type.name;
+                                controller.selectedTypeFilter.value == type;
                             return _buildFilterChip(
                               context,
                               type.displayNameAr,
                               type.name,
                               isSelected,
-                              () => controller.filterByType(type.name),
+                              () => controller.filterByType(type),
                               icon: type.icon,
                             );
                           }),
@@ -134,102 +161,111 @@ class IncidentsListPage extends GetView<IncidentsListController> {
             ),
           ),
 
-          // Incidents list
+          // Reports list
           Expanded(
             child: Obx(() {
               if (controller.isLoading.value) {
-                return const Center(
-                  child: CircularProgressIndicator(),
-                );
+                return const Center(child: CircularProgressIndicator());
               }
 
-              if (controller.filteredIncidents.isEmpty) {
+              final reports = controller.filteredReports;
+              if (reports.isEmpty) {
                 return Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        Icons.inbox_outlined,
-                        size: 64,
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
+                      Icon(Icons.inbox_outlined,
+                          size: 64,
+                          color: theme.colorScheme.onSurfaceVariant),
                       const SizedBox(height: 16),
-                      Text(
-                        'لا توجد حوادث',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
+                      Text('لا توجد بلاغات',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant)),
                       const SizedBox(height: 8),
-                      Text(
-                        'جرب تغيير الفلاتر أو أضف حادثة جديدة',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
+                      Text('جرب تغيير الفلاتر أو أضف بلاغ جديد',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant)),
                     ],
                   ),
                 );
               }
 
               return RefreshIndicator(
-                onRefresh: controller.refreshIncidents,
+                onRefresh: controller.refreshReports,
                 child: ListView.builder(
-                  itemCount: controller.filteredIncidents.length,
+                  itemCount: reports.length + (controller.hasMore ? 1 : 0),
                   itemBuilder: (context, index) {
-                    final incident = controller.filteredIncidents[index];
+                    if (index == reports.length) {
+                      controller.loadMore();
+                      return const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(16),
+                          child: CircularProgressIndicator(),
+                        ),
+                      );
+                    }
+                    final report = reports[index];
                     return IncidentCardWidget(
-                      incident: incident,
+                      incident: report,
                       onTap: () =>
-                          controller.navigateToIncidentDetail(incident.id),
+                          controller.navigateToReportDetail(report.id),
                     );
                   },
                 ),
               );
             }),
           ),
-
-          // Statistics bar at bottom
-          Obx(() => Container(
-                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceVariant.withOpacity(0.5),
-                  border: Border(
-                    top: BorderSide(
-                      color: theme.colorScheme.outline.withOpacity(0.2),
-                    ),
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _buildStatItem(
-                      context,
-                      'قيد الانتظار',
-                      controller.pendingCount,
-                      IncidentStatus.pending.color,
-                    ),
-                    _buildStatItem(
-                      context,
-                      'قيد المعالجة',
-                      controller.inProgressCount,
-                      IncidentStatus.inProgress.color,
-                    ),
-                    _buildStatItem(
-                      context,
-                      'تم الحل',
-                      controller.resolvedCount,
-                      IncidentStatus.resolved.color,
-                    ),
-                  ],
-                ),
-              )),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: controller.navigateToCreateIncident,
+        onPressed: () {
+          HapticFeedback.mediumImpact();
+          _showReportTypeSheet(context);
+        },
         icon: const Icon(Icons.add),
         label: const Text('إبلاغ جديد'),
+      ),
+    );
+  }
+
+  /// Build stat pill
+  Widget _buildStatPill(
+    BuildContext context,
+    String label,
+    int count,
+    Color color,
+  ) {
+    return Expanded(
+      child: Container(
+        padding:
+            const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '$count',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: color,
+                    fontSize: 11,
+                  ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -279,31 +315,74 @@ class IncidentsListPage extends GetView<IncidentsListController> {
   }
 
   /// Build statistics item
-  Widget _buildStatItem(
-    BuildContext context,
-    String label,
-    int count,
-    Color color,
-  ) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          '$count',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
+
+  void _showReportTypeSheet(BuildContext context) {
+    final theme = Theme.of(context);
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+                borderRadius: BorderRadius.circular(2),
               ),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'نوع الإبلاغ',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF8B5CF6).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.report_problem,
+                    color: Color(0xFF8B5CF6)),
+              ),
+              title: const Text('بلاغ عادي',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: const Text('إبلاغ عن حادثة أو طوارئ'),
+              onTap: () {
+                Navigator.pop(context);
+                controller.navigateToCreateReport();
+              },
+            ),
+            const Divider(height: 1),
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.red.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child:
+                    const Icon(Icons.person_search, color: Colors.red),
+              ),
+              title: const Text('إبلاغ عن مفقود',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: const Text('الإبلاغ عن شخص مفقود'),
+              onTap: () {
+                Navigator.pop(context);
+                Get.toNamed('/missing-person-form');
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
         ),
-      ],
+      ),
     );
   }
 }

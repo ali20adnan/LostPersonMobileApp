@@ -33,20 +33,20 @@ class LanguageCard extends StatelessWidget {
           border: Border.all(
             color: isSelected
                 ? theme.colorScheme.primary
-                : theme.colorScheme.outline.withOpacity(0.2),
+                : theme.colorScheme.outline.withValues(alpha: 0.2),
             width: isSelected ? 2 : 1,
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: theme.colorScheme.primary.withOpacity(0.4),
+                    color: theme.colorScheme.primary.withValues(alpha: 0.4),
                     blurRadius: 16,
                     offset: const Offset(0, 6),
                   ),
                 ]
               : [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -60,8 +60,8 @@ class LanguageCard extends StatelessWidget {
               height: 44,
               decoration: BoxDecoration(
                 color: isSelected
-                    ? theme.colorScheme.onPrimary.withOpacity(0.2)
-                    : theme.colorScheme.surfaceVariant,
+                    ? theme.colorScheme.onPrimary.withValues(alpha: 0.2)
+                    : theme.colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Center(
@@ -95,7 +95,7 @@ class LanguageCard extends StatelessWidget {
                     style: theme.textTheme.bodySmall?.copyWith(
                       fontSize: 12,
                       color: isSelected
-                          ? theme.colorScheme.onPrimary.withOpacity(0.9)
+                          ? theme.colorScheme.onPrimary.withValues(alpha: 0.9)
                           : theme.colorScheme.onSurfaceVariant,
                     ),
                   ),

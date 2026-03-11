@@ -1,247 +1,154 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../app/services/storage_service.dart';
-import '../../../app/services/media_storage_service.dart';
-import '../../../app/services/location_service.dart';
 import '../../../data/repositories/incident_repository.dart';
 import '../../../data/models/incident_model.dart';
 import '../../../core/constants/incident_constants.dart';
 
-/// Controller for incidents list page
+/// Controller for reports list page - uses API
 class IncidentsListController extends GetxController {
-  // Services
-  late final IncidentRepository _incidentRepository;
+  late final ReportRepository _reportRepository;
 
   // Observable state
-  final incidents = <Incident>[].obs;
-  final filteredIncidents = <Incident>[].obs;
+  final reports = <Report>[].obs;
   final isLoading = false.obs;
-  final selectedStatusFilter = Rx<String?>('all');
-  final selectedTypeFilter = Rx<String?>('all');
+  final isLoadingMore = false.obs;
+  final selectedStatusFilter = Rx<ReportStatus?>(null);
+  final selectedTypeFilter = Rx<ReportType?>(null);
+  final searchQuery = ''.obs;
+
+  // Pagination
+  int _currentPage = 1;
+  int _totalPages = 1;
+  int _totalItems = 0;
+
+  int get totalItems => _totalItems;
+  bool get hasMore => _currentPage < _totalPages;
 
   @override
   void onInit() {
     super.onInit();
-    _initializeServices();
-    loadIncidents();
+    _reportRepository = Get.find<ReportRepository>();
+    loadReports();
   }
 
-  /// Initialize services
-  void _initializeServices() {
-    final storageService = StorageService();
-    final mediaStorageService = MediaStorageService();
-    final locationService = LocationService();
-
-    _incidentRepository = IncidentRepository(
-      storageService: storageService,
-      mediaStorageService: mediaStorageService,
-      locationService: locationService,
-    );
-
-    debugPrint('IncidentsListController: Services initialized');
-  }
-
-  /// Load all incidents
-  Future<void> loadIncidents() async {
+  /// Load reports from API
+  Future<void> loadReports() async {
     try {
       isLoading.value = true;
+      _currentPage = 1;
 
-      final loadedIncidents = await _incidentRepository.getIncidents();
-      incidents.value = loadedIncidents;
-
-      // Apply filters
-      _applyFilters();
-
-      isLoading.value = false;
-      debugPrint('IncidentsListController: Loaded ${incidents.length} incidents');
-    } catch (e) {
-      debugPrint('IncidentsListController: Error loading incidents - $e');
-      isLoading.value = false;
-      Get.snackbar(
-        'خطأ',
-        'فشل تحميل الحوادث',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.withOpacity(0.8),
-        colorText: Colors.white,
+      final result = await _reportRepository.getReports(
+        page: 1,
+        limit: 20,
+        type: selectedTypeFilter.value?.name,
+        status: selectedStatusFilter.value?.apiValue,
       );
+
+      reports.value = result.items;
+      _currentPage = result.currentPage;
+      _totalPages = result.totalPages;
+      _totalItems = result.totalItems;
+
+      isLoading.value = false;
+    } catch (e) {
+      debugPrint('IncidentsListController: Error loading reports - $e');
+      isLoading.value = false;
+      Get.snackbar('خطأ', 'فشل تحميل البلاغات',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red.withValues(alpha: 0.8),
+          colorText: Colors.white);
+    }
+  }
+
+  /// Load more reports (pagination)
+  Future<void> loadMore() async {
+    if (!hasMore || isLoadingMore.value) return;
+
+    try {
+      isLoadingMore.value = true;
+
+      final result = await _reportRepository.getReports(
+        page: _currentPage + 1,
+        limit: 20,
+        type: selectedTypeFilter.value?.name,
+        status: selectedStatusFilter.value?.apiValue,
+      );
+
+      reports.addAll(result.items);
+      _currentPage = result.currentPage;
+      _totalPages = result.totalPages;
+      _totalItems = result.totalItems;
+
+      isLoadingMore.value = false;
+    } catch (e) {
+      debugPrint('IncidentsListController: Error loading more reports - $e');
+      isLoadingMore.value = false;
     }
   }
 
   /// Filter by status
-  void filterByStatus(String? status) {
+  void filterByStatus(ReportStatus? status) {
     selectedStatusFilter.value = status;
-    _applyFilters();
+    loadReports();
   }
 
   /// Filter by type
-  void filterByType(String? type) {
+  void filterByType(ReportType? type) {
     selectedTypeFilter.value = type;
-    _applyFilters();
+    loadReports();
   }
 
-  /// Apply all filters
-  void _applyFilters() {
-    var filtered = incidents.toList();
-
-    // Filter by status
-    if (selectedStatusFilter.value != null &&
-        selectedStatusFilter.value != 'all') {
-      filtered = filtered
-          .where((incident) => incident.status == selectedStatusFilter.value)
-          .toList();
-    }
-
-    // Filter by type
-    if (selectedTypeFilter.value != null && selectedTypeFilter.value != 'all') {
-      filtered = filtered
-          .where((incident) => incident.type == selectedTypeFilter.value)
-          .toList();
-    }
-
-    filteredIncidents.value = filtered;
-    debugPrint(
-        'IncidentsListController: Filtered ${filteredIncidents.length} incidents');
+  /// Refresh reports (pull to refresh)
+  Future<void> refreshReports() async {
+    await loadReports();
   }
 
-  /// Refresh incidents (pull to refresh)
-  Future<void> refreshIncidents() async {
-    await loadIncidents();
+  /// Navigate to report detail page
+  void navigateToReportDetail(int reportId) {
+    Get.toNamed('/incident-detail', arguments: {'reportId': reportId});
   }
 
-  /// Navigate to incident detail page
-  void navigateToIncidentDetail(String incidentId) {
-    Get.toNamed('/incident-detail', arguments: {'incidentId': incidentId});
-  }
-
-  /// Navigate to create incident page
-  void navigateToCreateIncident() {
+  /// Navigate to create report page
+  void navigateToCreateReport() {
     Get.toNamed('/incident-reporting');
   }
 
-  /// Update incident status
-  Future<void> updateIncidentStatus(String incidentId, String newStatus) async {
-    try {
-      final success =
-          await _incidentRepository.updateIncidentStatus(incidentId, newStatus);
-
-      if (success) {
-        // Reload incidents
-        await loadIncidents();
-
-        Get.snackbar(
-          'تم',
-          'تم تحديث حالة الحادثة',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.green.withOpacity(0.8),
-          colorText: Colors.white,
-          duration: const Duration(seconds: 2),
-        );
-      } else {
-        Get.snackbar(
-          'خطأ',
-          'فشل تحديث حالة الحادثة',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red.withOpacity(0.8),
-          colorText: Colors.white,
-        );
-      }
-    } catch (e) {
-      debugPrint(
-          'IncidentsListController: Error updating incident status - $e');
-      Get.snackbar(
-        'خطأ',
-        'حدث خطأ أثناء تحديث الحالة',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.withOpacity(0.8),
-        colorText: Colors.white,
-      );
-    }
+  /// Get reports filtered by search query (client-side)
+  List<Report> get filteredReports {
+    if (searchQuery.value.isEmpty) return reports;
+    final q = searchQuery.value.toLowerCase();
+    return reports
+        .where((r) =>
+            (r.title?.toLowerCase().contains(q) ?? false) ||
+            (r.description?.toLowerCase().contains(q) ?? false) ||
+            (r.addressLine?.toLowerCase().contains(q) ?? false))
+        .toList();
   }
 
-  /// Delete incident with confirmation
-  Future<void> deleteIncident(String incidentId) async {
-    // Show confirmation dialog
-    final confirmed = await Get.dialog<bool>(
-      AlertDialog(
-        title: const Text('تأكيد الحذف'),
-        content: const Text('هل أنت متأكد من حذف هذه الحادثة؟ لا يمكن التراجع عن هذا الإجراء.'),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(result: false),
-            child: const Text('إلغاء'),
-          ),
-          ElevatedButton(
-            onPressed: () => Get.back(result: true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
-            child: const Text('حذف'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true) {
-      try {
-        final success = await _incidentRepository.deleteIncident(incidentId);
-
-        if (success) {
-          // Reload incidents
-          await loadIncidents();
-
-          Get.snackbar(
-            'تم',
-            'تم حذف الحادثة بنجاح',
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: Colors.green.withOpacity(0.8),
-            colorText: Colors.white,
-            duration: const Duration(seconds: 2),
-          );
-        } else {
-          Get.snackbar(
-            'خطأ',
-            'فشل حذف الحادثة',
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: Colors.red.withOpacity(0.8),
-            colorText: Colors.white,
-          );
-        }
-      } catch (e) {
-        debugPrint('IncidentsListController: Error deleting incident - $e');
-        Get.snackbar(
-          'خطأ',
-          'حدث خطأ أثناء حذف الحادثة',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red.withOpacity(0.8),
-          colorText: Colors.white,
-        );
-      }
-    }
+  void updateSearch(String q) {
+    searchQuery.value = q;
   }
 
-  /// Get incidents count by status
-  int getIncidentsCountByStatus(IncidentStatus status) {
-    return incidents.where((incident) => incident.status == status.name).length;
-  }
+  /// Get pending reports count
+  int get pendingCount =>
+      reports.where((r) => r.status == ReportStatus.pending.apiValue).length;
 
-  /// Get pending incidents count
-  int get pendingCount => getIncidentsCountByStatus(IncidentStatus.pending);
-
-  /// Get in progress incidents count
+  /// Get in progress reports count
   int get inProgressCount =>
-      getIncidentsCountByStatus(IncidentStatus.inProgress);
+      reports.where((r) => r.status == ReportStatus.inProgress.apiValue).length;
 
-  /// Get resolved incidents count
-  int get resolvedCount => getIncidentsCountByStatus(IncidentStatus.resolved);
+  /// Get resolved reports count
+  int get resolvedCount =>
+      reports.where((r) => r.status == ReportStatus.resolved.apiValue).length;
 
-  /// Get critical incidents (high severity + not resolved)
-  List<Incident> get criticalIncidents {
-    return incidents
-        .where((incident) =>
-            incident.severity == IncidentSeverity.critical.name &&
-            incident.status != IncidentStatus.resolved.name &&
-            incident.status != IncidentStatus.closed.name)
+  /// Get critical reports (high severity + not resolved)
+  List<Report> get criticalReports {
+    return reports
+        .where((r) =>
+            r.severity == ReportSeverity.critical.name &&
+            r.status != ReportStatus.resolved.apiValue &&
+            r.status != ReportStatus.closed.apiValue)
         .toList();
   }
 }

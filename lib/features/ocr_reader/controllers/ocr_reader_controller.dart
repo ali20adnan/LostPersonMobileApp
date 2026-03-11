@@ -29,7 +29,7 @@ class OcrReaderController extends GetxController {
       'تم المسح',
       'تم مسح النص بنجاح (واجهة تجريبية)',
       snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.green.withOpacity(0.8),
+      backgroundColor: Colors.green.withValues(alpha: 0.8),
       colorText: Colors.white,
       margin: const EdgeInsets.all(16),
       borderRadius: 12,

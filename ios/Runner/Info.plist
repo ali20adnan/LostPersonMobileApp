@@ -49,5 +49,13 @@
 	<string>نحتاج إلى الوصول إلى الميكروفون لتسجيل صوتك وترجمته في الوقت الفعلي. لن يتم حفظ التسجيلات أو مشاركتها مع أي طرف ثالث.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>نستخدم التعرف على الكلام لترجمة حديثك في الوقت الفعلي.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>نحتاج إلى الوصول إلى الكاميرا لالتقاط الصور.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>نحتاج إلى الوصول إلى مكتبة الصور لاختيار الصور.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>نحتاج إلى الوصول إلى موقعك لتحديد مكانك على الخريطة.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>نحتاج إلى الوصول إلى موقعك لتحديد مكانك على الخريطة.</string>
 </dict>
 </plist>
