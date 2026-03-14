@@ -1,6 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
+
+import '../../app/themes/app_colors.dart';
 
 class TranslationDisplay extends StatefulWidget {
   final String text;
@@ -30,18 +33,13 @@ class _TranslationDisplayState extends State<TranslationDisplay> {
   void didUpdateWidget(TranslationDisplay oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    // Auto-scroll to bottom when text updates (DEBOUNCED)
     if (widget.text != oldWidget.text && widget.text.isNotEmpty) {
       _scrollDebounceTimer?.cancel();
-
-      // Only scroll after text settles for 200ms
       _scrollDebounceTimer = Timer(const Duration(milliseconds: 200), () {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (_scrollController.hasClients && mounted) {
-            // Only auto-scroll if user is near bottom (50px threshold)
             final maxScroll = _scrollController.position.maxScrollExtent;
             final currentScroll = _scrollController.offset;
-
             if (maxScroll - currentScroll <= 50 || currentScroll == 0) {
               _scrollController.animateTo(
                 maxScroll,
@@ -65,6 +63,7 @@ class _TranslationDisplayState extends State<TranslationDisplay> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final isEmpty = widget.text.isEmpty;
 
     return AnimatedSize(
@@ -72,61 +71,73 @@ class _TranslationDisplayState extends State<TranslationDisplay> {
       curve: Curves.easeInOut,
       alignment: Alignment.topCenter,
       child: Container(
-        constraints: const BoxConstraints(
-          minHeight: 120,
-        ),
+        constraints: const BoxConstraints(minHeight: 120),
         decoration: BoxDecoration(
-          color: widget.backgroundColor ?? theme.colorScheme.surface,
-          borderRadius: BorderRadius.circular(16),
+          color: widget.backgroundColor ??
+              (isDark
+                  ? AppColors.surfaceDark.withValues(alpha: 0.6)
+                  : Colors.white),
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: theme.dividerColor,
-            width: 1,
+            color: isDark ? AppColors.cardBorderDark : AppColors.cardBorder,
           ),
+          boxShadow: AppColors.cardShadow,
         ),
         padding: const EdgeInsets.all(16),
         child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Label
-          Text(
-            widget.label,
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: widget.isTranslation
-                  ? theme.colorScheme.primary
-                  : theme.colorScheme.onSurface.withValues(alpha: 0.6),
-              fontWeight: FontWeight.bold,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  widget.isTranslation ? Iconsax.translate : Iconsax.microphone,
+                  size: 16,
+                  color: widget.isTranslation
+                      ? AppColors.teal
+                      : AppColors.primary,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  widget.label,
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: widget.isTranslation
+                        ? AppColors.teal
+                        : AppColors.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 12),
-
-          // Text content
-          Expanded(
-            child: SingleChildScrollView(
-              controller: _scrollController,
-              child: isEmpty
-                  ? Center(
-                      child: Text(
-                        widget.isTranslation
-                            ? 'الترجمة ستظهر هنا...'
-                            : 'ابدأ الحديث...',
-                        style: theme.textTheme.bodyLarge?.copyWith(
-                          color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
-                        ),
-                      ),
-                    )
-                  : SelectableText(
-                      widget.text,
-                      style: widget.textStyle ??
-                          theme.textTheme.bodyLarge?.copyWith(
-                            fontSize: widget.isTranslation ? 16 : 14,
-                            height: 1.5,
+            const SizedBox(height: 12),
+            Expanded(
+              child: SingleChildScrollView(
+                controller: _scrollController,
+                child: isEmpty
+                    ? Center(
+                        child: Text(
+                          widget.isTranslation
+                              ? 'الترجمة ستظهر هنا...'
+                              : 'ابدأ الحديث...',
+                          style: theme.textTheme.bodyLarge?.copyWith(
+                            color: isDark
+                                ? AppColors.textOnDarkSecondary
+                                : AppColors.textLight,
                           ),
-                    ),
+                        ),
+                      )
+                    : SelectableText(
+                        widget.text,
+                        style: widget.textStyle ??
+                            theme.textTheme.bodyLarge?.copyWith(
+                              fontSize: widget.isTranslation ? 16 : 14,
+                              height: 1.5,
+                            ),
+                      ),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
     );
   }
 }

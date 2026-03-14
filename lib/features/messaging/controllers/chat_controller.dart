@@ -60,13 +60,16 @@ class ChatController extends GetxController {
     }
   }
 
+  /// Unique listener key for this chat instance
+  String get _listenerId => 'chat_$conversationId';
+
   /// Setup WebSocket listeners for this chat
   void _setupSocketListeners() {
     if (!Get.isRegistered<SocketService>()) return;
     final socket = Get.find<SocketService>();
 
     // Receive new message
-    socket.on('newMessage', (data) {
+    socket.on('newMessage', _listenerId, (data) {
       if (data is Map<String, dynamic>) {
         final message = ChatMessage.fromJson(data);
         if (message.conversationId == conversationId) {
@@ -81,7 +84,7 @@ class ChatController extends GetxController {
     });
 
     // Typing indicator
-    socket.on('userTyping', (data) {
+    socket.on('userTyping', _listenerId, (data) {
       if (data is Map<String, dynamic> &&
           data['conversationId'] == conversationId) {
         final userId = data['userId'] as int?;
@@ -97,7 +100,7 @@ class ChatController extends GetxController {
     });
 
     // Messages read confirmation
-    socket.on('messagesRead', (data) {
+    socket.on('messagesRead', _listenerId, (data) {
       if (data is Map<String, dynamic> &&
           data['conversationId'] == conversationId) {
         // Could update read receipts UI here
@@ -105,7 +108,7 @@ class ChatController extends GetxController {
     });
   }
 
-  /// Send a text message
+  /// Send a text message via REST API (guaranteed delivery)
   Future<void> sendMessage() async {
     final text = messageController.text.trim();
     if (text.isEmpty) return;
@@ -114,11 +117,13 @@ class ChatController extends GetxController {
     isSending.value = true;
 
     try {
-      if (Get.isRegistered<SocketService>()) {
-        Get.find<SocketService>().emit('sendMessage', {
-          'conversationId': conversationId,
-          'content': text,
-        });
+      final sentMessage = await _repo.sendMessage(conversationId, text);
+      if (sentMessage != null) {
+        // Add locally if not already delivered via socket
+        if (!messages.any((m) => m.id == sentMessage.id)) {
+          messages.add(sentMessage);
+          _scrollToBottom();
+        }
       }
     } catch (e) {
       debugPrint('ChatController: Error sending message - $e');
@@ -195,9 +200,9 @@ class ChatController extends GetxController {
     scrollController.dispose();
     if (Get.isRegistered<SocketService>()) {
       final socket = Get.find<SocketService>();
-      socket.off('newMessage');
-      socket.off('userTyping');
-      socket.off('messagesRead');
+      socket.off('newMessage', _listenerId);
+      socket.off('userTyping', _listenerId);
+      socket.off('messagesRead', _listenerId);
     }
     super.onClose();
   }

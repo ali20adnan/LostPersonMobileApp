@@ -76,8 +76,7 @@ enum ReportSeverity {
 enum ReportStatus {
   pending,
   inProgress,
-  resolved,
-  closed;
+  resolved;
 
   String get apiValue {
     switch (this) {
@@ -87,8 +86,6 @@ enum ReportStatus {
         return 'in_progress';
       case ReportStatus.resolved:
         return 'resolved';
-      case ReportStatus.closed:
-        return 'closed';
     }
   }
 
@@ -100,8 +97,6 @@ enum ReportStatus {
         return 'قيد المعالجة';
       case ReportStatus.resolved:
         return 'تم الحل';
-      case ReportStatus.closed:
-        return 'مغلق';
     }
   }
 
@@ -113,8 +108,6 @@ enum ReportStatus {
         return Colors.blue;
       case ReportStatus.resolved:
         return Colors.green;
-      case ReportStatus.closed:
-        return Colors.blueGrey;
     }
   }
 
@@ -126,8 +119,6 @@ enum ReportStatus {
         return ReportStatus.inProgress;
       case 'resolved':
         return ReportStatus.resolved;
-      case 'closed':
-        return ReportStatus.closed;
       default:
         return ReportStatus.pending;
     }

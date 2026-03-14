@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:gap/gap.dart';
 import 'package:get/get.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
+import '../../../app/themes/app_colors.dart';
 import '../controllers/chat_controller.dart';
 import '../../../data/models/chat_models.dart';
 
@@ -10,69 +15,28 @@ class ChatPage extends GetView<ChatController> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Obx(() => controller.isLoading.value
-            ? const Text('جاري التحميل...')
-            : Column(
-                children: [
-                  Text(controller.chatTitle,
-                      style: const TextStyle(fontSize: 16)),
-                ],
-              )),
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Get.back(),
-        ),
-      ),
+      backgroundColor: isDark ? AppColors.backgroundDark : AppColors.background,
+      appBar: _buildAppBar(context, isDark),
       body: Column(
         children: [
           // Messages list
           Expanded(
             child: Obx(() {
               if (controller.isLoading.value) {
-                return const Center(child: CircularProgressIndicator());
+                return Center(
+                  child: LoadingAnimationWidget.staggeredDotsWave(
+                    color: AppColors.primary,
+                    size: 40,
+                  ),
+                );
               }
 
               final msgs = controller.messages;
               if (msgs.isEmpty) {
-                return Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(32),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(Icons.chat_outlined,
-                              size: 48, color: theme.colorScheme.primary.withValues(alpha: 0.6)),
-                        ),
-                        const SizedBox(height: 20),
-                        Text(
-                          'ابدأ المحادثة',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'أرسل رسالة للبدء',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.outline,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
+                return _buildEmptyState(isDark);
               }
 
               return ListView.builder(
@@ -87,10 +51,11 @@ class ChatPage extends GetView<ChatController> {
 
                   return Column(
                     children: [
-                      if (showDate) _DateSeparator(date: msg.sentAt),
+                      if (showDate) _DateSeparator(date: msg.sentAt, isDark: isDark),
                       _MessageBubble(
                         message: msg,
                         isMe: isMe,
+                        isDark: isDark,
                       ),
                     ],
                   );
@@ -102,8 +67,8 @@ class ChatPage extends GetView<ChatController> {
           // Typing indicator
           Obx(() {
             if (!controller.isTyping.value) return const SizedBox.shrink();
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            return Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               child: Row(
                 children: [
                   SizedBox(
@@ -111,11 +76,12 @@ class ChatPage extends GetView<ChatController> {
                     height: 16,
                     child: _TypingDots(),
                   ),
-                  const SizedBox(width: 8),
+                  const Gap(8),
                   Text(
                     '${controller.typingUserName.value} يكتب...',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.outline,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
                       fontStyle: FontStyle.italic,
                     ),
                   ),
@@ -124,79 +90,182 @@ class ChatPage extends GetView<ChatController> {
             );
           }),
 
-          // Message input
-          Container(
-            padding: const EdgeInsets.fromLTRB(8, 8, 8, 12),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 8,
-                  offset: const Offset(0, -2),
-                ),
-              ],
-            ),
-            child: SafeArea(
-              top: false,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  // Image button
-                  IconButton(
-                    onPressed: controller.pickAndSendImage,
-                    icon: Icon(Icons.image_outlined,
-                        color: theme.colorScheme.primary),
-                    tooltip: 'إرسال صورة',
-                  ),
+          // Message input bar
+          _buildInputBar(context, isDark),
+        ],
+      ),
+    );
+  }
 
-                  // Text input
-                  Expanded(
-                    child: Container(
-                      constraints: const BoxConstraints(maxHeight: 120),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surfaceContainerHighest
-                            .withValues(alpha: 0.5),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: TextField(
-                        controller: controller.messageController,
-                        maxLines: null,
-                        textInputAction: TextInputAction.newline,
-                        onChanged: (_) => controller.onTyping(),
-                        decoration: const InputDecoration(
-                          hintText: 'اكتب رسالة...',
-                          border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 10),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 4),
+  PreferredSizeWidget _buildAppBar(BuildContext context, bool isDark) {
+    return AppBar(
+      elevation: 0,
+      flexibleSpace: Container(
+        decoration: const BoxDecoration(color: AppColors.primary),
+      ),
+      backgroundColor: Colors.transparent,
+      centerTitle: true,
+      title: Obx(() => controller.isLoading.value
+          ? Text('جاري التحميل...',
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 14))
+          : Text(
+              controller.chatTitle,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            )),
+      leading: IconButton(
+        icon: const Icon(Iconsax.arrow_right_3, color: Colors.white),
+        onPressed: () => Get.back(),
+      ),
+      iconTheme: const IconThemeData(color: Colors.white),
+    );
+  }
 
-                  // Send button
-                  Obx(() => IconButton.filled(
-                        onPressed: controller.isSending.value
-                            ? null
-                            : () {
-                                HapticFeedback.lightImpact();
-                                controller.sendMessage();
-                              },
-                        icon: controller.isSending.value
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                    strokeWidth: 2),
-                              )
-                            : const Icon(Icons.send),
-                      )),
+  Widget _buildEmptyState(bool isDark) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                gradient: AppColors.heroGradient,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.3),
+                    blurRadius: 24,
+                    offset: const Offset(0, 8),
+                  ),
                 ],
               ),
+              child: const Icon(Iconsax.message_text_1,
+                  size: 48, color: Colors.white),
             ),
+            const Gap(24),
+            Text(
+              'ابدأ المحادثة',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: isDark ? AppColors.textOnDark : AppColors.textPrimary,
+              ),
+            ),
+            const Gap(8),
+            Text(
+              'أرسل رسالة للبدء',
+              style: TextStyle(
+                fontSize: 14,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ).animate().fadeIn(duration: 400.ms).scale(begin: const Offset(0.9, 0.9)),
+      ),
+    );
+  }
+
+  Widget _buildInputBar(BuildContext context, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(8, 8, 8, 12),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surfaceDark : AppColors.surface,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 12,
+            offset: const Offset(0, -3),
           ),
         ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            // Image button
+            Container(
+              margin: const EdgeInsets.only(bottom: 4),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: IconButton(
+                onPressed: controller.pickAndSendImage,
+                icon: const Icon(Iconsax.image, color: AppColors.primary, size: 22),
+                tooltip: 'إرسال صورة',
+              ),
+            ),
+            const Gap(6),
+
+            // Text input
+            Expanded(
+              child: Container(
+                constraints: const BoxConstraints(maxHeight: 120),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? AppColors.cardDark
+                      : AppColors.surfaceSunken,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isDark ? AppColors.cardBorderDark : AppColors.cardBorder,
+                  ),
+                ),
+                child: TextField(
+                  controller: controller.messageController,
+                  maxLines: null,
+                  textInputAction: TextInputAction.newline,
+                  onChanged: (_) => controller.onTyping(),
+                  style: TextStyle(
+                    color: isDark ? AppColors.textOnDark : AppColors.textPrimary,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: 'اكتب رسالة...',
+                    hintStyle: TextStyle(color: AppColors.textLight),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 10),
+                  ),
+                ),
+              ),
+            ),
+            const Gap(6),
+
+            // Send button
+            Obx(() => Container(
+                  margin: const EdgeInsets.only(bottom: 4),
+                  decoration: BoxDecoration(
+                    gradient: AppColors.heroGradient,
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withValues(alpha: 0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: IconButton(
+                    onPressed: controller.isSending.value
+                        ? null
+                        : () {
+                            HapticFeedback.lightImpact();
+                            controller.sendMessage();
+                          },
+                    icon: controller.isSending.value
+                        ? LoadingAnimationWidget.staggeredDotsWave(
+                            color: Colors.white, size: 20)
+                        : const Icon(Iconsax.send_1,
+                            color: Colors.white, size: 22),
+                  ),
+                )),
+          ],
+        ),
       ),
     );
   }
@@ -209,18 +278,17 @@ class ChatPage extends GetView<ChatController> {
 class _MessageBubble extends StatelessWidget {
   final ChatMessage message;
   final bool isMe;
+  final bool isDark;
 
-  const _MessageBubble({required this.message, required this.isMe});
+  const _MessageBubble({
+    required this.message,
+    required this.isMe,
+    required this.isDark,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    // RTL: sender on left, received on right
     final alignment = isMe ? Alignment.centerLeft : Alignment.centerRight;
-    final bgColor =
-        isMe ? theme.colorScheme.primary : theme.colorScheme.surfaceContainerHighest;
-    final textColor =
-        isMe ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface;
 
     return Align(
       alignment: alignment,
@@ -231,25 +299,38 @@ class _MessageBubble extends StatelessWidget {
         margin: const EdgeInsets.symmetric(vertical: 3),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: bgColor,
+          gradient: isMe ? AppColors.heroGradient : null,
+          color: isMe
+              ? null
+              : (isDark ? AppColors.cardDark : AppColors.surfaceSunken),
           borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(16),
-            topRight: const Radius.circular(16),
-            bottomLeft: isMe ? Radius.zero : const Radius.circular(16),
-            bottomRight: isMe ? const Radius.circular(16) : Radius.zero,
+            topLeft: const Radius.circular(18),
+            topRight: const Radius.circular(18),
+            bottomLeft: isMe ? Radius.zero : const Radius.circular(18),
+            bottomRight: isMe ? const Radius.circular(18) : Radius.zero,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: isMe
+                  ? AppColors.primary.withValues(alpha: 0.15)
+                  : Colors.black.withValues(alpha: 0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Sender name (for group chats or received messages)
+            // Sender name
             if (!isMe && message.senderName != null)
               Padding(
                 padding: const EdgeInsets.only(bottom: 4),
                 child: Text(
                   message.senderName!,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.primary,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppColors.primary,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -260,37 +341,48 @@ class _MessageBubble extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(bottom: 6),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(10),
                   child: Image.network(
                     message.imageUrl!,
                     width: 200,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, _, _) => Container(
+                    errorBuilder: (_, __, ___) => Container(
                       width: 200,
                       height: 100,
-                      color: theme.colorScheme.errorContainer,
-                      child: const Icon(Icons.broken_image),
+                      decoration: BoxDecoration(
+                        color: AppColors.errorLight,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Iconsax.gallery_slash,
+                          color: AppColors.error),
                     ),
                   ),
                 ),
               ),
 
-            // Text content
+            // Text
             if (message.content != null && message.content!.isNotEmpty)
               Text(
                 message.content!,
-                style: theme.textTheme.bodyMedium?.copyWith(color: textColor),
+                style: TextStyle(
+                  fontSize: 14,
+                  color: isMe
+                      ? Colors.white
+                      : (isDark ? AppColors.textOnDark : AppColors.textPrimary),
+                ),
               ),
 
             // Time
-            const SizedBox(height: 4),
+            const Gap(4),
             Align(
               alignment: Alignment.bottomLeft,
               child: Text(
                 _formatTime(message.sentAt),
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: textColor.withValues(alpha: 0.7),
+                style: TextStyle(
                   fontSize: 10,
+                  color: isMe
+                      ? Colors.white.withValues(alpha: 0.7)
+                      : AppColors.textLight,
                 ),
               ),
             ),
@@ -310,12 +402,12 @@ class _MessageBubble extends StatelessWidget {
 /// Date separator between messages
 class _DateSeparator extends StatelessWidget {
   final DateTime date;
+  final bool isDark;
 
-  const _DateSeparator({required this.date});
+  const _DateSeparator({required this.date, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final now = DateTime.now();
     String text;
 
@@ -331,16 +423,19 @@ class _DateSeparator extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Center(
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
           decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceContainerHighest
-                .withValues(alpha: 0.5),
+            color: isDark
+                ? AppColors.cardDark
+                : AppColors.primarySoft,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
             text,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: theme.colorScheme.outline,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: isDark ? AppColors.textOnDarkSecondary : AppColors.primary,
             ),
           ),
         ),
@@ -379,10 +474,9 @@ class _TypingDotsState extends State<_TypingDots>
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return AnimatedBuilder(
       animation: _controller,
-      builder: (_, _) {
+      builder: (_, __) {
         return Row(
           mainAxisSize: MainAxisSize.min,
           children: List.generate(3, (i) {
@@ -394,8 +488,8 @@ class _TypingDotsState extends State<_TypingDots>
               child: Container(
                 width: size,
                 height: size,
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.outline,
+                decoration: const BoxDecoration(
+                  color: AppColors.primary,
                   shape: BoxShape.circle,
                 ),
               ),

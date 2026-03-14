@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 
+import '../../app/themes/app_colors.dart';
 import '../../data/models/language_model.dart';
 
 class LanguageSelector extends StatelessWidget {
@@ -15,58 +17,59 @@ class LanguageSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(14),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
-          borderRadius: BorderRadius.circular(12),
+          color: isDark
+              ? AppColors.primarySoft.withValues(alpha: 0.08)
+              : AppColors.primarySoft.withValues(alpha: 0.6),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: theme.colorScheme.primary.withValues(alpha: 0.3),
-            width: 1.5,
+            color: AppColors.primary.withValues(alpha: 0.2),
           ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Flag placeholder (you can add actual flag images later)
             Container(
-              width: 32,
-              height: 32,
+              width: 30,
+              height: 30,
               decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
+                gradient: AppColors.heroGradient,
+                borderRadius: BorderRadius.circular(8),
               ),
               child: Center(
                 child: Text(
                   language.code.toUpperCase(),
                   style: theme.textTheme.labelSmall?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.primary,
+                    color: Colors.white,
+                    fontSize: 10,
                   ),
                 ),
               ),
             ),
-            const SizedBox(width: 12),
-
-            // Language name
+            const SizedBox(width: 10),
             Flexible(
               child: Text(
                 language.nameAr,
-                style: theme.textTheme.titleMedium?.copyWith(
+                style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.bold,
+                  color: isDark ? AppColors.textOnDark : AppColors.textPrimary,
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-
-            const SizedBox(width: 8),
+            const SizedBox(width: 4),
             Icon(
-              Icons.arrow_drop_down,
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+              Iconsax.arrow_down_1,
+              size: 16,
+              color: AppColors.textLight,
             ),
           ],
         ),

@@ -1,7 +1,11 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:gap/gap.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:image_picker/image_picker.dart';
+
+import '../../../app/themes/app_colors.dart';
 
 /// Widget for picking and displaying media files (photos/videos)
 class MediaPickerWidget extends StatelessWidget {
@@ -22,65 +26,50 @@ class MediaPickerWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'الصور والفيديو',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 12),
-
         // Action buttons
         Row(
           children: [
             Expanded(
-              child: OutlinedButton.icon(
+              child: _buildActionButton(
+                icon: Iconsax.camera,
+                label: 'التقاط صورة',
                 onPressed: onTakePhoto,
-                icon: const Icon(Icons.camera_alt),
-                label: const Text('التقاط صورة'),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
+                isDark: isDark,
               ),
             ),
-            const SizedBox(width: 12),
+            const Gap(12),
             Expanded(
-              child: OutlinedButton.icon(
+              child: _buildActionButton(
+                icon: Iconsax.gallery,
+                label: 'اختيار صورة',
                 onPressed: onPickImage,
-                icon: const Icon(Icons.photo_library),
-                label: const Text('اختيار صورة'),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
+                isDark: isDark,
               ),
             ),
           ],
         ),
 
         if (onPickVideo != null) ...[
-          const SizedBox(height: 8),
+          const Gap(8),
           SizedBox(
             width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: onPickVideo,
-              icon: const Icon(Icons.videocam),
-              label: const Text('اختيار فيديو'),
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-              ),
+            child: _buildActionButton(
+              icon: Iconsax.video,
+              label: 'اختيار فيديو',
+              onPressed: onPickVideo!,
+              isDark: isDark,
             ),
           ),
         ],
 
         // Media files grid
         if (mediaFiles.isNotEmpty) ...[
-          const SizedBox(height: 16),
+          const Gap(16),
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -100,20 +89,31 @@ class MediaPickerWidget extends StatelessWidget {
                   // Media preview
                   Container(
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(12),
+                      color: isDark
+                          ? AppColors.surfaceElevatedDark
+                          : AppColors.surfaceSunken,
+                      borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: theme.colorScheme.outline.withValues(alpha: 0.2),
+                        color: isDark
+                            ? AppColors.cardBorderDark
+                            : AppColors.cardBorder,
                       ),
                     ),
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(14),
                       child: isVideo
                           ? Center(
-                              child: Icon(
-                                Icons.play_circle_outline,
-                                size: 48,
-                                color: theme.colorScheme.primary,
+                              child: Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  gradient: AppColors.heroGradient,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Iconsax.play,
+                                  size: 28,
+                                  color: Colors.white,
+                                ),
                               ),
                             )
                           : Image.file(
@@ -124,8 +124,8 @@ class MediaPickerWidget extends StatelessWidget {
                               errorBuilder: (context, error, stackTrace) {
                                 return Center(
                                   child: Icon(
-                                    Icons.image_not_supported,
-                                    color: theme.colorScheme.error,
+                                    Iconsax.image,
+                                    color: AppColors.error,
                                   ),
                                 );
                               },
@@ -142,11 +142,18 @@ class MediaPickerWidget extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
-                          color: Colors.red.withValues(alpha: 0.9),
+                          gradient: AppColors.accentGradient,
                           shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.accent.withValues(alpha: 0.4),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                         ),
                         child: const Icon(
-                          Icons.close,
+                          Iconsax.close_circle,
                           color: Colors.white,
                           size: 18,
                         ),
@@ -166,17 +173,17 @@ class MediaPickerWidget extends StatelessWidget {
                         ),
                         decoration: BoxDecoration(
                           color: Colors.black.withValues(alpha: 0.7),
-                          borderRadius: BorderRadius.circular(4),
+                          borderRadius: BorderRadius.circular(6),
                         ),
                         child: const Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
-                              Icons.videocam,
+                              Iconsax.video,
                               color: Colors.white,
                               size: 12,
                             ),
-                            SizedBox(width: 2),
+                            Gap(2),
                             Text(
                               'فيديو',
                               style: TextStyle(
@@ -200,26 +207,45 @@ class MediaPickerWidget extends StatelessWidget {
             margin: const EdgeInsets.only(top: 16),
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(12),
+              color: isDark
+                  ? AppColors.surfaceDark.withValues(alpha: 0.5)
+                  : AppColors.surfaceSunken.withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: theme.colorScheme.outline.withValues(alpha: 0.2),
-                style: BorderStyle.solid,
+                color: isDark
+                    ? AppColors.cardBorderDark
+                    : AppColors.cardBorder,
               ),
             ),
             child: Center(
               child: Column(
                 children: [
-                  Icon(
-                    Icons.add_photo_alternate_outlined,
-                    size: 48,
-                    color: theme.colorScheme.onSurfaceVariant,
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      gradient: AppColors.heroGradient,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withValues(alpha: 0.2),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Iconsax.gallery_add,
+                      size: 32,
+                      color: Colors.white,
+                    ),
                   ),
-                  const SizedBox(height: 8),
+                  const Gap(12),
                   Text(
                     'لم يتم إضافة صور أو فيديو بعد',
                     style: TextStyle(
-                      color: theme.colorScheme.onSurfaceVariant,
+                      color: isDark
+                          ? AppColors.textOnDarkSecondary
+                          : AppColors.textSecondary,
                       fontSize: 14,
                     ),
                   ),
@@ -228,6 +254,43 @@ class MediaPickerWidget extends StatelessWidget {
             ),
           ),
       ],
+    );
+  }
+
+  Widget _buildActionButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onPressed,
+    required bool isDark,
+  }) {
+    return GestureDetector(
+      onTap: onPressed,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.cardDark : AppColors.card,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: AppColors.primary.withValues(alpha: 0.3),
+          ),
+          boxShadow: AppColors.softShadow,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: AppColors.primary, size: 20),
+            const Gap(8),
+            Text(
+              label,
+              style: TextStyle(
+                color: isDark ? AppColors.textOnDark : AppColors.textPrimary,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

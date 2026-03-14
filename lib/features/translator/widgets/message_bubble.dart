@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../../app/themes/app_colors.dart';
+
 class MessageBubble extends StatelessWidget {
   final String text;
-  final bool isOriginal; // true = right side (original), false = left side (translation)
+  final bool isOriginal;
   final DateTime timestamp;
 
   const MessageBubble({
@@ -16,6 +18,7 @@ class MessageBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final timeStr = DateFormat('HH:mm').format(timestamp);
 
     return Align(
@@ -27,22 +30,37 @@ class MessageBubble extends StatelessWidget {
           bottom: 8,
           top: 4,
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: isOriginal
-              ? theme.colorScheme.primary.withValues(alpha: 0.15)
-              : theme.colorScheme.secondary.withValues(alpha: 0.15),
+          gradient: isOriginal
+              ? LinearGradient(
+                  colors: [
+                    AppColors.primary.withValues(alpha: isDark ? 0.25 : 0.12),
+                    AppColors.primaryLight.withValues(alpha: isDark ? 0.15 : 0.06),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                )
+              : LinearGradient(
+                  colors: [
+                    AppColors.teal.withValues(alpha: isDark ? 0.2 : 0.1),
+                    AppColors.secondary.withValues(alpha: isDark ? 0.1 : 0.05),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
           borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(16),
-            topRight: const Radius.circular(16),
-            bottomLeft: isOriginal ? const Radius.circular(16) : const Radius.circular(4),
-            bottomRight: isOriginal ? const Radius.circular(4) : const Radius.circular(16),
+            topLeft: const Radius.circular(18),
+            topRight: const Radius.circular(18),
+            bottomLeft:
+                isOriginal ? const Radius.circular(18) : const Radius.circular(4),
+            bottomRight:
+                isOriginal ? const Radius.circular(4) : const Radius.circular(18),
           ),
           border: Border.all(
             color: isOriginal
-                ? theme.colorScheme.primary.withValues(alpha: 0.3)
-                : theme.colorScheme.secondary.withValues(alpha: 0.3),
-            width: 1,
+                ? AppColors.primary.withValues(alpha: 0.2)
+                : AppColors.teal.withValues(alpha: 0.2),
           ),
         ),
         child: Column(
@@ -53,8 +71,8 @@ class MessageBubble extends StatelessWidget {
               text,
               style: theme.textTheme.bodyMedium?.copyWith(
                 fontSize: 14,
-                height: 1.4,
-                color: theme.colorScheme.onSurface,
+                height: 1.5,
+                color: isDark ? AppColors.textOnDark : AppColors.textPrimary,
               ),
             ),
             const SizedBox(height: 4),
@@ -62,7 +80,9 @@ class MessageBubble extends StatelessWidget {
               timeStr,
               style: theme.textTheme.bodySmall?.copyWith(
                 fontSize: 10,
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                color: isDark
+                    ? AppColors.textOnDarkSecondary
+                    : AppColors.textLight,
               ),
             ),
           ],

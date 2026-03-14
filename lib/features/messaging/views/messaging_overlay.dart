@@ -1,7 +1,12 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 
+import '../../../app/themes/app_colors.dart';
 import '../controllers/conversations_controller.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../data/models/chat_models.dart';
@@ -18,76 +23,80 @@ class MessagingOverlay extends StatelessWidget {
     }
     final controller = Get.find<ConversationsController>();
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Obx(() {
-      return Material(
-        elevation: 4,
-        borderRadius: BorderRadius.circular(22),
-        color: theme.colorScheme.surface,
-        shadowColor: theme.colorScheme.shadow.withValues(alpha: 0.3),
-        child: InkWell(
-          onTap: () {
-            HapticFeedback.lightImpact();
-            // Close notification overlay if open
-            if (Get.isRegistered<NotificationsController>()) {
-              final nc = Get.find<NotificationsController>();
-              if (nc.isOverlayOpen.value) nc.isOverlayOpen.value = false;
-            }
-            controller.toggleMessagingPanel();
-          },
-          borderRadius: BorderRadius.circular(22),
-          child: Container(
-            width: 44,
-            height: 44,
-            alignment: Alignment.center,
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 200),
-                  child: Icon(
+      return GestureDetector(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          if (Get.isRegistered<NotificationsController>()) {
+            final nc = Get.find<NotificationsController>();
+            if (nc.isOverlayOpen.value) nc.isOverlayOpen.value = false;
+          }
+          controller.toggleMessagingPanel();
+        },
+        child: Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: isDark
+                ? AppColors.surfaceDark.withValues(alpha: 0.8)
+                : Colors.white.withValues(alpha: 0.85),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: isDark ? AppColors.glassBorderDark : AppColors.glassBorder,
+            ),
+            boxShadow: AppColors.cardShadow,
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(14),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: Stack(
+                clipBehavior: Clip.none,
+                alignment: Alignment.center,
+                children: [
+                  Icon(
                     controller.isMessagingPanelOpen.value
-                        ? Icons.chat_bubble
-                        : Icons.chat_bubble_outline,
-                    key: ValueKey(controller.isMessagingPanelOpen.value),
-                    color: theme.colorScheme.primary,
-                    size: 24,
+                        ? Iconsax.message
+                        : Iconsax.message,
+                    color: AppColors.primary,
+                    size: 22,
                   ),
-                ),
-                // Unread badge
-                if (controller.totalUnreadCount.value > 0)
-                  Positioned(
-                    top: -6,
-                    right: -6,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 4, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.error,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: theme.colorScheme.surface,
-                          width: 1.5,
+                  if (controller.totalUnreadCount.value > 0)
+                    Positioned(
+                      top: 6,
+                      right: 6,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 4, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.accent,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: isDark
+                                ? AppColors.surfaceDark
+                                : Colors.white,
+                            width: 1.5,
+                          ),
                         ),
-                      ),
-                      constraints: const BoxConstraints(
-                        minWidth: 18,
-                        minHeight: 18,
-                      ),
-                      child: Text(
-                        controller.totalUnreadCount.value > 99
-                            ? '99+'
-                            : '${controller.totalUnreadCount.value}',
-                        style: TextStyle(
-                          color: theme.colorScheme.onError,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
+                        constraints: const BoxConstraints(
+                            minWidth: 16, minHeight: 16),
+                        child: Text(
+                          controller.totalUnreadCount.value > 99
+                              ? '99+'
+                              : '${controller.totalUnreadCount.value}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
                         ),
-                        textAlign: TextAlign.center,
                       ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -132,6 +141,7 @@ class MessagingSlidePanel extends StatelessWidget {
     }
     final controller = Get.find<ConversationsController>();
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final screenWidth = MediaQuery.of(context).size.width;
     final panelWidth = screenWidth * 0.85;
 
@@ -146,28 +156,27 @@ class MessagingSlidePanel extends StatelessWidget {
         bottom: 0,
         right: controller.isMessagingPanelOpen.value ? 0 : -panelWidth,
         width: panelWidth,
-        child: Material(
-          elevation: 16,
-          shadowColor: Colors.black54,
-          child: Container(
-            color: theme.colorScheme.surface,
+        child: Container(
+          decoration: BoxDecoration(
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.15),
+                blurRadius: 30,
+                offset: const Offset(-5, 0),
+              ),
+            ],
+          ),
+          child: Material(
+            color: isDark ? AppColors.backgroundDark : AppColors.background,
             child: Column(
               children: [
-                // Fill status bar area with surface color
-                Container(
-                  height: topPadding,
-                  color: theme.colorScheme.surface,
-                ),
-                // Header
+                SizedBox(height: topPadding),
                 _PanelHeader(controller: controller),
-                const Divider(height: 1),
-                // Search bar
+                Divider(height: 1, color: theme.dividerColor.withValues(alpha: 0.2)),
                 _PanelSearchBar(controller: controller),
-                // Conversation list
                 Expanded(
                   child: _PanelConversationList(controller: controller),
                 ),
-                // Bottom safe area
                 SizedBox(height: bottomPadding),
               ],
             ),
@@ -192,14 +201,22 @@ class _PanelHeader extends StatelessWidget {
         children: [
           IconButton(
             onPressed: () => controller.isMessagingPanelOpen.value = false,
-            icon: const Icon(Icons.arrow_forward),
+            icon: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerHighest
+                    .withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Iconsax.arrow_right_3, size: 18),
+            ),
             tooltip: 'إغلاق',
           ),
           const SizedBox(width: 4),
           Text(
             'المراسلات',
             style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w700,
             ),
           ),
           const Spacer(),
@@ -210,14 +227,15 @@ class _PanelHeader extends StatelessWidget {
               padding:
                   const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: theme.colorScheme.primaryContainer,
-                borderRadius: BorderRadius.circular(12),
+                color: AppColors.primarySoft,
+                borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
                 '$count غير مقروءة',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: theme.colorScheme.onPrimaryContainer,
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primary,
                 ),
               ),
             );
@@ -229,7 +247,14 @@ class _PanelHeader extends StatelessWidget {
               controller.isMessagingPanelOpen.value = false;
               _showNewChatDialog(context, controller);
             },
-            icon: const Icon(Icons.edit_square),
+            icon: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                gradient: AppColors.heroGradient,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Iconsax.edit, size: 18, color: Colors.white),
+            ),
             tooltip: 'محادثة جديدة',
           ),
         ],
@@ -240,6 +265,7 @@ class _PanelHeader extends StatelessWidget {
   void _showNewChatDialog(
       BuildContext context, ConversationsController controller) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final searchCtrl = TextEditingController();
     final users = <ChatUser>[].obs;
     final isSearching = false.obs;
@@ -248,8 +274,8 @@ class _PanelHeader extends StatelessWidget {
       Container(
         height: MediaQuery.of(context).size.height * 0.6,
         decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          color: isDark ? AppColors.surfaceDark : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
           children: [
@@ -258,14 +284,22 @@ class _PanelHeader extends StatelessWidget {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: theme.colorScheme.outline.withValues(alpha: 0.3),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
             Padding(
               padding: const EdgeInsets.all(16),
-              child:
-                  Text('محادثة جديدة', style: theme.textTheme.titleLarge),
+              child: Row(
+                children: [
+                  const Icon(Iconsax.message_add, color: AppColors.primary, size: 22),
+                  const SizedBox(width: 8),
+                  Text('محادثة جديدة',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      )),
+                ],
+              ),
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -282,10 +316,16 @@ class _PanelHeader extends StatelessWidget {
                 },
                 decoration: InputDecoration(
                   hintText: 'ابحث عن مستخدم...',
-                  prefixIcon: const Icon(Icons.search),
+                  prefixIcon: const Icon(Iconsax.search_normal, size: 20),
+                  filled: true,
+                  fillColor: theme.colorScheme.surfaceContainerHighest
+                      .withValues(alpha: 0.5),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide.none,
                   ),
+                  contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 12),
                 ),
               ),
             ),
@@ -297,9 +337,22 @@ class _PanelHeader extends StatelessWidget {
                 }
                 if (users.isEmpty) {
                   return Center(
-                    child: Text(
-                      'ابحث عن مستخدم لبدء محادثة',
-                      style: TextStyle(color: theme.colorScheme.outline),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Iconsax.search_normal,
+                            size: 40,
+                            color: theme.colorScheme.onSurface
+                                .withValues(alpha: 0.2)),
+                        const SizedBox(height: 8),
+                        Text(
+                          'ابحث عن مستخدم لبدء محادثة',
+                          style: TextStyle(
+                            color: theme.colorScheme.onSurface
+                                .withValues(alpha: 0.4),
+                          ),
+                        ),
+                      ],
                     ),
                   );
                 }
@@ -309,7 +362,7 @@ class _PanelHeader extends StatelessWidget {
                     final user = users[index];
                     return ListTile(
                       leading: CircleAvatar(
-                        backgroundColor: theme.colorScheme.primaryContainer,
+                        backgroundColor: AppColors.primarySoft,
                         backgroundImage:
                             ApiConstants.resolveAvatarUrl(user.avatarUrl) !=
                                     null
@@ -324,9 +377,9 @@ class _PanelHeader extends StatelessWidget {
                                     user.fullName.isNotEmpty
                                         ? user.fullName[0]
                                         : '?',
-                                    style: TextStyle(
-                                      color: theme
-                                          .colorScheme.onPrimaryContainer,
+                                    style: const TextStyle(
+                                      color: AppColors.primary,
+                                      fontWeight: FontWeight.w600,
                                     ),
                                   )
                                 : null,
@@ -372,7 +425,7 @@ class _PanelSearchBar extends StatelessWidget {
         onChanged: (val) => controller.searchQuery.value = val,
         decoration: InputDecoration(
           hintText: 'بحث في المحادثات...',
-          prefixIcon: const Icon(Icons.search),
+          prefixIcon: const Icon(Iconsax.search_normal, size: 20),
           filled: true,
           fillColor:
               theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
@@ -407,20 +460,32 @@ class _PanelConversationList extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.chat_bubble_outline,
-                  size: 64, color: theme.colorScheme.outline),
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: AppColors.primarySoft.withValues(
+                      alpha: theme.brightness == Brightness.dark ? 0.2 : 1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Iconsax.message,
+                    size: 40,
+                    color: AppColors.primary.withValues(alpha: 0.5)),
+              ),
               const SizedBox(height: 16),
               Text(
                 'لا توجد محادثات',
                 style: theme.textTheme.titleMedium?.copyWith(
-                  color: theme.colorScheme.outline,
+                  fontWeight: FontWeight.w600,
+                  color:
+                      theme.colorScheme.onSurface.withValues(alpha: 0.5),
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               Text(
                 'ابدأ محادثة جديدة',
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.outline,
+                  color:
+                      theme.colorScheme.onSurface.withValues(alpha: 0.35),
                 ),
               ),
             ],
@@ -472,80 +537,119 @@ class _PanelConversationTile extends StatelessWidget {
     final lastMsg = conversation.lastMessage;
     final hasUnread = conversation.unreadCount > 0;
 
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      child: ListTile(
-        onTap: onTap,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        leading: CircleAvatar(
-          radius: 24,
-          backgroundColor: theme.colorScheme.primaryContainer,
-          backgroundImage:
-              resolvedAvatar != null ? NetworkImage(resolvedAvatar) : null,
-          child: resolvedAvatar == null
-              ? Text(
-                  displayName.isNotEmpty ? displayName[0] : '?',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.onPrimaryContainer,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: Row(
+              children: [
+                // Avatar
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    color: AppColors.primarySoft,
+                    image: resolvedAvatar != null
+                        ? DecorationImage(
+                            image: NetworkImage(resolvedAvatar),
+                            fit: BoxFit.cover,
+                          )
+                        : null,
                   ),
-                )
-              : null,
-        ),
-        title: Text(
-          displayName,
-          style: theme.textTheme.titleSmall?.copyWith(
-            fontWeight: hasUnread ? FontWeight.bold : FontWeight.normal,
+                  child: resolvedAvatar == null
+                      ? Center(
+                          child: Text(
+                            displayName.isNotEmpty ? displayName[0] : '?',
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        )
+                      : null,
+                ),
+                const SizedBox(width: 12),
+                // Content
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        displayName,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight:
+                              hasUnread ? FontWeight.w700 : FontWeight.w500,
+                        ),
+                      ),
+                      if (lastMsg != null) ...[
+                        const SizedBox(height: 3),
+                        Text(
+                          lastMsg.content ?? '\u{1F4F7} صورة',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            fontWeight:
+                                hasUnread ? FontWeight.w600 : FontWeight.normal,
+                            color: hasUnread
+                                ? theme.colorScheme.onSurface
+                                : theme.colorScheme.onSurface
+                                    .withValues(alpha: 0.45),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Time & badge
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    if (lastMsg != null)
+                      Text(
+                        _formatTime(lastMsg.sentAt),
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: hasUnread
+                              ? AppColors.primary
+                              : theme.colorScheme.onSurface
+                                  .withValues(alpha: 0.35),
+                          fontWeight:
+                              hasUnread ? FontWeight.w600 : FontWeight.normal,
+                        ),
+                      ),
+                    if (hasUnread) ...[
+                      const SizedBox(height: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 7, vertical: 3),
+                        decoration: BoxDecoration(
+                          gradient: AppColors.heroGradient,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          '${conversation.unreadCount}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ),
           ),
-        ),
-        subtitle: lastMsg != null
-            ? Text(
-                lastMsg.content ?? '\u{1F4F7} صورة',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  fontWeight: hasUnread ? FontWeight.w600 : FontWeight.normal,
-                  color: hasUnread
-                      ? theme.colorScheme.onSurface
-                      : theme.colorScheme.outline,
-                ),
-              )
-            : null,
-        trailing: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            if (lastMsg != null)
-              Text(
-                _formatTime(lastMsg.sentAt),
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: hasUnread
-                      ? theme.colorScheme.primary
-                      : theme.colorScheme.outline,
-                ),
-              ),
-            if (hasUnread) ...[
-              const SizedBox(height: 4),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  '${conversation.unreadCount}',
-                  style: TextStyle(
-                    color: theme.colorScheme.onPrimary,
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ],
         ),
       ),
     );

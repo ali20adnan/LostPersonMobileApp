@@ -12,8 +12,8 @@ class AudioVisualizer extends StatelessWidget {
   const AudioVisualizer({
     super.key,
     required this.amplitude,
-    this.barCount = 5,
-    this.height = 40,
+    this.barCount = 7,
+    this.height = 48,
   });
 
   @override
@@ -24,19 +24,35 @@ class AudioVisualizer extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: List.generate(barCount, (index) {
-          // Create varied heights for visual effect
           final random = Random(index);
           final baseHeight = amplitude * height;
-          final variation = random.nextDouble() * 0.3 + 0.7;
-          final barHeight = max(4.0, baseHeight * variation);
+          final variation = random.nextDouble() * 0.4 + 0.6;
+          final barHeight = max(6.0, baseHeight * variation);
 
-          return Container(
-            width: 4,
+          // Gradient color per bar position
+          final t = index / (barCount - 1);
+          final color = Color.lerp(AppColors.primary, AppColors.secondary, t)!;
+
+          return AnimatedContainer(
+            duration: const Duration(milliseconds: 120),
+            curve: Curves.easeOut,
+            width: 5,
             height: barHeight,
-            margin: const EdgeInsets.symmetric(horizontal: 2),
+            margin: const EdgeInsets.symmetric(horizontal: 3),
             decoration: BoxDecoration(
-              color: AppColors.primary,
-              borderRadius: BorderRadius.circular(2),
+              gradient: LinearGradient(
+                colors: [color, color.withValues(alpha: 0.6)],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+              borderRadius: BorderRadius.circular(3),
+              boxShadow: [
+                BoxShadow(
+                  color: color.withValues(alpha: 0.4),
+                  blurRadius: 6,
+                  spreadRadius: 0,
+                ),
+              ],
             ),
           );
         }),

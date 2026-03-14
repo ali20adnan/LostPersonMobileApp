@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 
 import '../../app/services/soniox_service.dart';
 import '../../app/themes/app_colors.dart';
@@ -15,29 +16,22 @@ class ConnectionStatusIndicator extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = _getStatusColor();
     final label = _getStatusLabel();
+    final icon = _getStatusIcon();
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: color.withValues(alpha: 0.3),
-          width: 1,
+          color: color.withValues(alpha: 0.25),
         ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 8),
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 6),
           Text(
             label,
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
@@ -48,6 +42,19 @@ class ConnectionStatusIndicator extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  IconData _getStatusIcon() {
+    switch (status) {
+      case ConnectionStatus.connected:
+        return Iconsax.wifi;
+      case ConnectionStatus.connecting:
+        return Iconsax.refresh;
+      case ConnectionStatus.disconnected:
+        return Iconsax.wifi_square;
+      case ConnectionStatus.error:
+        return Iconsax.danger;
+    }
   }
 
   Color _getStatusColor() {

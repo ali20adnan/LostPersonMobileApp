@@ -59,7 +59,7 @@ class ConversationsController extends GetxController {
     final socket = Get.find<SocketService>();
 
     // New message → update conversation list
-    socket.on('newMessage', (data) {
+    socket.on('newMessage', 'conversations', (data) {
       if (data is Map<String, dynamic>) {
         final message = ChatMessage.fromJson(data);
         _updateConversationWithMessage(message);
@@ -68,7 +68,7 @@ class ConversationsController extends GetxController {
     });
 
     // Conversation updated
-    socket.on('conversationUpdated', (data) {
+    socket.on('conversationUpdated', 'conversations', (data) {
       if (data is Map<String, dynamic>) {
         final updated = ChatConversation.fromJson(data);
         final index = conversations.indexWhere((c) => c.id == updated.id);
@@ -79,7 +79,7 @@ class ConversationsController extends GetxController {
     });
 
     // New conversation created
-    socket.on('newConversation', (data) {
+    socket.on('newConversation', 'conversations', (data) {
       if (data is Map<String, dynamic>) {
         final conv = ChatConversation.fromJson(data);
         if (!conversations.any((c) => c.id == conv.id)) {
@@ -89,7 +89,7 @@ class ConversationsController extends GetxController {
     });
 
     // Messages read → update unread count
-    socket.on('messagesRead', (_) {
+    socket.on('messagesRead', 'conversations', (_) {
       _loadUnreadCount();
     });
   }
@@ -136,10 +136,10 @@ class ConversationsController extends GetxController {
   void onClose() {
     if (Get.isRegistered<SocketService>()) {
       final socket = Get.find<SocketService>();
-      socket.off('newMessage');
-      socket.off('conversationUpdated');
-      socket.off('newConversation');
-      socket.off('messagesRead');
+      socket.off('newMessage', 'conversations');
+      socket.off('conversationUpdated', 'conversations');
+      socket.off('newConversation', 'conversations');
+      socket.off('messagesRead', 'conversations');
     }
     super.onClose();
   }

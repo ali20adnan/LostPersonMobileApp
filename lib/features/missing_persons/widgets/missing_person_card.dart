@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 
+import '../../../app/themes/app_colors.dart';
+import '../../../app/routes/app_routes.dart';
 import '../../../data/models/missing_person_report_model.dart';
 
 /// Reusable card for displaying a missing / found person
@@ -7,51 +11,63 @@ class MissingPersonCard extends StatelessWidget {
   final MissingPersonReport person;
   final bool isFound;
   final VoidCallback? onMarkFound;
+  final VoidCallback? onTap;
 
   const MissingPersonCard({
     super.key,
     required this.person,
     required this.isFound,
     this.onMarkFound,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final accentColor =
-        isFound ? const Color(0xFF10B981) : const Color(0xFF8B5CF6);
-    final urgentColor =
-        isFound ? const Color(0xFF10B981) : const Color(0xFFEF4444);
+    final isDark = theme.brightness == Brightness.dark;
+    final accentColor = isFound ? AppColors.teal : AppColors.primary;
+    final urgentColor = isFound ? AppColors.teal : AppColors.accent;
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      elevation: 1,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+    return GestureDetector(
+      onTap: onTap ?? () => Get.toNamed(
+        AppRoutes.missingPersonDetail,
+        arguments: {'reportId': person.id},
+      ),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.cardDark : AppColors.card,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: isDark ? AppColors.cardBorderDark : AppColors.cardBorder,
+        ),
+        boxShadow: isDark ? null : AppColors.cardShadow,
       ),
       child: IntrinsicHeight(
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Left accent bar
+            // Right accent bar
             Container(
-              width: 5,
+              width: 4,
               decoration: BoxDecoration(
-                color: urgentColor,
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [urgentColor, urgentColor.withValues(alpha: 0.4)],
+                ),
                 borderRadius: const BorderRadius.only(
-                  topRight: Radius.circular(16),
-                  bottomRight: Radius.circular(16),
+                  topRight: Radius.circular(18),
+                  bottomRight: Radius.circular(18),
                 ),
               ),
             ),
-            // Card content
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.all(14),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Header: avatar + name/info + relative-time badge
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -65,39 +81,25 @@ class MissingPersonCard extends StatelessWidget {
                                 person.fullName ?? 'غير معروف',
                                 style: theme.textTheme.titleMedium?.copyWith(
                                   fontWeight: FontWeight.bold,
+                                  color: isDark ? AppColors.textOnDark : AppColors.textPrimary,
                                 ),
                               ),
-                              const SizedBox(height: 3),
+                              const SizedBox(height: 4),
                               Row(
                                 children: [
-                                  Icon(
-                                    Icons.cake_outlined,
-                                    size: 13,
-                                    color: theme.colorScheme.onSurfaceVariant,
-                                  ),
+                                  Icon(Iconsax.cake, size: 13, color: AppColors.textLight),
                                   const SizedBox(width: 3),
                                   Text(
                                     '${person.age ?? '?'} سنة',
-                                    style: theme.textTheme.bodySmall?.copyWith(
-                                      color:
-                                          theme.colorScheme.onSurfaceVariant,
-                                    ),
+                                    style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                                   ),
                                   const SizedBox(width: 8),
-                                  Icon(
-                                    Icons.person_outlined,
-                                    size: 13,
-                                    color: theme.colorScheme.onSurfaceVariant,
-                                  ),
+                                  Icon(Iconsax.user, size: 13, color: AppColors.textLight),
                                   const SizedBox(width: 3),
                                   Expanded(
                                     child: Text(
                                       person.gender ?? '',
-                                      style:
-                                          theme.textTheme.bodySmall?.copyWith(
-                                        color:
-                                            theme.colorScheme.onSurfaceVariant,
-                                      ),
+                                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
@@ -107,21 +109,16 @@ class MissingPersonCard extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        // Relative time badge
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
                             color: urgentColor.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: urgentColor.withValues(alpha: 0.3)),
                           ),
                           child: Text(
                             _relativeTime(person.createdAt),
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: urgentColor,
-                              fontWeight: FontWeight.w600,
-                            ),
+                            style: TextStyle(fontSize: 11, color: urgentColor, fontWeight: FontWeight.w600),
                           ),
                         ),
                       ],
@@ -129,20 +126,15 @@ class MissingPersonCard extends StatelessWidget {
 
                     const SizedBox(height: 10),
 
-                    // Description
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(
-                          Icons.description_outlined,
-                          size: 15,
-                          color: theme.colorScheme.primary,
-                        ),
+                        Icon(Iconsax.document_text, size: 14, color: AppColors.primary),
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
                             person.description ?? '',
-                            style: theme.textTheme.bodySmall,
+                            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -152,20 +144,17 @@ class MissingPersonCard extends StatelessWidget {
 
                     const SizedBox(height: 6),
 
-                    // Last seen location
                     Row(
                       children: [
-                        Icon(
-                          Icons.location_on_outlined,
-                          size: 15,
-                          color: theme.colorScheme.primary,
-                        ),
+                        Icon(Iconsax.location, size: 14, color: AppColors.primary),
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
                             person.lastSeenAddress ?? '',
-                            style: theme.textTheme.bodySmall?.copyWith(
+                            style: TextStyle(
+                              fontSize: 12,
                               fontWeight: FontWeight.w500,
+                              color: isDark ? AppColors.textOnDarkSecondary : AppColors.textSecondary,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -174,51 +163,112 @@ class MissingPersonCard extends StatelessWidget {
                       ],
                     ),
 
-                    // Found time (if applicable)
                     if (isFound) ...[
                       const SizedBox(height: 6),
                       Row(
                         children: [
-                          const Icon(
-                            Icons.check_circle,
-                            size: 15,
-                            color: Color(0xFF10B981),
-                          ),
+                          const Icon(Iconsax.tick_circle, size: 14, color: AppColors.teal),
                           const SizedBox(width: 6),
                           Text(
                             'تم العثور عليه ${_relativeTime(person.updatedAt)}',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: const Color(0xFF10B981),
+                            style: const TextStyle(
+                              color: AppColors.teal,
                               fontWeight: FontWeight.w600,
+                              fontSize: 12,
                             ),
                           ),
                         ],
                       ),
                     ],
 
-                    // Mark as found button
                     if (!isFound) ...[
-                      const SizedBox(height: 12),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: onMarkFound,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF10B981),
-                            foregroundColor: Colors.white,
-                            padding:
-                                const EdgeInsets.symmetric(vertical: 10),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          // Report Sighting button
+                          Expanded(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: AppColors.info.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: AppColors.info.withValues(alpha: 0.3)),
+                              ),
+                              child: Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  onTap: () => Get.toNamed(
+                                    AppRoutes.createAlert,
+                                    arguments: {
+                                      'missingPersonReportId': person.id,
+                                      'personName': person.fullName ?? 'غير معروف',
+                                    },
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: const Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 10),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Iconsax.eye, size: 16, color: AppColors.info),
+                                        SizedBox(width: 6),
+                                        Text(
+                                          'إبلاغ عن مشاهدة',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w600,
+                                            color: AppColors.info,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
                             ),
-                            elevation: 0,
                           ),
-                          icon: const Icon(Icons.check, size: 18),
-                          label: const Text(
-                            'تم العثور عليه',
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                          const SizedBox(width: 8),
+                          // Mark as Found button
+                          Expanded(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                gradient: AppColors.successGradient,
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.teal.withValues(alpha: 0.3),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 3),
+                                  ),
+                                ],
+                              ),
+                              child: Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  onTap: onMarkFound,
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: const Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 10),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Iconsax.tick_circle, size: 16, color: Colors.white),
+                                        SizedBox(width: 6),
+                                        Text(
+                                          'تم العثور',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
-                        ),
+                        ],
                       ),
                     ],
                   ],
@@ -228,26 +278,41 @@ class MissingPersonCard extends StatelessWidget {
           ],
         ),
       ),
+      ),
     );
   }
 
   Widget _buildAvatar(Color color) {
+    final photoUrl = person.primaryPhotoUrl;
     return Container(
-      width: 50,
-      height: 50,
+      width: 48,
+      height: 48,
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
         shape: BoxShape.circle,
         border: Border.all(color: color.withValues(alpha: 0.4), width: 2),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: photoUrl != null
+          ? Image.network(
+              photoUrl,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => _initialsWidget(color),
+            )
+          : _initialsWidget(color),
+    );
+  }
+
+  Widget _initialsWidget(Color color) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [color.withValues(alpha: 0.2), color.withValues(alpha: 0.08)],
+        ),
       ),
       child: Center(
         child: Text(
           _getInitials(person.fullName ?? ''),
-          style: TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color),
         ),
       ),
     );

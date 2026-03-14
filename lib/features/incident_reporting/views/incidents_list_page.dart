@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
+import 'package:gap/gap.dart';
 import 'package:get/get.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
+import '../../../app/themes/app_colors.dart';
 import '../controllers/incidents_list_controller.dart';
 import '../widgets/incident_card_widget.dart';
 import '../../../core/constants/incident_constants.dart';
@@ -12,160 +18,148 @@ class IncidentsListPage extends GetView<IncidentsListController> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
+      backgroundColor: isDark ? AppColors.backgroundDark : AppColors.background,
       appBar: AppBar(
         title: const Text('قائمة الإبلاغات'),
         centerTitle: true,
-        actions: [
-          Obx(() => Padding(
-                padding: const EdgeInsets.only(right: 16),
-                child: Center(
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Text(
-                      '${controller.filteredReports.length}',
-                      style: TextStyle(
-                        color: theme.colorScheme.onPrimaryContainer,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              )),
-        ],
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(color: AppColors.primary),
+        ),
+        foregroundColor: Colors.white,
       ),
       body: Column(
         children: [
           // Search + filter section
           Container(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
             decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.25),
-            border: Border(
-              bottom: BorderSide(
-                color: theme.colorScheme.outline.withValues(alpha: 0.15),
+              color: isDark ? AppColors.surfaceDark : AppColors.surface,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
                 ),
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TextField(
-                  onChanged: controller.updateSearch,
-                  textDirection: TextDirection.rtl,
-                  decoration: InputDecoration(
-                    hintText: 'ابحث بالعنوان أو الوصف أو الموقع...',
-                    hintTextDirection: TextDirection.rtl,
-                    prefixIcon: const Icon(Icons.search, size: 20),
-                    filled: true,
-                    fillColor: theme.colorScheme.surface,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide.none,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide.none,
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(
-                        color: theme.colorScheme.primary,
-                        width: 1.5,
-                      ),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      vertical: 11,
-                      horizontal: 16,
-                    ),
-                    isDense: true,
-                  ),
-                ),
-
-                const SizedBox(height: 10),
-
-                // Status filters
-                const Text(
-                  'الحالة',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 6),
-                Obx(() => SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          _buildFilterChip(
-                            context,
-                            'الكل',
-                            'all',
-                            controller.selectedStatusFilter.value == null,
-                            () => controller.filterByStatus(null),
-                          ),
-                          ...ReportStatus.values.map((status) {
-                            final isSelected =
-                                controller.selectedStatusFilter.value == status;
-                            return _buildFilterChip(
-                              context,
-                              status.displayNameAr,
-                              status.name,
-                              isSelected,
-                              () => controller.filterByStatus(status),
-                            );
-                          }),
-                        ],
-                      ),
-                    )),
-
-                const SizedBox(height: 8),
-
-                // Type filters
-                const Text(
-                  'النوع',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 6),
-                Obx(() => SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          _buildFilterChip(
-                            context,
-                            'الكل',
-                            'all',
-                            controller.selectedTypeFilter.value == null,
-                            () => controller.filterByType(null),
-                          ),
-                          ...ReportType.values.map((type) {
-                            final isSelected =
-                                controller.selectedTypeFilter.value == type;
-                            return _buildFilterChip(
-                              context,
-                              type.displayNameAr,
-                              type.name,
-                              isSelected,
-                              () => controller.filterByType(type),
-                              icon: type.icon,
-                            );
-                          }),
-                        ],
-                      ),
-                    )),
               ],
             ),
-          ),
+            child: Column(
+              children: [
+                // Search bar + filter button row
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        onChanged: controller.updateSearch,
+                        textDirection: TextDirection.rtl,
+                        style: TextStyle(
+                          color: isDark
+                              ? AppColors.textOnDark
+                              : AppColors.textPrimary,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: 'ابحث بالعنوان أو الوصف أو الموقع...',
+                          hintTextDirection: TextDirection.rtl,
+                          prefixIcon: const Icon(Iconsax.search_normal_1,
+                              size: 20, color: AppColors.primary),
+                          filled: true,
+                          fillColor: isDark
+                              ? AppColors.surfaceElevatedDark
+                              : AppColors.surfaceSunken,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: BorderSide.none,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: BorderSide(
+                              color: isDark
+                                  ? AppColors.cardBorderDark
+                                  : AppColors.cardBorder,
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(
+                              color: AppColors.primary,
+                              width: 1.5,
+                            ),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 11,
+                            horizontal: 16,
+                          ),
+                          isDense: true,
+                          hintStyle: TextStyle(
+                            color: isDark
+                                ? AppColors.textOnDarkSecondary
+                                : AppColors.textLight,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const Gap(8),
+                    Obx(() {
+                      final hasFilter =
+                          controller.selectedStatusFilter.value != null ||
+                              controller.selectedTypeFilter.value != null;
+                      return GestureDetector(
+                        onTap: () => _showFilterSheet(context, isDark),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          padding: const EdgeInsets.all(11),
+                          decoration: BoxDecoration(
+                            gradient:
+                                hasFilter ? AppColors.heroGradient : null,
+                            color: hasFilter
+                                ? null
+                                : isDark
+                                    ? AppColors.surfaceElevatedDark
+                                    : AppColors.surfaceSunken,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: hasFilter
+                                  ? Colors.transparent
+                                  : isDark
+                                      ? AppColors.cardBorderDark
+                                      : AppColors.cardBorder,
+                            ),
+                          ),
+                          child: Badge(
+                            isLabelVisible: hasFilter,
+                            backgroundColor: Colors.white,
+                            smallSize: 8,
+                            child: Icon(
+                              Iconsax.setting_4,
+                              size: 20,
+                              color: hasFilter
+                                  ? Colors.white
+                                  : AppColors.primary,
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
+                  ],
+                ),
+              ],
+            ),
+          ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.1),
 
           // Reports list
           Expanded(
             child: Obx(() {
               if (controller.isLoading.value) {
-                return const Center(child: CircularProgressIndicator());
+                return Center(
+                  child: LoadingAnimationWidget.staggeredDotsWave(
+                    color: AppColors.primary,
+                    size: 40,
+                  ),
+                );
               }
 
               final reports = controller.filteredReports;
@@ -174,212 +168,238 @@ class IncidentsListPage extends GetView<IncidentsListController> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.inbox_outlined,
-                          size: 64,
-                          color: theme.colorScheme.onSurfaceVariant),
-                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          gradient: AppColors.heroGradient,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primary.withValues(alpha: 0.3),
+                              blurRadius: 20,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(Iconsax.document,
+                            size: 48, color: Colors.white),
+                      ),
+                      const Gap(16),
                       Text('لا توجد بلاغات',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant)),
-                      const SizedBox(height: 8),
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: isDark
+                                ? AppColors.textOnDark
+                                : AppColors.textPrimary,
+                          )),
+                      const Gap(8),
                       Text('جرب تغيير الفلاتر أو أضف بلاغ جديد',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant)),
+                          style: TextStyle(
+                            color: isDark
+                                ? AppColors.textOnDarkSecondary
+                                : AppColors.textSecondary,
+                          )),
                     ],
-                  ),
+                  ).animate().fadeIn(duration: 500.ms).scale(begin: const Offset(0.9, 0.9)),
                 );
               }
 
               return RefreshIndicator(
+                color: AppColors.primary,
                 onRefresh: controller.refreshReports,
-                child: ListView.builder(
-                  itemCount: reports.length + (controller.hasMore ? 1 : 0),
-                  itemBuilder: (context, index) {
-                    if (index == reports.length) {
-                      controller.loadMore();
-                      return const Center(
-                        child: Padding(
-                          padding: EdgeInsets.all(16),
-                          child: CircularProgressIndicator(),
+                child: AnimationLimiter(
+                  child: ListView.builder(
+                    padding: const EdgeInsets.only(top: 8, bottom: 80),
+                    itemCount: reports.length + (controller.hasMore ? 1 : 0),
+                    itemBuilder: (context, index) {
+                      if (index == reports.length) {
+                        controller.loadMore();
+                        return Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: LoadingAnimationWidget.threeArchedCircle(
+                              color: AppColors.primary,
+                              size: 28,
+                            ),
+                          ),
+                        );
+                      }
+                      final report = reports[index];
+                      return AnimationConfiguration.staggeredList(
+                        position: index,
+                        duration: const Duration(milliseconds: 400),
+                        child: SlideAnimation(
+                          verticalOffset: 40,
+                          child: FadeInAnimation(
+                            child: IncidentCardWidget(
+                              incident: report,
+                              onTap: () =>
+                                  controller.navigateToReportDetail(report.id),
+                            ),
+                          ),
                         ),
                       );
-                    }
-                    final report = reports[index];
-                    return IncidentCardWidget(
-                      incident: report,
-                      onTap: () =>
-                          controller.navigateToReportDetail(report.id),
-                    );
-                  },
+                    },
+                  ),
                 ),
               );
             }),
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          HapticFeedback.mediumImpact();
-          _showReportTypeSheet(context);
-        },
-        icon: const Icon(Icons.add),
-        label: const Text('إبلاغ جديد'),
-      ),
     );
   }
 
-  /// Build stat pill
-  Widget _buildStatPill(
-    BuildContext context,
-    String label,
-    int count,
-    Color color,
-  ) {
-    return Expanded(
-      child: Container(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withValues(alpha: 0.3)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              '$count',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: color,
-                    fontSize: 11,
-                  ),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// Build filter chip
-  Widget _buildFilterChip(
-    BuildContext context,
-    String label,
-    String value,
-    bool isSelected,
-    VoidCallback onTap, {
-    IconData? icon,
-  }) {
-    final theme = Theme.of(context);
-
-    return Padding(
-      padding: const EdgeInsets.only(left: 8),
-      child: FilterChip(
-        label: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (icon != null) ...[
-              Icon(
-                icon,
-                size: 16,
-                color: isSelected
-                    ? theme.colorScheme.onPrimary
-                    : theme.colorScheme.onSurface,
-              ),
-              const SizedBox(width: 6),
-            ],
-            Text(label),
-          ],
-        ),
-        selected: isSelected,
-        onSelected: (_) => onTap(),
-        selectedColor: theme.colorScheme.primary,
-        backgroundColor: theme.colorScheme.surface,
-        labelStyle: TextStyle(
-          color: isSelected
-              ? theme.colorScheme.onPrimary
-              : theme.colorScheme.onSurface,
-          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-        ),
-      ),
-    );
-  }
-
-  /// Build statistics item
-
-  void _showReportTypeSheet(BuildContext context) {
-    final theme = Theme.of(context);
+  void _showFilterSheet(BuildContext context, bool isDark) {
     showModalBottomSheet(
       context: context,
+      backgroundColor: isDark ? AppColors.surfaceDark : AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (_) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'نوع الإبلاغ',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            ListTile(
-              leading: Container(
-                padding: const EdgeInsets.all(10),
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF8B5CF6).withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(12),
+                  color: isDark
+                      ? AppColors.textOnDarkSecondary
+                      : AppColors.textLight,
+                  borderRadius: BorderRadius.circular(2),
                 ),
-                child: const Icon(Icons.report_problem,
-                    color: Color(0xFF8B5CF6)),
               ),
-              title: const Text('بلاغ عادي',
-                  style: TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: const Text('إبلاغ عن حادثة أو طوارئ'),
-              onTap: () {
-                Navigator.pop(context);
-                controller.navigateToCreateReport();
-              },
             ),
-            const Divider(height: 1),
-            ListTile(
-              leading: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.red.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child:
-                    const Icon(Icons.person_search, color: Colors.red),
+            const Gap(16),
+            Text(
+              'تصفية البلاغات',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: isDark ? AppColors.textOnDark : AppColors.textPrimary,
               ),
-              title: const Text('إبلاغ عن مفقود',
-                  style: TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: const Text('الإبلاغ عن شخص مفقود'),
-              onTap: () {
-                Navigator.pop(context);
-                Get.toNamed('/missing-person-form');
-              },
             ),
-            const SizedBox(height: 8),
+            const Gap(16),
+            Text(
+              'الحالة',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: isDark
+                    ? AppColors.textOnDarkSecondary
+                    : AppColors.textSecondary,
+              ),
+            ),
+            const Gap(8),
+            Obx(() => Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _buildSheetChip(
+                      'الكل',
+                      controller.selectedStatusFilter.value == null,
+                      () => controller.filterByStatus(null),
+                      isDark: isDark,
+                    ),
+                    ...ReportStatus.values.map((s) => _buildSheetChip(
+                          s.displayNameAr,
+                          controller.selectedStatusFilter.value == s,
+                          () => controller.filterByStatus(s),
+                          isDark: isDark,
+                        )),
+                  ],
+                )),
+            const Gap(16),
+            Text(
+              'النوع',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: isDark
+                    ? AppColors.textOnDarkSecondary
+                    : AppColors.textSecondary,
+              ),
+            ),
+            const Gap(8),
+            Obx(() => Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _buildSheetChip(
+                      'الكل',
+                      controller.selectedTypeFilter.value == null,
+                      () => controller.filterByType(null),
+                      isDark: isDark,
+                    ),
+                    ...ReportType.values.map((t) => _buildSheetChip(
+                          t.displayNameAr,
+                          controller.selectedTypeFilter.value == t,
+                          () => controller.filterByType(t),
+                          icon: t.icon,
+                          isDark: isDark,
+                        )),
+                  ],
+                )),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSheetChip(
+    String label,
+    bool isSelected,
+    VoidCallback onTap, {
+    IconData? icon,
+    required bool isDark,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          gradient: isSelected ? AppColors.heroGradient : null,
+          color: isSelected
+              ? null
+              : isDark
+                  ? AppColors.cardDark
+                  : AppColors.card,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected
+                ? Colors.transparent
+                : isDark
+                    ? AppColors.cardBorderDark
+                    : AppColors.cardBorder,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              Icon(icon, size: 15,
+                  color: isSelected ? Colors.white : AppColors.primary),
+              const Gap(6),
+            ],
+            Text(
+              label,
+              style: TextStyle(
+                color: isSelected
+                    ? Colors.white
+                    : isDark
+                        ? AppColors.textOnDark
+                        : AppColors.textPrimary,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                fontSize: 13,
+              ),
+            ),
           ],
         ),
       ),

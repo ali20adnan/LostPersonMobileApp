@@ -10,6 +10,7 @@ import 'app/themes/app_theme.dart';
 import 'app/services/api_service.dart';
 import 'app/services/auth_service.dart';
 import 'app/services/socket_service.dart';
+import 'app/services/unread_count_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,25 +32,11 @@ void main() async {
   await Get.putAsync<ApiService>(() async => ApiService());
   await Get.putAsync<AuthService>(() => AuthService().init());
 
-  // Initialize Socket.IO if user is logged in
+  // Initialize Socket.IO if user is already logged in
   final authService = Get.find<AuthService>();
-
-  // ── Temporary auto-login ──────────────────────────────────────────────
-  if (!authService.isLoggedIn) {
-    try {
-      final result = await authService.login('qader', 'admin123');
-      if (result.isSuccess) {
-        debugPrint('Auto-login successful as qader');
-        await Get.putAsync<SocketService>(() => SocketService().init());
-      }
-    } catch (e) {
-      debugPrint('Auto-login failed: $e');
-    }
-  }
-  // ─────────────────────────────────────────────────────────────────────
-
   if (authService.isLoggedIn) {
     await Get.putAsync<SocketService>(() => SocketService().init());
+    await Get.putAsync<UnreadCountService>(() => UnreadCountService().init());
   }
 
   runApp(const SpeechTranslatorApp());
@@ -60,12 +47,8 @@ class SpeechTranslatorApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final authService = Get.find<AuthService>();
-    final initialRoute =
-        authService.isLoggedIn ? AppRoutes.home : AppRoutes.login;
-
     return GetMaterialApp(
-      title: dotenv.env['APP_NAME'] ?? 'مساعد الحرم - العثور على المفقودين',
+      title: dotenv.env['APP_NAME'] ?? 'الملاذ',
       debugShowCheckedModeBanner: false,
 
       // Arabic RTL support
@@ -88,7 +71,7 @@ class SpeechTranslatorApp extends StatelessWidget {
       themeMode: ThemeMode.light,
 
       // GetX Navigation
-      initialRoute: initialRoute,
+      initialRoute: AppRoutes.splash,
       getPages: AppPages.routes,
 
       // RTL text direction

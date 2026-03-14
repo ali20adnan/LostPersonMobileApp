@@ -1,6 +1,6 @@
 {
-    "name": "speech_translator_app",
-    "short_name": "speech_translator_app",
+    "name": "الملاذ",
+    "short_name": "الملاذ",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

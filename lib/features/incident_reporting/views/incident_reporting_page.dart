@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:gap/gap.dart';
 import 'package:get/get.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
+import '../../../app/themes/app_colors.dart';
 import '../controllers/incident_reporting_controller.dart';
 import '../widgets/severity_selector_widget.dart';
 import '../widgets/media_picker_widget.dart';
@@ -11,37 +16,93 @@ class IncidentReportingPage extends GetView<IncidentReportingController> {
   const IncidentReportingPage({super.key});
 
   // ── helpers ────────────────────────────────────────────────────────────
-  Widget _buildSectionHeader(IconData icon, String title) {
+  Widget _buildSectionHeader(IconData icon, String title, bool isDark) {
     return Row(
       children: [
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: const Color(0xFF8B5CF6).withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(8),
+            gradient: AppColors.heroGradient,
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
-          child: Icon(icon, size: 18, color: const Color(0xFF8B5CF6)),
+          child: Icon(icon, size: 18, color: Colors.white),
         ),
-        const SizedBox(width: 10),
+        const Gap(10),
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
+            color: isDark ? AppColors.textOnDark : AppColors.textPrimary,
           ),
         ),
       ],
     );
   }
 
+  InputDecoration _inputDecoration({
+    required String label,
+    required String hint,
+    required IconData icon,
+    required bool isDark,
+    Widget? suffixIcon,
+  }) {
+    return InputDecoration(
+      labelText: label,
+      hintText: hint,
+      filled: true,
+      fillColor: isDark
+          ? AppColors.surfaceDark.withValues(alpha: 0.6)
+          : AppColors.surfaceSunken.withValues(alpha: 0.7),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(
+          color: isDark ? AppColors.cardBorderDark : AppColors.cardBorder,
+        ),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+      ),
+      prefixIcon: Icon(icon, color: AppColors.primary),
+      suffixIcon: suffixIcon,
+      labelStyle: TextStyle(
+        color: isDark ? AppColors.textOnDarkSecondary : AppColors.textSecondary,
+      ),
+      hintStyle: TextStyle(
+        color: isDark
+            ? AppColors.textOnDarkSecondary.withValues(alpha: 0.6)
+            : AppColors.textLight,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
+      backgroundColor: isDark ? AppColors.backgroundDark : AppColors.background,
       appBar: AppBar(
         title: const Text('إبلاغ عن حادثة'),
         centerTitle: true,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(gradient: AppColors.heroGradient),
+        ),
+        foregroundColor: Colors.white,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -49,8 +110,9 @@ class IncidentReportingPage extends GetView<IncidentReportingController> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Incident type selector
-            _buildSectionHeader(Icons.category_outlined, 'نوع الحادثة'),
-            const SizedBox(height: 12),
+            _buildSectionHeader(Iconsax.category, 'نوع الحادثة', isDark)
+                .animate().fadeIn(duration: 400.ms).slideX(begin: -0.1),
+            const Gap(12),
             Obx(() => GridView.count(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
@@ -67,27 +129,30 @@ class IncidentReportingPage extends GetView<IncidentReportingController> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(
+                          gradient: isSelected ? AppColors.heroGradient : null,
                           color: isSelected
-                              ? theme.colorScheme.primary
-                              : theme.colorScheme.surfaceContainerHighest
-                                  .withValues(alpha: 0.5),
+                              ? null
+                              : isDark
+                                  ? AppColors.cardDark
+                                  : AppColors.card,
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
                             color: isSelected
-                                ? theme.colorScheme.primary
-                                : theme.colorScheme.outline.withValues(alpha: 0.3),
-                            width: isSelected ? 2 : 1,
+                                ? Colors.transparent
+                                : isDark
+                                    ? AppColors.cardBorderDark
+                                    : AppColors.cardBorder,
+                            width: isSelected ? 0 : 1,
                           ),
                           boxShadow: isSelected
                               ? [
                                   BoxShadow(
-                                    color: theme.colorScheme.primary
-                                        .withValues(alpha: 0.3),
+                                    color: AppColors.primary.withValues(alpha: 0.3),
                                     blurRadius: 8,
                                     offset: const Offset(0, 3),
                                   )
                                 ]
-                              : null,
+                              : AppColors.softShadow,
                         ),
                         child: Row(
                           children: [
@@ -96,16 +161,18 @@ class IncidentReportingPage extends GetView<IncidentReportingController> {
                               size: 20,
                               color: isSelected
                                   ? Colors.white
-                                  : theme.colorScheme.primary,
+                                  : AppColors.primary,
                             ),
-                            const SizedBox(width: 8),
+                            const Gap(8),
                             Expanded(
                               child: Text(
                                 type.displayNameAr,
                                 style: TextStyle(
                                   color: isSelected
                                       ? Colors.white
-                                      : theme.colorScheme.onSurface,
+                                      : isDark
+                                          ? AppColors.textOnDark
+                                          : AppColors.textPrimary,
                                   fontWeight: isSelected
                                       ? FontWeight.bold
                                       : FontWeight.w500,
@@ -116,7 +183,7 @@ class IncidentReportingPage extends GetView<IncidentReportingController> {
                             ),
                             if (isSelected)
                               const Icon(
-                                Icons.check_circle,
+                                Iconsax.tick_circle,
                                 color: Colors.white,
                                 size: 16,
                               ),
@@ -125,136 +192,103 @@ class IncidentReportingPage extends GetView<IncidentReportingController> {
                       ),
                     );
                   }).toList(),
-                )),
+                )).animate().fadeIn(duration: 500.ms, delay: 100.ms),
 
-            const SizedBox(height: 24),
+            const Gap(24),
 
             // Title field
-            _buildSectionHeader(Icons.title, 'تفاصيل الحادثة'),
-            const SizedBox(height: 12),
+            _buildSectionHeader(Iconsax.document_text, 'تفاصيل الحادثة', isDark)
+                .animate().fadeIn(duration: 400.ms, delay: 200.ms).slideX(begin: -0.1),
+            const Gap(12),
             TextField(
               controller: controller.titleController,
-              decoration: InputDecoration(
-                labelText: 'عنوان الحادثة *',
-                hintText: 'مثال: شخص مفقود في المنطقة الشرقية',
-                filled: true,
-                fillColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color: theme.colorScheme.primary,
-                    width: 1.5,
-                  ),
-                ),
-                prefixIcon: const Icon(Icons.title),
+              decoration: _inputDecoration(
+                label: 'عنوان الحادثة *',
+                hint: 'مثال: شخص مفقود في المنطقة الشرقية',
+                icon: Iconsax.text,
+                isDark: isDark,
               ),
               textDirection: TextDirection.rtl,
-            ),
+              style: TextStyle(
+                color: isDark ? AppColors.textOnDark : AppColors.textPrimary,
+              ),
+            ).animate().fadeIn(duration: 400.ms, delay: 250.ms),
 
-            const SizedBox(height: 14),
+            const Gap(14),
 
             // Description field
             TextField(
               controller: controller.descriptionController,
-              decoration: InputDecoration(
-                labelText: 'وصف الحادثة *',
-                hintText: 'أدخل تفاصيل الحادثة بشكل دقيق',
-                filled: true,
-                fillColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color: theme.colorScheme.primary,
-                    width: 1.5,
-                  ),
-                ),
-                prefixIcon: const Icon(Icons.description),
+              decoration: _inputDecoration(
+                label: 'وصف الحادثة *',
+                hint: 'أدخل تفاصيل الحادثة بشكل دقيق',
+                icon: Iconsax.note_text,
+                isDark: isDark,
               ),
               maxLines: 4,
               textDirection: TextDirection.rtl,
-            ),
+              style: TextStyle(
+                color: isDark ? AppColors.textOnDark : AppColors.textPrimary,
+              ),
+            ).animate().fadeIn(duration: 400.ms, delay: 300.ms),
 
-            const SizedBox(height: 24),
+            const Gap(24),
 
             // Location field
-            _buildSectionHeader(Icons.location_on_outlined, 'الموقع'),
-            const SizedBox(height: 12),
+            _buildSectionHeader(Iconsax.location, 'الموقع', isDark)
+                .animate().fadeIn(duration: 400.ms, delay: 350.ms).slideX(begin: -0.1),
+            const Gap(12),
             TextField(
               controller: controller.locationController,
-              decoration: InputDecoration(
-                labelText: 'الموقع *',
-                hintText: 'مثال: بوابة رقم 3',
-                filled: true,
-                fillColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color: theme.colorScheme.primary,
-                    width: 1.5,
-                  ),
-                ),
-                prefixIcon: const Icon(Icons.location_on),
+              decoration: _inputDecoration(
+                label: 'الموقع *',
+                hint: 'مثال: بوابة رقم 3',
+                icon: Iconsax.location,
+                isDark: isDark,
                 suffixIcon: Obx(() => controller.isLoadingLocation.value
-                    ? const Padding(
-                        padding: EdgeInsets.all(12),
+                    ? Padding(
+                        padding: const EdgeInsets.all(12),
                         child: SizedBox(
                           width: 20,
                           height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
+                          child: LoadingAnimationWidget.threeArchedCircle(
+                            color: AppColors.primary,
+                            size: 20,
+                          ),
                         ),
                       )
                     : IconButton(
-                        icon: const Icon(Icons.my_location),
+                        icon: const Icon(Iconsax.gps, color: AppColors.primary),
                         onPressed: controller.getCurrentLocation,
                         tooltip: 'تحديد الموقع الحالي',
                       )),
               ),
               textDirection: TextDirection.rtl,
-            ),
+              style: TextStyle(
+                color: isDark ? AppColors.textOnDark : AppColors.textPrimary,
+              ),
+            ).animate().fadeIn(duration: 400.ms, delay: 400.ms),
 
-            const SizedBox(height: 24),
+            const Gap(24),
 
             // Severity selector
-            _buildSectionHeader(
-                Icons.warning_amber_outlined, 'مستوى الخطورة'),
-            const SizedBox(height: 12),
+            _buildSectionHeader(Iconsax.warning_2, 'مستوى الخطورة', isDark)
+                .animate().fadeIn(duration: 400.ms, delay: 450.ms).slideX(begin: -0.1),
+            const Gap(12),
             Obx(() {
               final severity = controller.selectedSeverity.value;
               return SeveritySelectorWidget(
                 selectedSeverity: severity,
                 onChanged: controller.changeSeverity,
               );
-            }),
+            }).animate().fadeIn(duration: 400.ms, delay: 500.ms),
 
-            const SizedBox(height: 24),
+            const Gap(24),
 
             // Media picker
-            _buildSectionHeader(Icons.photo_camera_outlined, 'الصور والفيديو'),
-            const SizedBox(height: 12),
+            _buildSectionHeader(Iconsax.camera, 'الصور والفيديو', isDark)
+                .animate().fadeIn(duration: 400.ms, delay: 550.ms).slideX(begin: -0.1),
+            const Gap(12),
             Obx(() {
               final files = controller.selectedMediaFiles.toList();
               return MediaPickerWidget(
@@ -263,9 +297,9 @@ class IncidentReportingPage extends GetView<IncidentReportingController> {
                 onTakePhoto: controller.takePhoto,
                 onRemoveFile: controller.removeMediaFile,
               );
-            }),
+            }).animate().fadeIn(duration: 400.ms, delay: 600.ms),
 
-            const SizedBox(height: 28),
+            const Gap(28),
 
             // Submit button — gradient
             Obx(() => GestureDetector(
@@ -279,24 +313,16 @@ class IncidentReportingPage extends GetView<IncidentReportingController> {
                     decoration: BoxDecoration(
                       gradient: controller.isSubmitting.value
                           ? null
-                          : const LinearGradient(
-                              colors: [
-                                Color(0xFF8B5CF6),
-                                Color(0xFFD946EF),
-                              ],
-                              begin: Alignment.centerRight,
-                              end: Alignment.centerLeft,
-                            ),
+                          : AppColors.heroGradient,
                       color: controller.isSubmitting.value
-                          ? Colors.grey
+                          ? (isDark ? AppColors.surfaceDark : Colors.grey[300])
                           : null,
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(16),
                       boxShadow: controller.isSubmitting.value
                           ? null
                           : [
                               BoxShadow(
-                                color:
-                                    const Color(0xFF8B5CF6).withValues(alpha: 0.4),
+                                color: AppColors.primary.withValues(alpha: 0.4),
                                 blurRadius: 12,
                                 offset: const Offset(0, 4),
                               ),
@@ -306,16 +332,13 @@ class IncidentReportingPage extends GetView<IncidentReportingController> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         if (controller.isSubmitting.value)
-                          const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator.adaptive(
-                              strokeWidth: 2,
-                            ),
+                          LoadingAnimationWidget.staggeredDotsWave(
+                            color: AppColors.primary,
+                            size: 28,
                           )
-                        else ...[  
-                          const Icon(Icons.send, color: Colors.white),
-                          const SizedBox(width: 8),
+                        else ...[
+                          const Icon(Iconsax.send_1, color: Colors.white),
+                          const Gap(8),
                           const Text(
                             'إرسال البلاغ',
                             style: TextStyle(
@@ -328,19 +351,20 @@ class IncidentReportingPage extends GetView<IncidentReportingController> {
                       ],
                     ),
                   ),
-                )),
+                )).animate().fadeIn(duration: 500.ms, delay: 650.ms).slideY(begin: 0.1),
 
-            const SizedBox(height: 16),
+            const Gap(16),
 
             // Required fields note
             Text(
               '* حقول إلزامية',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+              style: TextStyle(
+                fontSize: 12,
+                color: isDark ? AppColors.textOnDarkSecondary : AppColors.textLight,
               ),
             ),
 
-            const SizedBox(height: 32),
+            const Gap(32),
           ],
         ),
       ),

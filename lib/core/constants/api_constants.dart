@@ -2,10 +2,11 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ApiConstants {
   // ── Backend API ────────────────────────────────────────────────
-  static const String apiBaseUrl = 'https://api.almuntazer.net/losts/api';
+  // For Android emulator use 10.0.2.2, for real devices use your PC's local IP
+  static const String apiBaseUrl = 'http://10.0.2.2:3003/api';
 
   /// Server root (without /api) – used for static files like uploads
-  static const String serverBaseUrl = 'https://api.almuntazer.net/losts';
+  static const String serverBaseUrl = 'http://10.0.2.2:3003';
 
   // Auth
   static const String login = '/auth/login';
@@ -13,9 +14,9 @@ class ApiConstants {
   static const String me = '/auth/me';
 
   // Missing Person Reports
-  static const String missingPersonReports = '/missing-person-reports';
+  static const String missingPersonReports = '/missing-persons';
   static const String missingPersonReportSearch =
-      '/missing-person-reports/search';
+      '/missing-persons/search';
 
   // Alerts (sightings / tips)
   static const String alerts = '/alerts';
@@ -38,7 +39,7 @@ class ApiConstants {
   // Conversations & Messaging
   static const String conversations = '/conversations';
   static const String conversationUsers = '/conversations/users';
-  static const String messagesUnreadCount = '/conversations/unread/count';
+  static const String messagesUnreadCount = '/messages/unread-count';
 
   // Alert notification endpoints
   static const String alertsUnreadCount = '/alerts/unread/count';
@@ -59,6 +60,12 @@ class ApiConstants {
 
   // Translation mode
   static const String translationMode = 'two_way';
+
+  // ── LibreTranslate API ─────────────────────────────────────────
+  static String get libreTranslateUrl =>
+      dotenv.env['LIBRE_TRANSLATE_URL'] ?? 'https://libretranslate.com/translate';
+  static String get libreTranslateApiKey =>
+      dotenv.env['LIBRE_TRANSLATE_API_KEY'] ?? '';
 
   /// Resolve an avatar URL from the backend.
   /// Handles: null, "undefined", full URLs, and relative paths.

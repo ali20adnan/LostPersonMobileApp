@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
+import 'package:gap/gap.dart';
 import 'package:get/get.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:intl/intl.dart' hide TextDirection;
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
+import '../../../app/themes/app_colors.dart';
 import '../../../app/services/storage_service.dart';
 import '../../../core/constants/language_constants.dart';
 import '../../../data/models/conversation_model.dart';
@@ -36,21 +42,59 @@ class _TranslationHistoryPageState extends State<TranslationHistoryPage> {
   }
 
   Future<void> _deleteConversation(String id) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final confirmed = await Get.dialog<bool>(
-      AlertDialog(
-        title: const Text('حذف المحادثة'),
-        content: const Text('هل أنت متأكد من حذف هذه المحادثة؟'),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(result: false),
-            child: const Text('إلغاء'),
+      Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          backgroundColor: isDark ? AppColors.surfaceDark : AppColors.surface,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.error.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Iconsax.trash, color: AppColors.error, size: 20),
+              ),
+              const Gap(10),
+              Text('حذف المحادثة',
+                  style: TextStyle(
+                    color: isDark ? AppColors.textOnDark : AppColors.textPrimary,
+                  )),
+            ],
           ),
-          TextButton(
-            onPressed: () => Get.back(result: true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('حذف'),
-          ),
-        ],
+          content: Text('هل أنت متأكد من حذف هذه المحادثة؟',
+              style: TextStyle(
+                color: isDark ? AppColors.textOnDarkSecondary : AppColors.textSecondary,
+              )),
+          actions: [
+            TextButton(
+              onPressed: () => Get.back(result: false),
+              child: Text('إلغاء', style: TextStyle(color: AppColors.textSecondary)),
+            ),
+            Container(
+              decoration: BoxDecoration(
+                gradient: AppColors.warmGradient,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(10),
+                  onTap: () => Get.back(result: true),
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    child: Text('حذف',
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
 
@@ -61,7 +105,7 @@ class _TranslationHistoryPageState extends State<TranslationHistoryPage> {
         'تم الحذف',
         'تم حذف المحادثة بنجاح',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.green.withValues(alpha: 0.8),
+        backgroundColor: AppColors.success.withValues(alpha: 0.9),
         colorText: Colors.white,
         margin: const EdgeInsets.all(16),
         duration: const Duration(seconds: 2),
@@ -71,22 +115,62 @@ class _TranslationHistoryPageState extends State<TranslationHistoryPage> {
 
   Future<void> _clearAll() async {
     if (_conversations.isEmpty) return;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final confirmed = await Get.dialog<bool>(
-      AlertDialog(
-        title: const Text('حذف الكل'),
-        content: const Text('هل أنت متأكد من حذف جميع المحادثات؟ لا يمكن التراجع عن هذا الإجراء.'),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(result: false),
-            child: const Text('إلغاء'),
+      Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          backgroundColor: isDark ? AppColors.surfaceDark : AppColors.surface,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.error.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Iconsax.trash, color: AppColors.error, size: 20),
+              ),
+              const Gap(10),
+              Text('حذف الكل',
+                  style: TextStyle(
+                    color: isDark ? AppColors.textOnDark : AppColors.textPrimary,
+                  )),
+            ],
           ),
-          TextButton(
-            onPressed: () => Get.back(result: true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('حذف الكل'),
+          content: Text(
+            'هل أنت متأكد من حذف جميع المحادثات؟ لا يمكن التراجع عن هذا الإجراء.',
+            style: TextStyle(
+              color: isDark ? AppColors.textOnDarkSecondary : AppColors.textSecondary,
+            ),
           ),
-        ],
+          actions: [
+            TextButton(
+              onPressed: () => Get.back(result: false),
+              child: Text('إلغاء', style: TextStyle(color: AppColors.textSecondary)),
+            ),
+            Container(
+              decoration: BoxDecoration(
+                gradient: AppColors.warmGradient,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(10),
+                  onTap: () => Get.back(result: true),
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    child: Text('حذف الكل',
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
 
@@ -97,7 +181,7 @@ class _TranslationHistoryPageState extends State<TranslationHistoryPage> {
         'تم الحذف',
         'تم حذف جميع المحادثات',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.green.withValues(alpha: 0.8),
+        backgroundColor: AppColors.success.withValues(alpha: 0.9),
         colorText: Colors.white,
         margin: const EdgeInsets.all(16),
         duration: const Duration(seconds: 2),
@@ -107,80 +191,122 @@ class _TranslationHistoryPageState extends State<TranslationHistoryPage> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
+        backgroundColor: isDark ? AppColors.backgroundDark : AppColors.background,
         appBar: AppBar(
           title: const Text(
             'سجل الترجمات',
-            style: TextStyle(fontWeight: FontWeight.bold),
+            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
           ),
           centerTitle: true,
+          elevation: 0,
+          flexibleSpace: Container(
+            decoration: const BoxDecoration(color: AppColors.primary),
+          ),
+          iconTheme: const IconThemeData(color: Colors.white),
+          leading: IconButton(
+            icon: const Icon(Iconsax.arrow_right_3),
+            onPressed: () => Get.back(),
+          ),
           actions: [
             if (_conversations.isNotEmpty)
               IconButton(
-                icon: const Icon(Icons.delete_sweep_outlined),
+                icon: const Icon(Iconsax.trash, color: Colors.white),
                 onPressed: _clearAll,
                 tooltip: 'حذف الكل',
               ),
           ],
         ),
         body: _isLoading
-            ? const Center(child: CircularProgressIndicator())
+            ? Center(
+                child: LoadingAnimationWidget.staggeredDotsWave(
+                  color: AppColors.primary,
+                  size: 40,
+                ),
+              )
             : _conversations.isEmpty
-                ? _buildEmptyState(theme)
+                ? _buildEmptyState(isDark)
                 : RefreshIndicator(
+                    color: AppColors.primary,
                     onRefresh: _loadHistory,
-                    child: ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: _conversations.length,
-                      itemBuilder: (context, index) {
-                        return _buildConversationCard(
-                          theme,
-                          _conversations[index],
-                        );
-                      },
+                    child: AnimationLimiter(
+                      child: ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: _conversations.length,
+                        itemBuilder: (context, index) {
+                          return AnimationConfiguration.staggeredList(
+                            position: index,
+                            duration: const Duration(milliseconds: 375),
+                            child: SlideAnimation(
+                              verticalOffset: 50.0,
+                              child: FadeInAnimation(
+                                child: _buildConversationCard(
+                                  isDark,
+                                  _conversations[index],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                     ),
                   ),
       ),
     );
   }
 
-  Widget _buildEmptyState(ThemeData theme) {
+  Widget _buildEmptyState(bool isDark) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.history,
-            size: 80,
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.2),
+          Container(
+            padding: const EdgeInsets.all(28),
+            decoration: BoxDecoration(
+              gradient: AppColors.heroGradient,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withValues(alpha: 0.3),
+                  blurRadius: 24,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: const Icon(Iconsax.clock, size: 52, color: Colors.white),
           ),
-          const SizedBox(height: 16),
+          const Gap(20),
           Text(
             'لا توجد محادثات سابقة',
-            style: theme.textTheme.titleMedium?.copyWith(
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: isDark ? AppColors.textOnDark : AppColors.textPrimary,
             ),
           ),
-          const SizedBox(height: 8),
+          const Gap(8),
           Text(
             'ابدأ الترجمة الصوتية لحفظ السجل هنا',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+            style: TextStyle(
+              fontSize: 14,
+              color: AppColors.textSecondary,
             ),
           ),
         ],
       ),
-    );
+    ).animate().fadeIn(duration: 600.ms).scale(begin: const Offset(0.9, 0.9));
   }
 
-  Widget _buildConversationCard(ThemeData theme, Conversation conversation) {
+  Widget _buildConversationCard(bool isDark, Conversation conversation) {
     final dateFormat = DateFormat('yyyy/MM/dd - HH:mm', 'ar');
-    final sourceLang = LanguageConstants.getLanguageNameArabic(conversation.sourceLanguage);
-    final targetLang = LanguageConstants.getLanguageNameArabic(conversation.targetLanguage);
+    final sourceLang =
+        LanguageConstants.getLanguageNameArabic(conversation.sourceLanguage);
+    final targetLang =
+        LanguageConstants.getLanguageNameArabic(conversation.targetLanguage);
     final translationCount = conversation.translations.length;
     final preview = conversation.translations.isNotEmpty
         ? conversation.translations.first.originalText
@@ -189,98 +315,118 @@ class _TranslationHistoryPageState extends State<TranslationHistoryPage> {
         ? '${(conversation.durationSeconds! ~/ 60)} دقيقة'
         : null;
 
-    return Card(
-      elevation: 0,
+    return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          color: theme.colorScheme.outline.withValues(alpha: 0.15),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.cardDark : AppColors.card,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: isDark ? AppColors.cardBorderDark : AppColors.cardBorder,
         ),
+        boxShadow: AppColors.cardShadow,
       ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: () => _showConversationDetail(context, theme, conversation),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header: languages & date
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      '$sourceLang → $targetLang',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: theme.colorScheme.onPrimaryContainer,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18),
+          onTap: () => _showConversationDetail(context, isDark, conversation),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 5),
+                      decoration: BoxDecoration(
+                        gradient: AppColors.heroGradient,
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withValues(alpha: 0.2),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Text(
+                        '$sourceLang → $targetLang',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    icon: Icon(Icons.delete_outline, size: 20, color: Colors.red.shade300),
-                    onPressed: () => _deleteConversation(conversation.id),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                    tooltip: 'حذف',
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              // Date & stats
-              Row(
-                children: [
-                  Icon(Icons.access_time, size: 14, color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
-                  const SizedBox(width: 4),
-                  Text(
-                    dateFormat.format(conversation.startTime),
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                    ),
-                  ),
-                  if (duration != null) ...[
-                    const SizedBox(width: 12),
-                    Icon(Icons.timer_outlined, size: 14, color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
-                    const SizedBox(width: 4),
-                    Text(
-                      duration,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                    const Spacer(),
+                    GestureDetector(
+                      onTap: () => _deleteConversation(conversation.id),
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: AppColors.error.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(Iconsax.trash,
+                            size: 18, color: AppColors.error),
                       ),
                     ),
                   ],
-                  const SizedBox(width: 12),
-                  Icon(Icons.chat_bubble_outline, size: 14, color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
-                  const SizedBox(width: 4),
+                ),
+                const Gap(10),
+                Row(
+                  children: [
+                    Icon(Iconsax.clock, size: 14, color: AppColors.textLight),
+                    const Gap(4),
+                    Text(
+                      dateFormat.format(conversation.startTime),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    if (duration != null) ...[
+                      const Gap(12),
+                      Icon(Iconsax.timer_1, size: 14, color: AppColors.textLight),
+                      const Gap(4),
+                      Text(
+                        duration,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                    const Gap(12),
+                    Icon(Iconsax.message_text, size: 14, color: AppColors.textLight),
+                    const Gap(4),
+                    Text(
+                      '$translationCount جملة',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+                if (preview.isNotEmpty) ...[
+                  const Gap(10),
                   Text(
-                    '$translationCount جملة',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                    preview,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: isDark
+                          ? AppColors.textOnDarkSecondary
+                          : AppColors.textSecondary,
                     ),
                   ),
                 ],
-              ),
-              // Preview
-              if (preview.isNotEmpty) ...[
-                const SizedBox(height: 10),
-                Text(
-                  preview,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-                  ),
-                ),
               ],
-            ],
+            ),
           ),
         ),
       ),
@@ -289,16 +435,19 @@ class _TranslationHistoryPageState extends State<TranslationHistoryPage> {
 
   void _showConversationDetail(
     BuildContext context,
-    ThemeData theme,
+    bool isDark,
     Conversation conversation,
   ) {
     final dateFormat = DateFormat('yyyy/MM/dd - HH:mm', 'ar');
-    final sourceLang = LanguageConstants.getLanguageNameArabic(conversation.sourceLanguage);
-    final targetLang = LanguageConstants.getLanguageNameArabic(conversation.targetLanguage);
+    final sourceLang =
+        LanguageConstants.getLanguageNameArabic(conversation.sourceLanguage);
+    final targetLang =
+        LanguageConstants.getLanguageNameArabic(conversation.targetLanguage);
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: isDark ? AppColors.surfaceDark : AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -313,121 +462,173 @@ class _TranslationHistoryPageState extends State<TranslationHistoryPage> {
               textDirection: TextDirection.rtl,
               child: Column(
                 children: [
-                  // Handle
-                  Container(
-                    margin: const EdgeInsets.symmetric(vertical: 12),
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(2),
+                  Center(
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(vertical: 12),
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: AppColors.textLight.withValues(alpha: 0.4),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
                     ),
                   ),
-                  // Title
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Row(
                       children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            gradient: AppColors.heroGradient,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(Iconsax.translate,
+                              size: 20, color: Colors.white),
+                        ),
+                        const Gap(10),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 '$sourceLang → $targetLang',
-                                style: theme.textTheme.titleMedium?.copyWith(
+                                style: TextStyle(
+                                  fontSize: 16,
                                   fontWeight: FontWeight.bold,
+                                  color: isDark
+                                      ? AppColors.textOnDark
+                                      : AppColors.textPrimary,
                                 ),
                               ),
-                              const SizedBox(height: 4),
+                              const Gap(2),
                               Text(
                                 dateFormat.format(conversation.startTime),
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.textSecondary,
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.copy_all),
-                          onPressed: () {
+                        GestureDetector(
+                          onTap: () {
+                            HapticFeedback.lightImpact();
                             final buffer = StringBuffer();
                             for (var t in conversation.translations) {
                               buffer.writeln(t.originalText);
                               buffer.writeln(t.translatedText);
                               buffer.writeln('---');
                             }
-                            Clipboard.setData(ClipboardData(text: buffer.toString()));
+                            Clipboard.setData(
+                                ClipboardData(text: buffer.toString()));
                             Get.snackbar(
                               'تم النسخ',
                               'تم نسخ جميع الترجمات',
                               snackPosition: SnackPosition.BOTTOM,
                               duration: const Duration(seconds: 1),
                               margin: const EdgeInsets.all(16),
+                              backgroundColor:
+                                  AppColors.success.withValues(alpha: 0.9),
+                              colorText: Colors.white,
                             );
                           },
-                          tooltip: 'نسخ الكل',
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(Iconsax.copy,
+                                color: AppColors.primary, size: 20),
+                          ),
                         ),
                       ],
                     ),
                   ),
-                  const Divider(height: 16),
-                  // Translations list
+                  const Gap(12),
+                  Divider(
+                    color: isDark ? AppColors.dividerDark : AppColors.divider,
+                    height: 1,
+                  ),
                   Expanded(
                     child: conversation.translations.isEmpty
                         ? Center(
                             child: Text(
                               'لا توجد ترجمات',
-                              style: theme.textTheme.bodyLarge?.copyWith(
-                                color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                              style: TextStyle(
+                                fontSize: 15,
+                                color: AppColors.textSecondary,
                               ),
                             ),
                           )
                         : ListView.builder(
                             controller: scrollController,
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 12),
                             itemCount: conversation.translations.length,
                             itemBuilder: (ctx, index) {
                               final t = conversation.translations[index];
                               return Padding(
                                 padding: const EdgeInsets.only(bottom: 12),
                                 child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
                                   children: [
-                                    // Original text
                                     Container(
-                                      padding: const EdgeInsets.all(12),
+                                      padding: const EdgeInsets.all(14),
                                       decoration: BoxDecoration(
-                                        color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                                        gradient: AppColors.heroGradient,
                                         borderRadius: const BorderRadius.only(
                                           topRight: Radius.circular(16),
                                           topLeft: Radius.circular(16),
                                           bottomLeft: Radius.circular(16),
                                           bottomRight: Radius.circular(4),
                                         ),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: AppColors.primary
+                                                .withValues(alpha: 0.15),
+                                            blurRadius: 8,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                        ],
                                       ),
                                       child: Text(
                                         t.originalText,
-                                        style: theme.textTheme.bodyMedium,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 14,
+                                        ),
                                       ),
                                     ),
-                                    const SizedBox(height: 4),
-                                    // Translated text
+                                    const Gap(4),
                                     Container(
-                                      padding: const EdgeInsets.all(12),
+                                      padding: const EdgeInsets.all(14),
                                       decoration: BoxDecoration(
-                                        color: theme.colorScheme.secondaryContainer.withValues(alpha: 0.5),
+                                        color: isDark
+                                            ? AppColors.cardDark
+                                            : AppColors.surfaceSunken,
                                         borderRadius: const BorderRadius.only(
                                           topRight: Radius.circular(4),
                                           topLeft: Radius.circular(16),
                                           bottomLeft: Radius.circular(16),
                                           bottomRight: Radius.circular(16),
                                         ),
+                                        border: Border.all(
+                                          color: isDark
+                                              ? AppColors.cardBorderDark
+                                              : AppColors.cardBorder,
+                                        ),
                                       ),
                                       child: Text(
                                         t.translatedText,
-                                        style: theme.textTheme.bodyMedium?.copyWith(
-                                          color: theme.colorScheme.onSecondaryContainer,
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: isDark
+                                              ? AppColors.textOnDark
+                                              : AppColors.textPrimary,
                                         ),
                                       ),
                                     ),

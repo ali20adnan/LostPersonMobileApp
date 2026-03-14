@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../app/services/socket_service.dart';
 import '../../../data/models/missing_person_report_model.dart';
 import '../../../data/repositories/missing_persons_repository.dart';
 
 class MissingPersonsController extends GetxController {
-  final MissingPersonsRepository _repository = MissingPersonsRepository();
+  late final MissingPersonsRepository _repository;
 
   // Observable state
   final selectedTab = 0.obs;
@@ -50,7 +51,9 @@ class MissingPersonsController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    _repository = Get.find<MissingPersonsRepository>();
     loadReports();
+    _setupSocketListeners();
   }
 
   void changeTab(int index) {
@@ -131,5 +134,49 @@ class MissingPersonsController extends GetxController {
   /// Search for a person via API
   void searchPerson(String query) {
     searchQuery.value = query;
+  }
+
+  /// Setup socket listeners for real-time updates
+  void _setupSocketListeners() {
+    if (!Get.isRegistered<SocketService>()) return;
+    final socket = Get.find<SocketService>();
+
+    socket.on('newMissingPerson', 'missingPersonsList', (data) {
+      if (data is Map<String, dynamic>) {
+        final report = MissingPersonReport.fromJson(data);
+        if (report.status == 'found') {
+          foundPersons.insert(0, report);
+          totalFound.value++;
+        } else {
+          reportedPersons.insert(0, report);
+          totalMissing.value++;
+        }
+      }
+    });
+
+    socket.on('missingPersonUpdated', 'missingPersonsList', (data) {
+      if (data is Map<String, dynamic>) {
+        final updated = MissingPersonReport.fromJson(data);
+        // Remove from both lists
+        reportedPersons.removeWhere((p) => p.id == updated.id);
+        foundPersons.removeWhere((p) => p.id == updated.id);
+        // Add to the correct list based on status
+        if (updated.status == 'found') {
+          foundPersons.insert(0, updated);
+        } else {
+          reportedPersons.insert(0, updated);
+        }
+      }
+    });
+  }
+
+  @override
+  void onClose() {
+    if (Get.isRegistered<SocketService>()) {
+      final socket = Get.find<SocketService>();
+      socket.off('newMissingPerson', 'missingPersonsList');
+      socket.off('missingPersonUpdated', 'missingPersonsList');
+    }
+    super.onClose();
   }
 }

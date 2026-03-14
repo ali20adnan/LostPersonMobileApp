@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:gap/gap.dart';
 import 'package:get/get.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
+import '../../../app/themes/app_colors.dart';
+import '../../../app/routes/app_routes.dart';
 import '../controllers/profile_controller.dart';
 import '../../../core/constants/api_constants.dart';
 
@@ -10,37 +16,50 @@ class ProfilePage extends GetView<ProfileController> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: theme.colorScheme.surface,
+        backgroundColor: isDark ? AppColors.backgroundDark : AppColors.background,
         body: Obx(() {
           final user = controller.user.value;
           if (user == null) {
-            return const Center(child: CircularProgressIndicator());
+            return Center(
+              child: LoadingAnimationWidget.staggeredDotsWave(
+                color: AppColors.primary,
+                size: 40,
+              ),
+            );
           }
 
           return RefreshIndicator(
+            color: AppColors.primary,
             onRefresh: controller.refreshProfile,
             child: CustomScrollView(
               slivers: [
-                // Header with avatar
                 SliverToBoxAdapter(
-                  child: _buildHeader(context, theme),
+                  child: _buildHeader(context, isDark),
                 ),
-                // Info cards
                 SliverPadding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                   sliver: SliverList(
                     delegate: SliverChildListDelegate([
-                      _buildInfoCard(theme),
-                      const SizedBox(height: 16),
-                      _buildActionsCard(theme),
-                      const SizedBox(height: 16),
-                      _buildLogoutButton(theme),
-                      const SizedBox(height: 32),
+                      _buildInfoCard(isDark)
+                          .animate()
+                          .fadeIn(delay: 200.ms, duration: 400.ms)
+                          .slideY(begin: 0.1),
+                      const Gap(16),
+                      _buildActionsCard(isDark)
+                          .animate()
+                          .fadeIn(delay: 300.ms, duration: 400.ms)
+                          .slideY(begin: 0.1),
+                      const Gap(16),
+                      _buildLogoutButton(isDark)
+                          .animate()
+                          .fadeIn(delay: 400.ms, duration: 400.ms)
+                          .slideY(begin: 0.1),
+                      const Gap(32),
                     ]),
                   ),
                 ),
@@ -52,77 +71,80 @@ class ProfilePage extends GetView<ProfileController> {
     );
   }
 
-  Widget _buildHeader(BuildContext context, ThemeData theme) {
+  Widget _buildHeader(BuildContext context, bool isDark) {
     final user = controller.user.value!;
 
     return Container(
       padding: EdgeInsets.only(
         top: MediaQuery.of(context).padding.top + 24,
-        bottom: 24,
+        bottom: 28,
       ),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            theme.colorScheme.primary,
-            theme.colorScheme.primary.withValues(alpha: 0.8),
-          ],
+        gradient: AppColors.heroGradient,
+        borderRadius: const BorderRadius.vertical(
+          bottom: Radius.circular(32),
         ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
-        children: [
-          // Avatar
-          Stack(
-            alignment: Alignment.bottomLeft,
+            children: [
+              // Avatar
+              Stack(
+                alignment: Alignment.bottomLeft,
             children: [
               Obx(() {
                 final user = controller.user.value!;
                 final avatarUrl = ApiConstants.resolveAvatarUrl(user.avatarUrl);
                 return Container(
-                    width: 100,
-                    height: 100,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.8),
-                          width: 3),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.2),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: controller.isUploadingAvatar.value
-                        ? const CircleAvatar(
-                            radius: 48,
-                            child: CircularProgressIndicator(
-                                color: Colors.white, strokeWidth: 2),
-                          )
-                        : CircleAvatar(
-                            radius: 48,
-                            backgroundColor:
-                                theme.colorScheme.primaryContainer,
-                            backgroundImage: avatarUrl != null
-                                ? NetworkImage(avatarUrl)
-                                : null,
-                            child: avatarUrl == null
-                                ? Text(
-                                    user.fullName.isNotEmpty
-                                        ? user.fullName[0].toUpperCase()
-                                        : '?',
-                                    style: TextStyle(
-                                      fontSize: 36,
-                                      fontWeight: FontWeight.bold,
-                                      color:
-                                          theme.colorScheme.onPrimaryContainer,
-                                    ),
-                                  )
-                                : null,
+                  width: 104,
+                  height: 104,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.4), width: 3),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.25),
+                        blurRadius: 16,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: controller.isUploadingAvatar.value
+                      ? CircleAvatar(
+                          radius: 48,
+                          backgroundColor: Colors.white.withValues(alpha: 0.2),
+                          child: LoadingAnimationWidget.staggeredDotsWave(
+                            color: Colors.white,
+                            size: 30,
                           ),
-                  );
+                        )
+                      : CircleAvatar(
+                          radius: 48,
+                          backgroundColor: AppColors.primarySoft,
+                          backgroundImage: avatarUrl != null
+                              ? NetworkImage(avatarUrl)
+                              : null,
+                          child: avatarUrl == null
+                              ? Text(
+                                  user.fullName.isNotEmpty
+                                      ? user.fullName[0].toUpperCase()
+                                      : '?',
+                                  style: const TextStyle(
+                                    fontSize: 36,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.primary,
+                                  ),
+                                )
+                              : null,
+                        ),
+                );
               }),
               // Camera button
               GestureDetector(
@@ -131,22 +153,29 @@ class ProfilePage extends GetView<ProfileController> {
                   controller.pickAndUploadAvatar();
                 },
                 child: Container(
-                  padding: const EdgeInsets.all(6),
+                  padding: const EdgeInsets.all(7),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.secondaryContainer,
+                    gradient: AppColors.accentGradient,
                     shape: BoxShape.circle,
                     border: Border.all(color: Colors.white, width: 2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.accent.withValues(alpha: 0.4),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
-                  child: Icon(
-                    Icons.camera_alt_rounded,
-                    size: 18,
-                    color: theme.colorScheme.onSecondaryContainer,
+                  child: const Icon(
+                    Iconsax.camera,
+                    size: 16,
+                    color: Colors.white,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const Gap(16),
           // Name
           Text(
             user.fullName,
@@ -155,46 +184,49 @@ class ProfilePage extends GetView<ProfileController> {
               fontWeight: FontWeight.bold,
               color: Colors.white,
             ),
-          ),
-          const SizedBox(height: 4),
+          ).animate().fadeIn(delay: 100.ms),
+          const Gap(6),
           // Role badge
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.3),
+              ),
             ),
             child: Text(
               user.roleDisplayAr,
               style: TextStyle(
                 fontSize: 13,
                 color: Colors.white.withValues(alpha: 0.95),
-                fontWeight: FontWeight.w500,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),
           // Temp password warning
           if (user.isTempPass) ...[
-            const SizedBox(height: 12),
+            const Gap(12),
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 32),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: Colors.amber.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(8),
+                color: AppColors.warning.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                    color: Colors.amber.withValues(alpha: 0.5)),
+                    color: AppColors.warning.withValues(alpha: 0.5)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.warning_amber_rounded,
-                      color: Colors.amber.shade200, size: 18),
-                  const SizedBox(width: 6),
-                  Text(
+                  Icon(Iconsax.warning_2,
+                      color: AppColors.warningLight, size: 18),
+                  const Gap(6),
+                  const Text(
                     'كلمة مرور مؤقتة - يرجى تغييرها',
                     style: TextStyle(
-                      color: Colors.amber.shade100,
+                      color: Colors.white,
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                     ),
@@ -208,78 +240,92 @@ class ProfilePage extends GetView<ProfileController> {
     );
   }
 
-  Widget _buildInfoCard(ThemeData theme) {
+  Widget _buildInfoCard(bool isDark) {
     final user = controller.user.value!;
 
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          color: theme.colorScheme.outline.withValues(alpha: 0.15),
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.cardDark : AppColors.card,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: isDark ? AppColors.cardBorderDark : AppColors.cardBorder,
         ),
+        boxShadow: AppColors.cardShadow,
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.person_outline,
-                    color: theme.colorScheme.primary, size: 20),
-                const SizedBox(width: 8),
-                Text(
-                  'معلومات الحساب',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.onSurface,
-                  ),
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  gradient: AppColors.heroGradient,
+                  borderRadius: BorderRadius.circular(10),
                 ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            _buildInfoRow(
-              theme,
-              icon: Icons.badge_outlined,
-              label: 'اسم المستخدم',
-              value: user.userName,
-            ),
-            const Divider(height: 24),
-            _buildInfoRow(
-              theme,
-              icon: Icons.person_rounded,
-              label: 'الاسم الكامل',
-              value: user.fullName,
-            ),
-            const Divider(height: 24),
-            _buildInfoRow(
-              theme,
-              icon: Icons.security_rounded,
-              label: 'الصلاحية',
-              value: user.roleDisplayAr,
-            ),
-            if (user.accountExpiresAt != null) ...[
-              const Divider(height: 24),
-              _buildInfoRow(
-                theme,
-                icon: Icons.timer_outlined,
-                label: 'انتهاء الحساب',
-                value: _formatDate(user.accountExpiresAt!),
-                valueColor: user.accountExpiresAt!.isBefore(DateTime.now())
-                    ? Colors.red
-                    : null,
+                child: const Icon(Iconsax.user, color: Colors.white, size: 18),
+              ),
+              const Gap(10),
+              Text(
+                'معلومات الحساب',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? AppColors.textOnDark : AppColors.textPrimary,
+                ),
               ),
             ],
+          ),
+          const Gap(18),
+          _buildInfoRow(
+            isDark,
+            icon: Iconsax.user_tag,
+            label: 'اسم المستخدم',
+            value: user.userName,
+          ),
+          Divider(
+            height: 24,
+            color: isDark ? AppColors.dividerDark : AppColors.divider,
+          ),
+          _buildInfoRow(
+            isDark,
+            icon: Iconsax.personalcard,
+            label: 'الاسم الكامل',
+            value: user.fullName,
+          ),
+          Divider(
+            height: 24,
+            color: isDark ? AppColors.dividerDark : AppColors.divider,
+          ),
+          _buildInfoRow(
+            isDark,
+            icon: Iconsax.security_user,
+            label: 'الصلاحية',
+            value: user.roleDisplayAr,
+          ),
+          if (user.accountExpiresAt != null) ...[
+            Divider(
+              height: 24,
+              color: isDark ? AppColors.dividerDark : AppColors.divider,
+            ),
+            _buildInfoRow(
+              isDark,
+              icon: Iconsax.timer_1,
+              label: 'انتهاء الحساب',
+              value: _formatDate(user.accountExpiresAt!),
+              valueColor: user.accountExpiresAt!.isBefore(DateTime.now())
+                  ? AppColors.error
+                  : null,
+            ),
           ],
-        ),
+        ],
       ),
     );
   }
 
   Widget _buildInfoRow(
-    ThemeData theme, {
+    bool isDark, {
     required IconData icon,
     required String label,
     required String value,
@@ -290,12 +336,12 @@ class ProfilePage extends GetView<ProfileController> {
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: theme.colorScheme.primaryContainer.withValues(alpha: 0.4),
-            borderRadius: BorderRadius.circular(8),
+            color: AppColors.primary.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(10),
           ),
-          child: Icon(icon, size: 18, color: theme.colorScheme.primary),
+          child: Icon(icon, size: 18, color: AppColors.primary),
         ),
-        const SizedBox(width: 12),
+        const Gap(12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -304,16 +350,17 @@ class ProfilePage extends GetView<ProfileController> {
                 label,
                 style: TextStyle(
                   fontSize: 12,
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  color: AppColors.textSecondary,
                 ),
               ),
-              const SizedBox(height: 2),
+              const Gap(2),
               Text(
                 value,
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
-                  color: valueColor ?? theme.colorScheme.onSurface,
+                  color: valueColor ??
+                      (isDark ? AppColors.textOnDark : AppColors.textPrimary),
                 ),
               ),
             ],
@@ -323,113 +370,256 @@ class ProfilePage extends GetView<ProfileController> {
     );
   }
 
-  Widget _buildActionsCard(ThemeData theme) {
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          color: theme.colorScheme.outline.withValues(alpha: 0.15),
+  Widget _buildActionsCard(bool isDark) {
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.cardDark : AppColors.card,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: isDark ? AppColors.cardBorderDark : AppColors.cardBorder,
         ),
+        boxShadow: AppColors.cardShadow,
       ),
       child: Column(
         children: [
-          _buildActionTile(
-            theme,
-            icon: Icons.lock_outline,
-            title: 'تغيير كلمة المرور',
-            subtitle: 'تحديث كلمة مرور حسابك',
-            onTap: () {
-              HapticFeedback.lightImpact();
-              _showChangePasswordSheet(Get.context!);
-            },
+          // Settings row
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+              onTap: () {
+                HapticFeedback.lightImpact();
+                Get.toNamed(AppRoutes.settings);
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        gradient: AppColors.heroGradient,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withValues(alpha: 0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: const Icon(Iconsax.setting_2, color: Colors.white, size: 20),
+                    ),
+                    const Gap(14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'الإعدادات',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 15,
+                              color: isDark
+                                  ? AppColors.textOnDark
+                                  : AppColors.textPrimary,
+                            ),
+                          ),
+                          const Gap(2),
+                          Text(
+                            'تخصيص إعدادات التطبيق',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(Iconsax.arrow_left_2,
+                        color: AppColors.textLight, size: 20),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Divider(
+            height: 1,
+            indent: 16,
+            endIndent: 16,
+            color: isDark ? AppColors.dividerDark : AppColors.divider,
+          ),
+          // Change password row
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(18)),
+              onTap: () {
+                HapticFeedback.lightImpact();
+                _showChangePasswordSheet(Get.context!);
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        gradient: AppColors.heroGradient,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withValues(alpha: 0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: const Icon(Iconsax.lock, color: Colors.white, size: 20),
+                    ),
+                    const Gap(14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'تغيير كلمة المرور',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 15,
+                              color: isDark
+                                  ? AppColors.textOnDark
+                                  : AppColors.textPrimary,
+                            ),
+                          ),
+                          const Gap(2),
+                          Text(
+                            'تحديث كلمة مرور حسابك',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(Iconsax.arrow_left_2,
+                        color: AppColors.textLight, size: 20),
+                  ],
+                ),
+              ),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildActionTile(
-    ThemeData theme, {
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required VoidCallback onTap,
-  }) {
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      leading: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.primaryContainer.withValues(alpha: 0.4),
-          borderRadius: BorderRadius.circular(10),
+  Widget _buildLogoutButton(bool isDark) {
+    return Container(
+      width: double.infinity,
+      height: 54,
+      decoration: BoxDecoration(
+        gradient: AppColors.warmGradient,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.accent.withValues(alpha: 0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () {
+            HapticFeedback.mediumImpact();
+            _showLogoutConfirmation(Get.context!);
+          },
+          child: const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Iconsax.logout, color: Colors.white, size: 22),
+              Gap(10),
+              Text(
+                'تسجيل الخروج',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
         ),
-        child: Icon(icon, color: theme.colorScheme.primary, size: 22),
-      ),
-      title: Text(title,
-          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
-      subtitle: Text(subtitle,
-          style: TextStyle(
-              fontSize: 12,
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
-      trailing: Icon(Icons.chevron_left,
-          color: theme.colorScheme.onSurface.withValues(alpha: 0.4)),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      onTap: onTap,
-    );
-  }
-
-  Widget _buildLogoutButton(ThemeData theme) {
-    return FilledButton.icon(
-      onPressed: () {
-        HapticFeedback.mediumImpact();
-        _showLogoutConfirmation(Get.context!);
-      },
-      style: FilledButton.styleFrom(
-        backgroundColor: theme.colorScheme.error,
-        foregroundColor: theme.colorScheme.onError,
-        minimumSize: const Size(double.infinity, 52),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      ),
-      icon: const Icon(Icons.logout_rounded),
-      label: const Text(
-        'تسجيل الخروج',
-        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
       ),
     );
   }
 
   void _showLogoutConfirmation(BuildContext context) {
-    final theme = Theme.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     showDialog(
       context: context,
       builder: (ctx) => Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
+          backgroundColor: isDark ? AppColors.surfaceDark : AppColors.surface,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: Row(
             children: [
-              Icon(Icons.logout_rounded, color: theme.colorScheme.error),
-              const SizedBox(width: 8),
-              const Text('تسجيل الخروج'),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.error.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Iconsax.logout, color: AppColors.error, size: 20),
+              ),
+              const Gap(10),
+              Text('تسجيل الخروج',
+                  style: TextStyle(
+                    color: isDark ? AppColors.textOnDark : AppColors.textPrimary,
+                  )),
             ],
           ),
-          content: const Text('هل أنت متأكد أنك تريد تسجيل الخروج؟'),
+          content: Text('هل أنت متأكد أنك تريد تسجيل الخروج؟',
+              style: TextStyle(
+                color: isDark
+                    ? AppColors.textOnDarkSecondary
+                    : AppColors.textSecondary,
+              )),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('إلغاء'),
+              child: Text('إلغاء',
+                  style: TextStyle(color: AppColors.textSecondary)),
             ),
-            FilledButton(
-              onPressed: () {
-                Navigator.pop(ctx);
-                controller.logout();
-              },
-              style: FilledButton.styleFrom(
-                backgroundColor: theme.colorScheme.error,
+            Container(
+              decoration: BoxDecoration(
+                gradient: AppColors.warmGradient,
+                borderRadius: BorderRadius.circular(10),
               ),
-              child: const Text('تسجيل الخروج'),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(10),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    controller.logout();
+                  },
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    child: Text('تسجيل الخروج',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        )),
+                  ),
+                ),
+              ),
             ),
           ],
         ),
@@ -438,7 +628,7 @@ class ProfilePage extends GetView<ProfileController> {
   }
 
   void _showChangePasswordSheet(BuildContext context) {
-    final theme = Theme.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     controller.passwordError.value = '';
     controller.currentPasswordController.clear();
     controller.newPasswordController.clear();
@@ -447,6 +637,7 @@ class ProfilePage extends GetView<ProfileController> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: isDark ? AppColors.surfaceDark : AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -470,104 +661,92 @@ class ProfilePage extends GetView<ProfileController> {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.outline.withValues(alpha: 0.3),
+                      color: AppColors.textLight.withValues(alpha: 0.4),
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
                 ),
-                const SizedBox(height: 20),
+                const Gap(20),
                 Row(
                   children: [
-                    Icon(Icons.lock_outline, color: theme.colorScheme.primary),
-                    const SizedBox(width: 8),
-                    const Text(
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        gradient: AppColors.heroGradient,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Iconsax.lock, color: Colors.white, size: 20),
+                    ),
+                    const Gap(10),
+                    Text(
                       'تغيير كلمة المرور',
-                      style:
-                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: isDark
+                            ? AppColors.textOnDark
+                            : AppColors.textPrimary,
+                      ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 24),
+                const Gap(24),
                 // Current password
-                Obx(() => TextField(
+                Obx(() => _buildPasswordField(
                       controller: controller.currentPasswordController,
-                      obscureText: controller.obscureCurrent.value,
-                      textDirection: TextDirection.ltr,
-                      decoration: InputDecoration(
-                        labelText: 'كلمة المرور الحالية',
-                        prefixIcon: const Icon(Icons.lock_outline),
-                        suffixIcon: IconButton(
-                          icon: Icon(controller.obscureCurrent.value
-                              ? Icons.visibility_off
-                              : Icons.visibility),
-                          onPressed: () => controller.obscureCurrent.toggle(),
-                        ),
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12)),
-                      ),
+                      obscure: controller.obscureCurrent.value,
+                      toggleObscure: () => controller.obscureCurrent.toggle(),
+                      label: 'كلمة المرور الحالية',
+                      icon: Iconsax.lock,
+                      isDark: isDark,
                     )),
-                const SizedBox(height: 16),
+                const Gap(16),
                 // New password
-                Obx(() => TextField(
+                Obx(() => _buildPasswordField(
                       controller: controller.newPasswordController,
-                      obscureText: controller.obscureNew.value,
-                      textDirection: TextDirection.ltr,
-                      decoration: InputDecoration(
-                        labelText: 'كلمة المرور الجديدة',
-                        prefixIcon: const Icon(Icons.lock_reset),
-                        suffixIcon: IconButton(
-                          icon: Icon(controller.obscureNew.value
-                              ? Icons.visibility_off
-                              : Icons.visibility),
-                          onPressed: () => controller.obscureNew.toggle(),
-                        ),
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12)),
-                        helperText: '6 أحرف على الأقل',
-                      ),
+                      obscure: controller.obscureNew.value,
+                      toggleObscure: () => controller.obscureNew.toggle(),
+                      label: 'كلمة المرور الجديدة',
+                      icon: Iconsax.lock_1,
+                      isDark: isDark,
+                      helperText: '6 أحرف على الأقل',
                     )),
-                const SizedBox(height: 16),
+                const Gap(16),
                 // Confirm password
-                Obx(() => TextField(
+                Obx(() => _buildPasswordField(
                       controller: controller.confirmPasswordController,
-                      obscureText: controller.obscureConfirm.value,
-                      textDirection: TextDirection.ltr,
-                      decoration: InputDecoration(
-                        labelText: 'تأكيد كلمة المرور الجديدة',
-                        prefixIcon: const Icon(Icons.lock_reset),
-                        suffixIcon: IconButton(
-                          icon: Icon(controller.obscureConfirm.value
-                              ? Icons.visibility_off
-                              : Icons.visibility),
-                          onPressed: () => controller.obscureConfirm.toggle(),
-                        ),
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12)),
-                      ),
+                      obscure: controller.obscureConfirm.value,
+                      toggleObscure: () => controller.obscureConfirm.toggle(),
+                      label: 'تأكيد كلمة المرور الجديدة',
+                      icon: Iconsax.lock_1,
+                      isDark: isDark,
                     )),
                 // Error message
                 Obx(() {
                   if (controller.passwordError.value.isEmpty) {
-                    return const SizedBox(height: 20);
+                    return const Gap(20);
                   }
                   return Padding(
                     padding: const EdgeInsets.only(top: 12),
                     child: Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.errorContainer,
-                        borderRadius: BorderRadius.circular(10),
+                        color: AppColors.errorLight,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: AppColors.error.withValues(alpha: 0.3),
+                        ),
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.error_outline,
-                              color: theme.colorScheme.error, size: 18),
-                          const SizedBox(width: 8),
+                          const Icon(Iconsax.warning_2,
+                              color: AppColors.error, size: 18),
+                          const Gap(8),
                           Expanded(
                             child: Text(
                               controller.passwordError.value,
-                              style: TextStyle(
-                                color: theme.colorScheme.error,
+                              style: const TextStyle(
+                                color: AppColors.error,
                                 fontSize: 13,
                               ),
                             ),
@@ -577,39 +756,100 @@ class ProfilePage extends GetView<ProfileController> {
                     ),
                   );
                 }),
-                const SizedBox(height: 20),
+                const Gap(20),
                 // Submit button
-                Obx(() => FilledButton(
-                      onPressed: controller.isChangingPassword.value
-                          ? null
-                          : () async {
-                              HapticFeedback.mediumImpact();
-                              final navigator = Navigator.of(ctx);
-                              final success =
-                                  await controller.changePassword();
-                              if (success) navigator.pop();
-                            },
-                      style: FilledButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 50),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
+                Obx(() => Container(
+                      width: double.infinity,
+                      height: 52,
+                      decoration: BoxDecoration(
+                        gradient: AppColors.heroGradient,
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withValues(alpha: 0.3),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
-                      child: controller.isChangingPassword.value
-                          ? const SizedBox(
-                              width: 22,
-                              height: 22,
-                              child: CircularProgressIndicator(
-                                  color: Colors.white, strokeWidth: 2),
-                            )
-                          : const Text(
-                              'تغيير كلمة المرور',
-                              style: TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.w600),
-                            ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(14),
+                          onTap: controller.isChangingPassword.value
+                              ? null
+                              : () async {
+                                  HapticFeedback.mediumImpact();
+                                  final navigator = Navigator.of(ctx);
+                                  final success =
+                                      await controller.changePassword();
+                                  if (success) navigator.pop();
+                                },
+                          child: Center(
+                            child: controller.isChangingPassword.value
+                                ? LoadingAnimationWidget.staggeredDotsWave(
+                                    color: Colors.white, size: 22)
+                                : const Text(
+                                    'تغيير كلمة المرور',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                      ),
                     )),
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPasswordField({
+    required TextEditingController controller,
+    required bool obscure,
+    required VoidCallback toggleObscure,
+    required String label,
+    required IconData icon,
+    required bool isDark,
+    String? helperText,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.cardDark : AppColors.surfaceSunken,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isDark ? AppColors.cardBorderDark : AppColors.cardBorder,
+        ),
+      ),
+      child: TextField(
+        controller: controller,
+        obscureText: obscure,
+        textDirection: TextDirection.ltr,
+        style: TextStyle(
+          color: isDark ? AppColors.textOnDark : AppColors.textPrimary,
+        ),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: TextStyle(color: AppColors.textSecondary),
+          prefixIcon: Icon(icon, color: AppColors.primary, size: 20),
+          suffixIcon: IconButton(
+            icon: Icon(
+              obscure ? Iconsax.eye_slash : Iconsax.eye,
+              color: AppColors.textLight,
+              size: 20,
+            ),
+            onPressed: toggleObscure,
+          ),
+          border: InputBorder.none,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          helperText: helperText,
+          helperStyle: TextStyle(color: AppColors.textLight, fontSize: 11),
         ),
       ),
     );

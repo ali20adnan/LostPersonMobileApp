@@ -1,3 +1,5 @@
+import '../../core/constants/api_constants.dart';
+
 /// Missing person report model matching the API response
 class MissingPersonReport {
   final int id;
@@ -69,7 +71,7 @@ class MissingPersonReport {
       (p) => p.isPrimary,
       orElse: () => photos.first,
     );
-    return primary.path;
+    return primary.displayUrl;
   }
 
   factory MissingPersonReport.fromJson(Map<String, dynamic> json) {
@@ -124,18 +126,37 @@ class MissingPersonReport {
 class ReportPhoto {
   final int id;
   final String path;
+  final String? url;
   final bool isPrimary;
 
   const ReportPhoto({
     required this.id,
     required this.path,
+    this.url,
     this.isPrimary = false,
   });
+
+  /// Full URL for displaying the photo.
+  /// Prefers the `url` field from the API; falls back to constructing from path.
+  String? get displayUrl {
+    // Prefer full URL from backend
+    if (url != null && url!.isNotEmpty) {
+      if (url!.startsWith('http')) return url;
+      // Relative URL like /uploads/... — prepend server base
+      return '${ApiConstants.serverBaseUrl}$url';
+    }
+    if (path.isEmpty) return null;
+    if (path.startsWith('http')) return path;
+    // Raw storage key like missing-persons/photos/photo-xxx.jpg
+    if (path.startsWith('/uploads/')) return '${ApiConstants.serverBaseUrl}$path';
+    return '${ApiConstants.serverBaseUrl}/uploads/$path';
+  }
 
   factory ReportPhoto.fromJson(Map<String, dynamic> json) {
     return ReportPhoto(
       id: json['id'] as int,
       path: json['path'] as String? ?? '',
+      url: json['url'] as String?,
       isPrimary: json['isPrimary'] as bool? ?? false,
     );
   }

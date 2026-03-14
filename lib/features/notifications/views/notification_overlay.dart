@@ -1,11 +1,17 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 
+import '../../../app/themes/app_colors.dart';
+import '../../../app/routes/app_routes.dart';
 import '../controllers/notifications_controller.dart';
 import '../../../data/models/alert_model.dart';
 
-/// Floating notification bell button + dropdown overlay
+/// Floating notification bell button + glassmorphic dropdown overlay
 class NotificationOverlay extends StatelessWidget {
   const NotificationOverlay({super.key});
 
@@ -13,74 +19,73 @@ class NotificationOverlay extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = Get.find<NotificationsController>();
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Obx(() {
       return Stack(
         clipBehavior: Clip.none,
         children: [
-          // Bell button with scale animation
-          TweenAnimationBuilder<double>(
-            tween: Tween(begin: 1.0, end: controller.unreadCount.value > 0 ? 1.0 : 1.0),
-            duration: const Duration(milliseconds: 200),
-            builder: (context, value, child) => Transform.scale(
-              scale: value,
-              child: child,
-            ),
-            child: Material(
-              elevation: 4,
-              borderRadius: BorderRadius.circular(22),
-              color: theme.colorScheme.surface,
-              shadowColor: theme.colorScheme.shadow.withValues(alpha: 0.3),
-              child: InkWell(
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  controller.toggleOverlay();
-                },
-                borderRadius: BorderRadius.circular(22),
-                child: Container(
-                  width: 44,
-                  height: 44,
-                  alignment: Alignment.center,
+          // ── Bell Button ──────────────────────────────────
+          GestureDetector(
+            onTap: () {
+              HapticFeedback.lightImpact();
+              controller.toggleOverlay();
+            },
+            child: Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: isDark
+                    ? AppColors.surfaceDark.withValues(alpha: 0.8)
+                    : Colors.white.withValues(alpha: 0.85),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: isDark ? AppColors.glassBorderDark : AppColors.glassBorder,
+                ),
+                boxShadow: AppColors.cardShadow,
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(14),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                   child: Stack(
                     clipBehavior: Clip.none,
+                    alignment: Alignment.center,
                     children: [
-                      AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 200),
-                        child: Icon(
-                          controller.isOverlayOpen.value
-                              ? Icons.notifications
-                              : Icons.notifications_outlined,
-                          key: ValueKey(controller.isOverlayOpen.value),
-                          color: theme.colorScheme.primary,
-                          size: 24,
-                        ),
+                      Icon(
+                        controller.isOverlayOpen.value
+                            ? Iconsax.notification
+                            : Iconsax.notification,
+                        color: AppColors.primary,
+                        size: 22,
                       ),
                       // Unread badge
                       if (controller.unreadCount.value > 0)
                         Positioned(
-                          top: -6,
-                          right: -6,
+                          top: 6,
+                          right: 6,
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 4, vertical: 2),
                             decoration: BoxDecoration(
-                              color: theme.colorScheme.error,
-                              borderRadius: BorderRadius.circular(10),
+                              color: AppColors.accent,
+                              borderRadius: BorderRadius.circular(8),
                               border: Border.all(
-                                color: theme.colorScheme.surface,
+                                color: isDark
+                                    ? AppColors.surfaceDark
+                                    : Colors.white,
                                 width: 1.5,
                               ),
                             ),
                             constraints: const BoxConstraints(
-                              minWidth: 18,
-                              minHeight: 18,
-                            ),
+                                minWidth: 16, minHeight: 16),
                             child: Text(
                               controller.unreadCount.value > 99
                                   ? '99+'
                                   : '${controller.unreadCount.value}',
-                              style: TextStyle(
-                                color: theme.colorScheme.onError,
-                                fontSize: 10,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 9,
                                 fontWeight: FontWeight.bold,
                               ),
                               textAlign: TextAlign.center,
@@ -94,24 +99,15 @@ class NotificationOverlay extends StatelessWidget {
             ),
           ),
 
-          // Dropdown overlay with animation
+          // ── Dropdown Overlay ─────────────────────────────
           if (controller.isOverlayOpen.value)
             Positioned(
               top: 52,
               left: 0,
-              child: TweenAnimationBuilder<double>(
-                tween: Tween(begin: 0.0, end: 1.0),
-                duration: const Duration(milliseconds: 250),
-                curve: Curves.easeOutCubic,
-                builder: (context, value, child) => Opacity(
-                  opacity: value,
-                  child: Transform.translate(
-                    offset: Offset(0, -8 * (1 - value)),
-                    child: child,
-                  ),
-                ),
-                child: _NotificationDropdown(controller: controller),
-              ),
+              child: _NotificationDropdown(controller: controller)
+                  .animate()
+                  .fadeIn(duration: 200.ms)
+                  .slideY(begin: -0.1, end: 0, duration: 250.ms, curve: Curves.easeOutCubic),
             ),
         ],
       );
@@ -150,111 +146,149 @@ class _NotificationDropdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
-    return Material(
-      elevation: 8,
-      borderRadius: BorderRadius.circular(16),
-      color: theme.colorScheme.surface,
-      child: Container(
-        width: MediaQuery.of(context).size.width * 0.85,
-        constraints: const BoxConstraints(maxHeight: 400),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: theme.colorScheme.outline.withValues(alpha: 0.1),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+        child: Container(
+          width: MediaQuery.of(context).size.width * 0.88,
+          constraints: const BoxConstraints(maxHeight: 420),
+          decoration: BoxDecoration(
+            color: isDark
+                ? AppColors.surfaceDark.withValues(alpha: 0.9)
+                : Colors.white.withValues(alpha: 0.92),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isDark ? AppColors.glassBorderDark : AppColors.glassBorder,
+            ),
+            boxShadow: AppColors.elevatedShadow,
           ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Header
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-              child: Row(
-                children: [
-                  Text(
-                    'الإشعارات',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+                child: Row(
+                  children: [
+                    Icon(Iconsax.notification, size: 20, color: AppColors.primary),
+                    const SizedBox(width: 8),
+                    Text(
+                      'الإشعارات',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
-                  ),
-                  const Spacer(),
-                  Obx(() => controller.unreadCount.value > 0
-                      ? TextButton.icon(
-                          onPressed: controller.markAllAsRead,
-                          icon: const Icon(Icons.done_all, size: 16),
-                          label: const Text('قراءة الكل',
-                              style: TextStyle(fontSize: 12)),
-                          style: TextButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8),
-                            minimumSize: Size.zero,
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          ),
-                        )
-                      : const SizedBox.shrink()),
-                ],
+                    const Spacer(),
+                    Obx(() => controller.unreadCount.value > 0
+                        ? TextButton.icon(
+                            onPressed: controller.markAllAsRead,
+                            icon: const Icon(Iconsax.tick_circle, size: 14),
+                            label: const Text('قراءة الكل',
+                                style: TextStyle(fontSize: 11)),
+                            style: TextButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(horizontal: 8),
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                          )
+                        : const SizedBox.shrink()),
+                    TextButton.icon(
+                      onPressed: () {
+                        controller.isOverlayOpen.value = false;
+                        Get.toNamed(AppRoutes.notifications);
+                      },
+                      icon: const Icon(Iconsax.arrow_left_2, size: 14),
+                      label: const Text('عرض الكل',
+                          style: TextStyle(fontSize: 11)),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const Divider(height: 1),
+              Divider(height: 1, color: theme.dividerColor.withValues(alpha: 0.3)),
 
-            // Alert list
-            Flexible(
-              child: Obx(() {
-                if (controller.isLoading.value && controller.alerts.isEmpty) {
-                  return const Padding(
-                    padding: EdgeInsets.all(32),
-                    child: Center(child: CircularProgressIndicator()),
-                  );
-                }
-
-                if (controller.alerts.isEmpty) {
-                  return Padding(
-                    padding: const EdgeInsets.all(32),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.notifications_off_outlined,
-                            size: 40, color: theme.colorScheme.outline),
-                        const SizedBox(height: 8),
-                        Text(
-                          'لا توجد إشعارات',
-                          style: TextStyle(color: theme.colorScheme.outline),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
-                return ListView.separated(
-                  shrinkWrap: true,
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  itemCount: controller.alerts.length,
-                  separatorBuilder: (_, _) =>
-                      Divider(height: 1, indent: 16, endIndent: 16,
-                          color: theme.colorScheme.outline.withValues(alpha: 0.1)),
-                  itemBuilder: (context, index) {
-                    // Load more when reaching end
-                    if (index == controller.alerts.length - 1) {
-                      controller.loadMore();
-                    }
-                    return _AlertTile(
-                      alert: controller.alerts[index],
-                      onTap: () => controller.markAsRead(
-                          controller.alerts[index].id),
+              // Alert list
+              Flexible(
+                child: Obx(() {
+                  if (controller.isLoading.value && controller.alerts.isEmpty) {
+                    return const Padding(
+                      padding: EdgeInsets.all(32),
+                      child: Center(child: CircularProgressIndicator()),
                     );
-                  },
-                );
-              }),
-            ),
-          ],
+                  }
+
+                  if (controller.alerts.isEmpty) {
+                    return Padding(
+                      padding: const EdgeInsets.all(32),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: AppColors.primarySoft.withValues(
+                                  alpha: isDark ? 0.2 : 1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Iconsax.notification_bing,
+                              size: 32,
+                              color: AppColors.primary.withValues(alpha: 0.5),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'لا توجد إشعارات',
+                            style: TextStyle(
+                              color: theme.colorScheme.onSurface
+                                  .withValues(alpha: 0.4),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  return ListView.separated(
+                    shrinkWrap: true,
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    itemCount: controller.alerts.length,
+                    separatorBuilder: (_, __) => Divider(
+                      height: 1,
+                      indent: 60,
+                      endIndent: 16,
+                      color: theme.dividerColor.withValues(alpha: 0.15),
+                    ),
+                    itemBuilder: (context, index) {
+                      if (index == controller.alerts.length - 1) {
+                        controller.loadMore();
+                      }
+                      return _AlertTile(
+                        alert: controller.alerts[index],
+                        onTap: () =>
+                            controller.markAsRead(controller.alerts[index].id),
+                      );
+                    },
+                  );
+                }),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-/// Single alert tile
+/// Single alert tile with modern design
 class _AlertTile extends StatelessWidget {
   final Alert alert;
   final VoidCallback onTap;
@@ -274,11 +308,11 @@ class _AlertTile extends StatelessWidget {
           children: [
             // Type icon
             Container(
-              width: 36,
-              height: 36,
+              width: 38,
+              height: 38,
               decoration: BoxDecoration(
                 color: _typeColor(alert.type, theme).withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
                 _typeIcon(alert.type),
@@ -307,7 +341,7 @@ class _AlertTile extends StatelessWidget {
                           alert.typeDisplayAr,
                           style: TextStyle(
                             fontSize: 10,
-                            fontWeight: FontWeight.bold,
+                            fontWeight: FontWeight.w600,
                             color: _typeColor(alert.type, theme),
                           ),
                         ),
@@ -316,7 +350,8 @@ class _AlertTile extends StatelessWidget {
                       Text(
                         _formatTime(alert.createdAt),
                         style: theme.textTheme.labelSmall?.copyWith(
-                          color: theme.colorScheme.outline,
+                          color: theme.colorScheme.onSurface
+                              .withValues(alpha: 0.35),
                         ),
                       ),
                     ],
@@ -333,7 +368,8 @@ class _AlertTile extends StatelessWidget {
                     Text(
                       alert.report!.personName!,
                       style: theme.textTheme.labelSmall?.copyWith(
-                        color: theme.colorScheme.primary,
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
@@ -349,30 +385,30 @@ class _AlertTile extends StatelessWidget {
   IconData _typeIcon(String type) {
     switch (type) {
       case 'sighting':
-        return Icons.visibility;
+        return Iconsax.eye;
       case 'tip':
-        return Icons.lightbulb_outline;
+        return Iconsax.lamp_on;
       case 'found':
-        return Icons.check_circle_outline;
+        return Iconsax.tick_circle;
       case 'information':
-        return Icons.info_outline;
+        return Iconsax.info_circle;
       default:
-        return Icons.notifications;
+        return Iconsax.notification;
     }
   }
 
   Color _typeColor(String type, ThemeData theme) {
     switch (type) {
       case 'sighting':
-        return Colors.blue;
+        return AppColors.info;
       case 'tip':
-        return Colors.orange;
+        return AppColors.warning;
       case 'found':
-        return Colors.green;
+        return AppColors.success;
       case 'information':
-        return Colors.purple;
+        return AppColors.primary;
       default:
-        return theme.colorScheme.primary;
+        return AppColors.secondary;
     }
   }
 

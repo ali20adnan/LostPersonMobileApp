@@ -69,7 +69,12 @@ class ConversationRepository {
   Future<int> getUnreadCount() async {
     final response = await _api.get(ApiConstants.messagesUnreadCount);
     if (response.isSuccess && response.data != null) {
-      return (response.data as Map<String, dynamic>)['count'] as int? ?? 0;
+      // Backend may return a plain int or {count: N}
+      if (response.data is int) return response.data as int;
+      if (response.data is Map) {
+        return (response.data as Map<String, dynamic>)['count'] as int? ?? 0;
+      }
+      return 0;
     }
     return 0;
   }
@@ -94,6 +99,20 @@ class ConversationRepository {
     debugPrint(
         'ConversationRepository: Error fetching messages - ${response.errorMessage}');
     return [];
+  }
+
+  /// Send a text message via REST API (guaranteed delivery)
+  Future<ChatMessage?> sendMessage(int conversationId, String content) async {
+    final response = await _api.post(
+      '${ApiConstants.conversations}/$conversationId/messages',
+      body: {'content': content},
+    );
+    if (response.isSuccess && response.data != null) {
+      return ChatMessage.fromJson(response.data as Map<String, dynamic>);
+    }
+    debugPrint(
+        'ConversationRepository: Error sending message - ${response.errorMessage}');
+    return null;
   }
 
   /// Upload image in a conversation message

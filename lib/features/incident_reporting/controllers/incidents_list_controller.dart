@@ -147,8 +147,7 @@ class IncidentsListController extends GetxController {
     return reports
         .where((r) =>
             r.severity == ReportSeverity.critical.name &&
-            r.status != ReportStatus.resolved.apiValue &&
-            r.status != ReportStatus.closed.apiValue)
+            r.status != ReportStatus.resolved.apiValue)
         .toList();
   }
 }

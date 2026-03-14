@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:gap/gap.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:intl/intl.dart';
 
+import '../../../app/themes/app_colors.dart';
 import '../../../data/models/incident_model.dart';
 import '../../../core/constants/incident_constants.dart';
 
@@ -17,7 +20,7 @@ class IncidentCardWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final type = ReportType.fromString(incident.type);
     final severity = ReportSeverity.fromString(incident.severity ?? 'medium');
     final status = ReportStatus.fromApiString(incident.status);
@@ -25,20 +28,14 @@ class IncidentCardWidget extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
+          color: isDark ? AppColors.cardDark : AppColors.card,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: theme.colorScheme.outline.withValues(alpha: 0.15),
+            color: isDark ? AppColors.cardBorderDark : AppColors.cardBorder,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          boxShadow: AppColors.softShadow,
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(16),
@@ -46,10 +43,19 @@ class IncidentCardWidget extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Left severity accent bar
+                // Left severity accent bar with gradient fade
                 Container(
                   width: 5,
-                  color: severity.color,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        severity.color,
+                        severity.color.withValues(alpha: 0.3),
+                      ],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    ),
+                  ),
                 ),
                 // Card content
                 Expanded(
@@ -64,39 +70,58 @@ class IncidentCardWidget extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.all(9),
                               decoration: BoxDecoration(
-                                color: severity.color.withValues(alpha: 0.12),
+                                gradient: LinearGradient(
+                                  colors: [
+                                    severity.color,
+                                    severity.color.withValues(alpha: 0.7),
+                                  ],
+                                ),
                                 borderRadius: BorderRadius.circular(10),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: severity.color.withValues(alpha: 0.3),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
                               ),
                               child: Icon(
                                 type.icon,
-                                color: severity.color,
+                                color: Colors.white,
                                 size: 22,
                               ),
                             ),
-                            const SizedBox(width: 10),
+                            const Gap(10),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
                                     incident.displayTitle,
-                                    style: theme.textTheme.titleSmall?.copyWith(
+                                    style: TextStyle(
                                       fontWeight: FontWeight.bold,
+                                      fontSize: 14,
+                                      color: isDark
+                                          ? AppColors.textOnDark
+                                          : AppColors.textPrimary,
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
-                                  const SizedBox(height: 2),
+                                  const Gap(2),
                                   Text(
                                     type.displayNameAr,
-                                    style: theme.textTheme.bodySmall?.copyWith(
-                                      color: theme.colorScheme.onSurfaceVariant,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: isDark
+                                          ? AppColors.textOnDarkSecondary
+                                          : AppColors.textSecondary,
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                            const SizedBox(width: 8),
+                            const Gap(8),
                             // Status badge
                             Container(
                               padding: const EdgeInsets.symmetric(
@@ -125,7 +150,9 @@ class IncidentCardWidget extends StatelessWidget {
                       Divider(
                         height: 1,
                         thickness: 1,
-                        color: theme.colorScheme.outline.withValues(alpha: 0.1),
+                        color: isDark
+                            ? AppColors.dividerDark
+                            : AppColors.divider,
                         indent: 14,
                         endIndent: 14,
                       ),
@@ -139,36 +166,42 @@ class IncidentCardWidget extends StatelessWidget {
                             // Description
                             Text(
                               incident.description ?? '',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurface
-                                    .withValues(alpha: 0.75),
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: isDark
+                                    ? AppColors.textOnDark.withValues(alpha: 0.75)
+                                    : AppColors.textPrimary.withValues(alpha: 0.75),
                               ),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            const SizedBox(height: 10),
+                            const Gap(10),
 
                             // Location + severity row
                             Row(
                               children: [
                                 Icon(
-                                  Icons.location_on_outlined,
+                                  Iconsax.location,
                                   size: 14,
-                                  color: theme.colorScheme.onSurfaceVariant,
+                                  color: isDark
+                                      ? AppColors.textOnDarkSecondary
+                                      : AppColors.textSecondary,
                                 ),
-                                const SizedBox(width: 4),
+                                const Gap(4),
                                 Expanded(
                                   child: Text(
                                     incident.addressLine ?? '',
-                                    style: theme.textTheme.bodySmall?.copyWith(
-                                      color:
-                                          theme.colorScheme.onSurfaceVariant,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: isDark
+                                          ? AppColors.textOnDarkSecondary
+                                          : AppColors.textSecondary,
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
-                                const SizedBox(width: 8),
+                                const Gap(8),
                                 Container(
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 8, vertical: 3),
@@ -188,7 +221,7 @@ class IncidentCardWidget extends StatelessWidget {
                               ],
                             ),
 
-                            const SizedBox(height: 8),
+                            const Gap(8),
 
                             // Footer: time
                             Row(
@@ -197,17 +230,19 @@ class IncidentCardWidget extends StatelessWidget {
                                 Row(
                                   children: [
                                     Icon(
-                                      Icons.access_time_rounded,
+                                      Iconsax.clock,
                                       size: 13,
-                                      color: theme.colorScheme.onSurfaceVariant,
+                                      color: isDark
+                                          ? AppColors.textOnDarkSecondary
+                                          : AppColors.textLight,
                                     ),
-                                    const SizedBox(width: 4),
+                                    const Gap(4),
                                     Text(
                                       _formatTimestamp(incident.createdAt),
-                                      style: theme.textTheme.bodySmall
-                                          ?.copyWith(
-                                        color: theme
-                                            .colorScheme.onSurfaceVariant,
+                                      style: TextStyle(
+                                        color: isDark
+                                            ? AppColors.textOnDarkSecondary
+                                            : AppColors.textLight,
                                         fontSize: 11,
                                       ),
                                     ),

@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:get/get.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 
+import '../../../app/themes/app_colors.dart';
 import '../../../data/models/missing_person_report_model.dart';
 import '../controllers/missing_persons_controller.dart';
 import '../widgets/missing_person_card.dart';
@@ -11,155 +15,48 @@ class MissingPersonsPage extends GetView<MissingPersonsController> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: const Text(
-          'الأشخاص المفقودون',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        centerTitle: true,
-        elevation: 0,
-      ),
-      body: Column(
-        children: [
-          _buildStatsHeader(),
-          _buildSearchBar(theme),
-          const SizedBox(height: 8),
-          _buildTabs(theme),
-          const SizedBox(height: 4),
-          Expanded(
-            child: Obx(() => _buildTabContent(theme)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatsHeader() {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topRight,
-          end: Alignment.bottomLeft,
-          colors: [Color(0xFF8B5CF6), Color(0xFF7C3AED)],
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF8B5CF6).withValues(alpha: 0.3),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(
-                  Icons.manage_search,
-                  color: Colors.white,
-                  size: 26,
-                ),
-              ),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'خدمة العثور على المفقودين',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                      ),
-                    ),
-                    SizedBox(height: 2),
-                    Text(
-                      'نساعدك في العثور على المفقودين في الحرم الشريف',
-                      style: TextStyle(
-                        color: Color(0xCCFFFFFF),
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Obx(
-            () => Row(
-              children: [
-                _buildStatPill(
-                  Icons.person_search_outlined,
-                  '${controller.reportedPersons.length}',
-                  'مبلَّغ عنهم',
-                ),
-                const SizedBox(width: 10),
-                _buildStatPill(
-                  Icons.check_circle_outline,
-                  '${controller.foundPersons.length}',
-                  'تم العثور عليهم',
-                ),
-              ],
+      backgroundColor: isDark ? AppColors.backgroundDark : AppColors.background,
+      body: CustomScrollView(
+        slivers: [
+          _buildSliverAppBar(isDark),
+          SliverToBoxAdapter(child: _buildSearchBar(theme, isDark)),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+              child: _buildTabs(theme, isDark),
             ),
           ),
+          SliverFillRemaining(
+            hasScrollBody: true,
+            child: Obx(() => _buildTabContent(theme, isDark)),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildStatPill(IconData icon, String count, String label) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.18),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, color: Colors.white, size: 22),
-            const SizedBox(width: 8),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  count,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20,
-                  ),
-                ),
-                Text(
-                  label,
-                  style: const TextStyle(
-                    color: Color(0xCCFFFFFF),
-                    fontSize: 11,
-                  ),
-                ),
-              ],
-            ),
-          ],
+  Widget _buildSliverAppBar(bool isDark) {
+    return SliverAppBar(
+      pinned: true,
+      flexibleSpace: FlexibleSpaceBar(
+        background: Container(
+          decoration: const BoxDecoration(color: AppColors.primary),
         ),
       ),
+      title: const Text(
+        'الأشخاص المفقودون',
+        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+      ),
+      centerTitle: true,
     );
   }
 
-  Widget _buildSearchBar(ThemeData theme) {
+
+
+  Widget _buildSearchBar(ThemeData theme, bool isDark) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
       child: TextField(
@@ -168,86 +65,71 @@ class MissingPersonsPage extends GetView<MissingPersonsController> {
         decoration: InputDecoration(
           hintText: 'ابحث بالاسم أو البلد أو الوصف...',
           hintTextDirection: TextDirection.rtl,
-          prefixIcon: const Icon(Icons.search),
+          prefixIcon: Icon(Iconsax.search_normal_1, color: AppColors.primary, size: 20),
           filled: true,
-          fillColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.45),
+          fillColor: isDark
+              ? AppColors.surfaceDark
+              : AppColors.surfaceSunken,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
             borderSide: BorderSide.none,
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide.none,
+            borderSide: BorderSide(
+              color: isDark ? AppColors.borderDark : AppColors.border,
+            ),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(
-              color: theme.colorScheme.primary,
-              width: 1.5,
-            ),
+            borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
           ),
-          contentPadding: const EdgeInsets.symmetric(
-            vertical: 12,
-            horizontal: 16,
-          ),
+          contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         ),
       ),
     );
   }
 
-  Widget _buildTabs(ThemeData theme) {
+  Widget _buildTabs(ThemeData theme, bool isDark) {
     return Obx(
       () => Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16),
         decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
-          borderRadius: BorderRadius.circular(14),
+          color: isDark
+              ? AppColors.surfaceDark
+              : AppColors.surfaceSunken,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isDark ? AppColors.borderDark : AppColors.border,
+          ),
         ),
+        padding: const EdgeInsets.all(4),
         child: Row(
           children: [
-            _buildTab(
-              theme,
-              'المبلغ عنهم',
-              Icons.person_search,
-              0,
-              controller.reportedPersons.length,
-            ),
-            _buildTab(
-              theme,
-              'تم العثور',
-              Icons.check_circle_outline,
-              1,
-              controller.foundPersons.length,
-            ),
+            _buildTab(isDark, 'المبلغ عنهم', Iconsax.search_normal, 0,
+                controller.reportedPersons.length),
+            _buildTab(isDark, 'تم العثور', Iconsax.tick_circle, 1,
+                controller.foundPersons.length),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildTab(
-    ThemeData theme,
-    String label,
-    IconData icon,
-    int index,
-    int count,
-  ) {
+  Widget _buildTab(bool isDark, String label, IconData icon, int index, int count) {
     final isSelected = controller.selectedTab.value == index;
     return Expanded(
       child: GestureDetector(
         onTap: () => controller.changeTab(index),
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 220),
-          padding: const EdgeInsets.symmetric(vertical: 11),
+          duration: const Duration(milliseconds: 250),
+          padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
-            color: isSelected
-                ? theme.colorScheme.primary
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(14),
+            gradient: isSelected ? AppColors.heroGradient : null,
+            borderRadius: BorderRadius.circular(12),
             boxShadow: isSelected
                 ? [
                     BoxShadow(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                      color: AppColors.primary.withValues(alpha: 0.3),
                       blurRadius: 8,
                       offset: const Offset(0, 3),
                     ),
@@ -257,44 +139,31 @@ class MissingPersonsPage extends GetView<MissingPersonsController> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                icon,
-                size: 18,
-                color: isSelected
-                    ? Colors.white
-                    : theme.colorScheme.onSurface.withValues(alpha: 0.6),
-              ),
+              Icon(icon, size: 16, color: isSelected ? Colors.white : AppColors.textLight),
               const SizedBox(width: 6),
               Text(
                 label,
                 style: TextStyle(
-                  color: isSelected
-                      ? Colors.white
-                      : theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                  fontWeight:
-                      isSelected ? FontWeight.bold : FontWeight.normal,
-                  fontSize: 14,
+                  color: isSelected ? Colors.white : AppColors.textLight,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  fontSize: 13,
                 ),
               ),
               const SizedBox(width: 6),
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 220),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                 decoration: BoxDecoration(
                   color: isSelected
                       ? Colors.white.withValues(alpha: 0.25)
-                      : theme.colorScheme.outline.withValues(alpha: 0.2),
+                      : AppColors.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   '$count',
                   style: TextStyle(
-                    color: isSelected
-                        ? Colors.white
-                        : theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                    color: isSelected ? Colors.white : AppColors.primary,
                     fontWeight: FontWeight.bold,
-                    fontSize: 12,
+                    fontSize: 11,
                   ),
                 ),
               ),
@@ -305,41 +174,30 @@ class MissingPersonsPage extends GetView<MissingPersonsController> {
     );
   }
 
-  Widget _buildTabContent(ThemeData theme) {
+  Widget _buildTabContent(ThemeData theme, bool isDark) {
     final tab = controller.selectedTab.value;
     if (tab == 0) {
-      return _buildPersonList(
-        theme,
-        controller.filteredReportedPersons,
-        isFound: false,
-      );
+      return _buildPersonList(theme, isDark, controller.filteredReportedPersons, isFound: false);
     }
-    return _buildPersonList(
-      theme,
-      controller.filteredFoundPersons,
-      isFound: true,
-    );
+    return _buildPersonList(theme, isDark, controller.filteredFoundPersons, isFound: true);
   }
 
   Widget _buildPersonList(
     ThemeData theme,
+    bool isDark,
     List<MissingPersonReport> persons, {
     required bool isFound,
   }) {
     if (persons.isEmpty) {
       final hasSearch = controller.searchQuery.value.isNotEmpty;
       return _buildEmptyState(
-        theme,
+        isDark,
         hasSearch
-            ? Icons.search_off
-            : (isFound
-                ? Icons.sentiment_satisfied_alt
-                : Icons.person_search),
+            ? Iconsax.search_normal
+            : (isFound ? Iconsax.tick_circle : Iconsax.search_status),
         hasSearch
             ? 'لا توجد نتائج'
-            : (isFound
-                ? 'لا يوجد أشخاص تم العثور عليهم'
-                : 'لا توجد بلاغات حالياً'),
+            : (isFound ? 'لا يوجد أشخاص تم العثور عليهم' : 'لا توجد بلاغات حالياً'),
         hasSearch
             ? 'جرب تغيير كلمة البحث'
             : (isFound
@@ -348,52 +206,66 @@ class MissingPersonsPage extends GetView<MissingPersonsController> {
       );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
-      itemCount: persons.length,
-      itemBuilder: (context, index) {
-        final person = persons[index];
-        return MissingPersonCard(
-          person: person,
-          isFound: isFound,
-          onMarkFound:
-              isFound ? null : () => controller.markAsFound(person),
-        );
-      },
+    return AnimationLimiter(
+      child: ListView.builder(
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
+        itemCount: persons.length,
+        itemBuilder: (context, index) {
+          final person = persons[index];
+          return AnimationConfiguration.staggeredList(
+            position: index,
+            duration: const Duration(milliseconds: 375),
+            child: SlideAnimation(
+              verticalOffset: 50.0,
+              child: FadeInAnimation(
+                child: MissingPersonCard(
+                  person: person,
+                  isFound: isFound,
+                  onMarkFound: isFound ? null : () => controller.markAsFound(person),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 
-  Widget _buildEmptyState(
-    ThemeData theme,
-    IconData icon,
-    String title,
-    String subtitle,
-  ) {
+  Widget _buildEmptyState(bool isDark, IconData icon, String title, String subtitle) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              icon,
-              size: 80,
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
-            ),
-            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.primary.withValues(alpha: 0.15),
+                    AppColors.secondary.withValues(alpha: 0.08),
+                  ],
+                ),
+              ),
+              child: Icon(icon, size: 56, color: AppColors.primary),
+            ).animate().scale(duration: 500.ms, curve: Curves.elasticOut),
+            const SizedBox(height: 20),
             Text(
               title,
-              style: theme.textTheme.titleLarge?.copyWith(
+              style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                fontSize: 18,
+                color: isDark ? AppColors.textOnDark : AppColors.textPrimary,
               ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
               subtitle,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+              style: TextStyle(
+                color: isDark ? AppColors.textOnDarkSecondary : AppColors.textSecondary,
               ),
               textAlign: TextAlign.center,
             ),

@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:gap/gap.dart';
 import 'package:get/get.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 
+import '../../../app/themes/app_colors.dart';
 import '../controllers/languages_controller.dart';
 import '../widgets/language_card.dart';
 
@@ -9,127 +14,109 @@ class LanguagesPage extends GetView<LanguagesController> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
-      appBar: AppBar(
-        title: const Text(
-          'اختيار اللغة',
-          style: TextStyle(fontWeight: FontWeight.bold),
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        backgroundColor:
+            isDark ? AppColors.backgroundDark : AppColors.background,
+        appBar: AppBar(
+          title: const Text(
+            'اختيار اللغة',
+            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+          ),
+          centerTitle: true,
+          elevation: 0,
+          flexibleSpace: Container(
+            decoration: const BoxDecoration(color: AppColors.primary),
+          ),
+          iconTheme: const IconThemeData(color: Colors.white),
+          leading: IconButton(
+            icon: const Icon(Iconsax.arrow_right_3),
+            onPressed: () => Get.back(),
+          ),
         ),
-        centerTitle: true,
-        elevation: 0,
-        backgroundColor: theme.colorScheme.surface,
-      ),
-      body: Column(
-        children: [
-          // Top decoration
-          Container(
-            height: 4,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  theme.colorScheme.primary,
-                  theme.colorScheme.secondary,
+        body: Column(
+          children: [
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                children: [
+                  _buildSectionHeader(
+                    isDark,
+                    'اللغة المصدر',
+                    'Source Language',
+                    Iconsax.microphone,
+                  ).animate().fadeIn(duration: 300.ms).slideX(begin: 0.05),
+                  const Gap(8),
+                  Obx(() => _buildLanguageList(isDark, isSource: true)),
+                  const Gap(20),
+                  _buildSwapButton(isDark)
+                      .animate()
+                      .fadeIn(delay: 200.ms, duration: 400.ms)
+                      .scale(begin: const Offset(0.95, 0.95)),
+                  const Gap(20),
+                  _buildSectionHeader(
+                    isDark,
+                    'اللغة الهدف',
+                    'Target Language',
+                    Iconsax.translate,
+                  ).animate().fadeIn(delay: 300.ms, duration: 300.ms).slideX(begin: 0.05),
+                  const Gap(8),
+                  Obx(() => _buildLanguageList(isDark, isSource: false)),
+                  const Gap(100),
                 ],
               ),
             ),
-          ),
-
-          // Main content
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              children: [
-                // Source Language Section
-                _buildSectionHeader(
-                  context,
-                  'اللغة المصدر',
-                  'Source Language',
-                  Icons.mic_rounded,
-                ),
-                const SizedBox(height: 8),
-                Obx(() => _buildLanguageList(
-                      context,
-                      isSource: true,
-                    )),
-
-                const SizedBox(height: 24),
-
-                // Swap Button
-                _buildSwapButton(context),
-
-                const SizedBox(height: 24),
-
-                // Target Language Section
-                _buildSectionHeader(
-                  context,
-                  'اللغة الهدف',
-                  'Target Language',
-                  Icons.translate_rounded,
-                ),
-                const SizedBox(height: 8),
-                Obx(() => _buildLanguageList(
-                      context,
-                      isSource: false,
-                    )),
-
-                const SizedBox(height: 100),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
+        floatingActionButton: _buildSaveButton(isDark),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       ),
-
-      // Floating Save Button
-      floatingActionButton: _buildSaveButton(context),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 
   Widget _buildSectionHeader(
-    BuildContext context,
+    bool isDark,
     String titleAr,
     String titleEn,
     IconData icon,
   ) {
-    final theme = Theme.of(context);
-
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(9),
             decoration: BoxDecoration(
-              color: theme.colorScheme.primaryContainer,
-              borderRadius: BorderRadius.circular(10),
+              gradient: AppColors.heroGradient,
+              borderRadius: BorderRadius.circular(11),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withValues(alpha: 0.25),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
-            child: Icon(
-              icon,
-              color: theme.colorScheme.primary,
-              size: 20,
-            ),
+            child: Icon(icon, color: Colors.white, size: 18),
           ),
-          const SizedBox(width: 10),
+          const Gap(10),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 titleAr,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
+                style: TextStyle(
                   fontSize: 16,
-                  color: theme.colorScheme.onSurface,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? AppColors.textOnDark : AppColors.textPrimary,
                 ),
               ),
               Text(
                 titleEn,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  fontSize: 11,
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                ),
+                style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
               ),
             ],
           ),
@@ -138,7 +125,7 @@ class LanguagesPage extends GetView<LanguagesController> {
     );
   }
 
-  Widget _buildLanguageList(BuildContext context, {required bool isSource}) {
+  Widget _buildLanguageList(bool isDark, {required bool isSource}) {
     final selectedLanguage = isSource
         ? controller.selectedSourceLanguage.value
         : controller.selectedTargetLanguage.value;
@@ -151,6 +138,7 @@ class LanguagesPage extends GetView<LanguagesController> {
           language: language,
           isSelected: isSelected,
           onTap: () {
+            HapticFeedback.lightImpact();
             if (isSource) {
               controller.selectSourceLanguage(language);
             } else {
@@ -162,88 +150,90 @@ class LanguagesPage extends GetView<LanguagesController> {
     );
   }
 
-  Widget _buildSwapButton(BuildContext context) {
-    final theme = Theme.of(context);
-
+  Widget _buildSwapButton(bool isDark) {
     return Center(
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: controller.swapLanguages,
-          borderRadius: BorderRadius.circular(16),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: theme.colorScheme.outline.withValues(alpha: 0.2),
+      child: GestureDetector(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          controller.swapLanguages();
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.cardDark : AppColors.card,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isDark ? AppColors.cardBorderDark : AppColors.cardBorder,
+            ),
+            boxShadow: AppColors.cardShadow,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  gradient: AppColors.heroGradient,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Iconsax.arrow_swap_horizontal,
+                    color: Colors.white, size: 18),
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
+              const Gap(10),
+              Text(
+                'تبديل اللغات',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.primary,
                 ),
-              ],
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.swap_vert_rounded,
-                  color: theme.colorScheme.primary,
-                  size: 24,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'تبديل اللغات',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontSize: 15,
-                    color: theme.colorScheme.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildSaveButton(BuildContext context) {
-    final theme = Theme.of(context);
-
+  Widget _buildSaveButton(bool isDark) {
     return Container(
       width: double.infinity,
+      height: 52,
       margin: const EdgeInsets.symmetric(horizontal: 20),
-      height: 50,
-      child: ElevatedButton(
-        onPressed: controller.saveAndGoBack,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: theme.colorScheme.primary,
-          foregroundColor: theme.colorScheme.onPrimary,
-          elevation: 4,
-          shadowColor: theme.colorScheme.primary.withValues(alpha: 0.4),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+      decoration: BoxDecoration(
+        gradient: AppColors.heroGradient,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.35),
+            blurRadius: 14,
+            offset: const Offset(0, 5),
           ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.check_circle_outline, size: 20),
-            const SizedBox(width: 10),
-            Text(
-              'حفظ التغييرات',
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontSize: 15,
-                color: theme.colorScheme.onPrimary,
-                fontWeight: FontWeight.bold,
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () {
+            HapticFeedback.mediumImpact();
+            controller.saveAndGoBack();
+          },
+          child: const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Iconsax.tick_circle, color: Colors.white, size: 20),
+              Gap(10),
+              Text(
+                'حفظ التغييرات',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

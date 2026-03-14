@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:gap/gap.dart';
 import 'package:get/get.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 
+import '../../../app/themes/app_colors.dart';
 import '../../../core/widgets/audio_visualizer.dart';
 import '../../../core/widgets/connection_status_indicator.dart';
 import '../../../core/widgets/language_selector.dart';
@@ -13,16 +18,25 @@ class TranslatorPage extends GetView<TranslatorController> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
+      backgroundColor: isDark ? AppColors.backgroundDark : AppColors.background,
       appBar: AppBar(
-        title: const Text('مترجم الحرم الفوري'),
+        title: const Text(
+          'مترجم الحرم الفوري',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
         centerTitle: true,
         elevation: 0,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(color: AppColors.primary),
+        ),
+        iconTheme: const IconThemeData(color: Colors.white),
         actions: [
-          // Connection status
           Obx(
             () => Padding(
               padding: const EdgeInsets.only(left: 16),
@@ -38,60 +52,43 @@ class TranslatorPage extends GetView<TranslatorController> {
       body: SafeArea(
         child: Column(
           children: [
-            const SizedBox(height: 16),
-
-            // Language selector with swap button
-            _buildLanguageSelector(theme),
-
-            const SizedBox(height: 24),
-
-            // Chat messages display
+            const Gap(16),
+            _buildLanguageSelector(isDark)
+                .animate()
+                .fadeIn(duration: 400.ms)
+                .slideY(begin: -0.1),
+            const Gap(16),
             Expanded(
               child: Column(
                 children: [
-                  // Messages list
                   Expanded(
                     child: Obx(
                       () => controller.messages.isEmpty
-                          ? Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.chat_bubble_outline,
-                                    size: 64,
-                                    color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    'ابدأ الحديث لرؤية الترجمة',
-                                    style: theme.textTheme.bodyLarge?.copyWith(
-                                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            )
+                          ? _buildEmptyState(isDark)
                           : ListView.builder(
                               reverse: true,
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 8),
                               itemCount: controller.messages.length,
                               itemBuilder: (context, index) {
-                                // Reverse index to show latest at bottom
-                                final messageIndex = controller.messages.length - 1 - index;
-                                final message = controller.messages[messageIndex];
+                                final messageIndex =
+                                    controller.messages.length - 1 - index;
+                                final message =
+                                    controller.messages[messageIndex];
 
                                 return Column(
                                   children: [
-                                    // Original message (right side)
-                                    if (message.originalText.trim().isNotEmpty)
+                                    if (message.originalText
+                                        .trim()
+                                        .isNotEmpty)
                                       MessageBubble(
                                         text: message.originalText,
                                         isOriginal: true,
                                         timestamp: message.timestamp,
                                       ),
-                                    // Translation message (left side)
-                                    if (message.translatedText.trim().isNotEmpty)
+                                    if (message.translatedText
+                                        .trim()
+                                        .isNotEmpty)
                                       MessageBubble(
                                         text: message.translatedText,
                                         isOriginal: false,
@@ -103,8 +100,6 @@ class TranslatorPage extends GetView<TranslatorController> {
                             ),
                     ),
                   ),
-
-                  // Audio visualizer
                   Obx(
                     () => controller.isRecording.value
                         ? Padding(
@@ -113,15 +108,12 @@ class TranslatorPage extends GetView<TranslatorController> {
                               amplitude: controller.audioLevel.value,
                             ),
                           )
-                        : const SizedBox(height: 8),
+                        : const Gap(8),
                   ),
                 ],
               ),
             ),
-
-            const SizedBox(height: 24),
-
-            // Record button
+            const Gap(16),
             Obx(
               () => RecordButton(
                 isRecording: controller.isRecording.value,
@@ -130,116 +122,210 @@ class TranslatorPage extends GetView<TranslatorController> {
                 size: 80,
               ),
             ),
-
-            const SizedBox(height: 16),
-
-            // Recording hint
+            const Gap(12),
             Obx(
               () => Text(
-                controller.isRecording.value
-                    ? 'اضغط للتوقف'
-                    : 'اضغط للبدء',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                controller.isRecording.value ? 'اضغط للتوقف' : 'اضغط للبدء',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: isDark
+                      ? AppColors.textOnDarkSecondary
+                      : AppColors.textSecondary,
                 ),
               ),
             ),
-
-            const SizedBox(height: 24),
+            const Gap(24),
           ],
         ),
       ),
-
-      // Floating action buttons
-      floatingActionButton: _buildFloatingActions(),
+      floatingActionButton: _buildFloatingActions(isDark),
       floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
     );
   }
 
-  Widget _buildLanguageSelector(ThemeData theme) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
+  Widget _buildEmptyState(bool isDark) {
+    return Center(
+      child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Source language
-          Flexible(
-            child: Obx(
-              () => LanguageSelector(
-                language: controller.sourceLanguage.value,
-                onTap: controller.goToLanguageSelection,
-              ),
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              gradient: AppColors.heroGradient,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withValues(alpha: 0.3),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: const Icon(
+              Iconsax.translate,
+              size: 48,
+              color: Colors.white,
             ),
           ),
-
-          const SizedBox(width: 16),
-
-          // Swap button
-          InkWell(
-            onTap: controller.swapLanguages,
-            borderRadius: BorderRadius.circular(20),
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.swap_horiz,
-                color: theme.colorScheme.primary,
-                size: 28,
-              ),
+          const Gap(20),
+          Text(
+            'ابدأ الحديث لرؤية الترجمة',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: isDark ? AppColors.textOnDarkSecondary : AppColors.textSecondary,
             ),
           ),
-
-          const SizedBox(width: 16),
-
-          // Target language
-          Flexible(
-            child: Obx(
-              () => LanguageSelector(
-                language: controller.targetLanguage.value,
-                onTap: controller.goToLanguageSelection,
-              ),
+          const Gap(8),
+          Text(
+            'اضغط على زر التسجيل أدناه',
+            style: TextStyle(
+              fontSize: 13,
+              color: AppColors.textLight,
             ),
           ),
         ],
       ),
+    ).animate().fadeIn(duration: 600.ms).scale(begin: const Offset(0.9, 0.9));
+  }
+
+  Widget _buildLanguageSelector(bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.cardDark : AppColors.card,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: isDark ? AppColors.cardBorderDark : AppColors.cardBorder,
+          ),
+          boxShadow: AppColors.cardShadow,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Flexible(
+              child: Obx(
+                () => LanguageSelector(
+                  language: controller.sourceLanguage.value,
+                  onTap: controller.goToLanguageSelection,
+                ),
+              ),
+            ),
+            const Gap(10),
+            // Swap button
+            GestureDetector(
+              onTap: () {
+                HapticFeedback.lightImpact();
+                controller.swapLanguages();
+              },
+              child: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  gradient: AppColors.heroGradient,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Iconsax.arrow_swap_horizontal,
+                  color: Colors.white,
+                  size: 22,
+                ),
+              ),
+            ),
+            const Gap(10),
+            Flexible(
+              child: Obx(
+                () => LanguageSelector(
+                  language: controller.targetLanguage.value,
+                  onTap: controller.goToLanguageSelection,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
-  Widget _buildFloatingActions() {
+  Widget _buildFloatingActions(bool isDark) {
     return Obx(
-      () => Column(
+      () => Padding(
+        padding: const EdgeInsets.only(
+          bottom: 220,
+        ),
+        child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Speak translation button
           if (controller.currentTranslation.value.isNotEmpty)
-            FloatingActionButton(
+            _buildFab(
               heroTag: 'speak',
+              icon: Iconsax.volume_high,
               onPressed: controller.speakTranslation,
-              child: const Icon(Icons.volume_up),
+              gradient: AppColors.successGradient,
+              shadowColor: AppColors.success,
             ),
-
-          const SizedBox(height: 12),
-
-          // History button
-          FloatingActionButton(
+          if (controller.currentTranslation.value.isNotEmpty) const Gap(12),
+          _buildFab(
             heroTag: 'history',
+            icon: Iconsax.clock,
             onPressed: controller.goToHistory,
-            child: const Icon(Icons.history),
+            gradient: AppColors.heroGradient,
+            shadowColor: AppColors.primary,
           ),
-
-          const SizedBox(height: 12),
-
-          // Settings button
-          FloatingActionButton(
+          const Gap(12),
+          _buildFab(
             heroTag: 'settings',
+            icon: Iconsax.setting_2,
             onPressed: controller.goToSettings,
-            child: const Icon(Icons.settings),
+            gradient: AppColors.warmGradient,
+            shadowColor: AppColors.accent,
           ),
         ],
+      ),
+      ),
+    );
+  }
+
+  Widget _buildFab({
+    required String heroTag,
+    required IconData icon,
+    required VoidCallback onPressed,
+    required LinearGradient gradient,
+    required Color shadowColor,
+  }) {
+    return Container(
+      width: 52,
+      height: 52,
+      decoration: BoxDecoration(
+        gradient: gradient,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: shadowColor.withValues(alpha: 0.35),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(26),
+          onTap: () {
+            HapticFeedback.lightImpact();
+            onPressed();
+          },
+          child: Icon(icon, color: Colors.white, size: 22),
+        ),
       ),
     );
   }

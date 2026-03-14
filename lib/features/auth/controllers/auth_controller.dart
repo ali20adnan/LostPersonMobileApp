@@ -33,16 +33,6 @@ class AuthController extends GetxController {
     isLoading.value = false;
 
     if (response.isSuccess) {
-      // Restrict mobile login to PATROL and VOLUNTEER roles only
-      final user = _authService.currentUser.value;
-      if (user != null &&
-          user.role != 'PATROL' &&
-          user.role != 'VOLUNTEER') {
-        await _authService.logout();
-        errorMessage.value =
-            'هذا التطبيق مخصص للفرق الجوالة والمتطوعين فقط';
-        return;
-      }
       Get.offAllNamed('/home');
     } else {
       errorMessage.value =
@@ -52,8 +42,11 @@ class AuthController extends GetxController {
 
   @override
   void onClose() {
-    userNameController.dispose();
-    passwordController.dispose();
+    // Defer disposal to avoid 'used after being disposed' during navigation
+    Future.microtask(() {
+      userNameController.dispose();
+      passwordController.dispose();
+    });
     super.onClose();
   }
 }

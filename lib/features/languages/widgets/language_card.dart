@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:gap/gap.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 
+import '../../../app/themes/app_colors.dart';
 import '../../../data/models/language_model.dart';
 
 class LanguageCard extends StatelessWidget {
@@ -16,63 +20,59 @@ class LanguageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeInOut,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOutCubic,
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: isSelected
-              ? theme.colorScheme.primary
-              : theme.colorScheme.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected
-                ? theme.colorScheme.primary
-                : theme.colorScheme.outline.withValues(alpha: 0.2),
-            width: isSelected ? 2 : 1,
-          ),
+          gradient: isSelected ? AppColors.heroGradient : null,
+          color: isSelected ? null : (isDark ? AppColors.cardDark : AppColors.card),
+          borderRadius: BorderRadius.circular(18),
+          border: isSelected
+              ? null
+              : Border.all(
+                  color: isDark ? AppColors.cardBorderDark : AppColors.cardBorder,
+                ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.4),
-                    blurRadius: 16,
-                    offset: const Offset(0, 6),
+                    color: AppColors.primary.withValues(alpha: 0.35),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
                   ),
                 ]
-              : [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+              : AppColors.softShadow,
         ),
         child: Row(
           children: [
-            // Flag or language icon
-            Container(
-              width: 44,
-              height: 44,
+            // Flag container
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              width: 48,
+              height: 48,
               decoration: BoxDecoration(
                 color: isSelected
-                    ? theme.colorScheme.onPrimary.withValues(alpha: 0.2)
-                    : theme.colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(10),
+                    ? Colors.white.withValues(alpha: 0.2)
+                    : (isDark ? AppColors.surfaceDark : AppColors.primarySoft),
+                borderRadius: BorderRadius.circular(14),
               ),
               child: Center(
                 child: Text(
                   _getLanguageEmoji(language.code),
-                  style: const TextStyle(fontSize: 24),
+                  style: const TextStyle(fontSize: 26),
                 ),
               ),
             ),
 
-            const SizedBox(width: 12),
+            const Gap(14),
 
             // Language names
             Expanded(
@@ -81,22 +81,22 @@ class LanguageCard extends StatelessWidget {
                 children: [
                   Text(
                     language.nameAr,
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
                       fontSize: 15,
                       color: isSelected
-                          ? theme.colorScheme.onPrimary
-                          : theme.colorScheme.onSurface,
+                          ? Colors.white
+                          : (isDark ? AppColors.textOnDark : AppColors.textPrimary),
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  const Gap(3),
                   Text(
                     language.nameEn,
-                    style: theme.textTheme.bodySmall?.copyWith(
+                    style: TextStyle(
                       fontSize: 12,
                       color: isSelected
-                          ? theme.colorScheme.onPrimary.withValues(alpha: 0.9)
-                          : theme.colorScheme.onSurfaceVariant,
+                          ? Colors.white.withValues(alpha: 0.85)
+                          : (isDark ? AppColors.textOnDarkSecondary : AppColors.textSecondary),
                     ),
                   ),
                 ],
@@ -105,26 +105,27 @@ class LanguageCard extends StatelessWidget {
 
             // Selection indicator
             AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              width: 24,
-              height: 24,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOutCubic,
+              width: 28,
+              height: 28,
               decoration: BoxDecoration(
                 color: isSelected
-                    ? theme.colorScheme.onPrimary
+                    ? Colors.white
                     : Colors.transparent,
                 shape: BoxShape.circle,
                 border: Border.all(
                   color: isSelected
-                      ? theme.colorScheme.onPrimary
-                      : theme.colorScheme.outline,
+                      ? Colors.white
+                      : (isDark ? AppColors.borderDark : AppColors.border),
                   width: 2,
                 ),
               ),
               child: isSelected
                   ? Icon(
-                      Icons.check,
-                      size: 16,
-                      color: theme.colorScheme.primary,
+                      Iconsax.tick_circle,
+                      size: 18,
+                      color: AppColors.primary,
                     )
                   : null,
             ),
@@ -137,17 +138,17 @@ class LanguageCard extends StatelessWidget {
   String _getLanguageEmoji(String code) {
     switch (code) {
       case 'ar':
-        return '🇸🇦'; // Saudi Arabia flag
+        return '🇸🇦';
       case 'en':
-        return '🇬🇧'; // UK flag
+        return '🇬🇧';
       case 'fa':
-        return '🇮🇷'; // Iran flag
+        return '🇮🇷';
       case 'ur':
-        return '🇵🇰'; // Pakistan flag
+        return '🇵🇰';
       case 'ku':
-        return '🏴'; // Kurdish flag (generic)
+        return '🏴';
       default:
-        return '🌍'; // Generic globe
+        return '🌍';
     }
   }
 }

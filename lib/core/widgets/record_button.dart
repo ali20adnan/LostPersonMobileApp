@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 import '../../app/themes/app_colors.dart';
 
@@ -33,7 +35,7 @@ class _RecordButtonState extends State<RecordButton>
       vsync: this,
     )..repeat(reverse: true);
 
-    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.15).animate(
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.12).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
   }
@@ -46,11 +48,14 @@ class _RecordButtonState extends State<RecordButton>
 
   @override
   Widget build(BuildContext context) {
-    final color = widget.isRecording
-        ? AppColors.recordActive
+    final gradient = widget.isRecording
+        ? AppColors.warmGradient
         : widget.isLoading
-            ? AppColors.recordProcessing
-            : AppColors.recordIdle;
+            ? AppColors.heroGradient
+            : AppColors.heroGradient;
+
+    final glowColor =
+        widget.isRecording ? AppColors.accent : AppColors.primary;
 
     return GestureDetector(
       onTap: widget.isLoading ? null : widget.onPressed,
@@ -66,26 +71,28 @@ class _RecordButtonState extends State<RecordButton>
               height: widget.size,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: color,
+                gradient: gradient,
                 boxShadow: [
                   BoxShadow(
-                    color: color.withValues(alpha: 0.4),
-                    blurRadius: widget.isRecording ? 20 : 10,
-                    spreadRadius: widget.isRecording ? 5 : 0,
+                    color: glowColor.withValues(alpha: widget.isRecording ? 0.5 : 0.3),
+                    blurRadius: widget.isRecording ? 28 : 16,
+                    spreadRadius: widget.isRecording ? 6 : 2,
                   ),
                 ],
               ),
               child: widget.isLoading
-                  ? const Center(
-                      child: CircularProgressIndicator(
+                  ? Center(
+                      child: LoadingAnimationWidget.staggeredDotsWave(
                         color: Colors.white,
-                        strokeWidth: 3,
+                        size: widget.size * 0.35,
                       ),
                     )
                   : Icon(
-                      widget.isRecording ? Icons.stop : Icons.mic,
+                      widget.isRecording
+                          ? Iconsax.stop
+                          : Iconsax.microphone,
                       color: Colors.white,
-                      size: widget.size * 0.5,
+                      size: widget.size * 0.4,
                     ),
             ),
           );

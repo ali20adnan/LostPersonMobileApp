@@ -2,8 +2,12 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
+import '../../../app/themes/app_colors.dart';
 import '../controllers/missing_person_form_controller.dart';
 
 class MissingPersonFormPage extends GetView<MissingPersonFormController> {
@@ -12,8 +16,10 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
+      backgroundColor: isDark ? AppColors.backgroundDark : AppColors.background,
       appBar: AppBar(
         title: const Text('إبلاغ عن مفقود'),
         centerTitle: true,
@@ -23,26 +29,26 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
         child: Column(
           children: [
             _buildCollapsibleSection(
-              theme: theme,
+              isDark: isDark,
               index: 0,
-              icon: Icons.person_outline,
+              icon: Iconsax.user,
               title: 'معلومات الشخص',
               children: [
                 _buildTextField(
                   controller: controller.fullNameController,
                   label: 'الاسم الكامل *',
-                  icon: Icons.person,
-                  theme: theme,
+                  icon: Iconsax.user,
+                  isDark: isDark,
                 ),
                 const SizedBox(height: 12),
-                _buildGenderSelector(theme),
+                _buildGenderSelector(isDark),
                 const SizedBox(height: 12),
                 _buildTextField(
                   controller: controller.dateOfBirthController,
                   label: 'تاريخ الميلاد',
-                  icon: Icons.cake,
+                  icon: Iconsax.cake,
                   hint: 'YYYY-MM-DD',
-                  theme: theme,
+                  isDark: isDark,
                 ),
                 const SizedBox(height: 12),
                 Row(
@@ -51,9 +57,9 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
                       child: _buildTextField(
                         controller: controller.heightController,
                         label: 'الطول (سم)',
-                        icon: Icons.height,
+                        icon: Iconsax.ruler,
                         keyboardType: TextInputType.number,
-                        theme: theme,
+                        isDark: isDark,
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -61,9 +67,9 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
                       child: _buildTextField(
                         controller: controller.weightController,
                         label: 'الوزن (كغ)',
-                        icon: Icons.monitor_weight_outlined,
+                        icon: Iconsax.weight,
                         keyboardType: TextInputType.number,
-                        theme: theme,
+                        isDark: isDark,
                       ),
                     ),
                   ],
@@ -75,8 +81,8 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
                       child: _buildTextField(
                         controller: controller.hairColorController,
                         label: 'لون الشعر',
-                        icon: Icons.face,
-                        theme: theme,
+                        icon: Iconsax.activity,
+                        isDark: isDark,
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -84,8 +90,8 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
                       child: _buildTextField(
                         controller: controller.eyeColorController,
                         label: 'لون العين',
-                        icon: Icons.remove_red_eye_outlined,
-                        theme: theme,
+                        icon: Iconsax.eye,
+                        isDark: isDark,
                       ),
                     ),
                   ],
@@ -94,51 +100,54 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
                 _buildTextField(
                   controller: controller.distinguishingFeaturesController,
                   label: 'علامات مميزة',
-                  icon: Icons.star_outline,
+                  icon: Iconsax.star,
                   maxLines: 2,
-                  theme: theme,
+                  isDark: isDark,
                 ),
                 const SizedBox(height: 12),
                 _buildTextField(
                   controller: controller.medicalConditionsController,
                   label: 'حالات طبية',
-                  icon: Icons.medical_services_outlined,
+                  icon: Iconsax.health,
                   maxLines: 2,
-                  theme: theme,
+                  isDark: isDark,
                 ),
                 const SizedBox(height: 12),
                 _buildTextField(
                   controller: controller.clothingDescriptionController,
                   label: 'وصف الملابس',
-                  icon: Icons.checkroom,
+                  icon: Iconsax.bag_2,
                   maxLines: 2,
-                  theme: theme,
+                  isDark: isDark,
                 ),
               ],
             ),
             const SizedBox(height: 12),
             _buildCollapsibleSection(
-              theme: theme,
+              isDark: isDark,
               index: 1,
-              icon: Icons.location_on_outlined,
+              icon: Iconsax.location,
               title: 'آخر موقع شوهد فيه',
               children: [
                 _buildTextField(
                   controller: controller.addressLineController,
                   label: 'العنوان',
-                  icon: Icons.location_on,
-                  theme: theme,
+                  icon: Iconsax.location,
+                  isDark: isDark,
                   suffixWidget: Obx(() => controller.isLoadingLocation.value
-                      ? const Padding(
-                          padding: EdgeInsets.all(12),
+                      ? Padding(
+                          padding: const EdgeInsets.all(12),
                           child: SizedBox(
                             width: 20,
                             height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
+                            child: LoadingAnimationWidget.staggeredDotsWave(
+                              color: AppColors.primary,
+                              size: 20,
+                            ),
                           ),
                         )
                       : IconButton(
-                          icon: const Icon(Icons.my_location),
+                          icon: const Icon(Iconsax.gps, color: AppColors.primary),
                           onPressed: controller.getCurrentLocation,
                           tooltip: 'تحديد الموقع الحالي',
                         )),
@@ -147,39 +156,39 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
             ),
             const SizedBox(height: 12),
             _buildCollapsibleSection(
-              theme: theme,
+              isDark: isDark,
               index: 3,
-              icon: Icons.contact_phone_outlined,
+              icon: Iconsax.call,
               title: 'معلومات المُبلّغ',
               children: [
                 _buildTextField(
                   controller: controller.reporterNameController,
                   label: 'اسم المُبلّغ *',
-                  icon: Icons.person,
-                  theme: theme,
+                  icon: Iconsax.user,
+                  isDark: isDark,
                 ),
                 const SizedBox(height: 12),
                 _buildTextField(
                   controller: controller.reporterPhoneController,
                   label: 'رقم الهاتف *',
-                  icon: Icons.phone,
+                  icon: Iconsax.call,
                   keyboardType: TextInputType.phone,
-                  theme: theme,
+                  isDark: isDark,
                 ),
                 const SizedBox(height: 12),
                 _buildTextField(
                   controller: controller.reporterRelationshipController,
                   label: 'صلة القرابة',
-                  icon: Icons.group,
-                  theme: theme,
+                  icon: Iconsax.people,
+                  isDark: isDark,
                 ),
               ],
             ),
             const SizedBox(height: 12),
             _buildCollapsibleSection(
-              theme: theme,
+              isDark: isDark,
               index: 4,
-              icon: Icons.article_outlined,
+              icon: Iconsax.document_text,
               title: 'تفاصيل البلاغ',
               children: [
                 GestureDetector(
@@ -188,8 +197,8 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
                     child: _buildTextField(
                       controller: controller.missingDateController,
                       label: 'تاريخ الفقدان *',
-                      icon: Icons.calendar_today,
-                      theme: theme,
+                      icon: Iconsax.calendar,
+                      isDark: isDark,
                     ),
                   ),
                 ),
@@ -197,16 +206,16 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
                 _buildTextField(
                   controller: controller.descriptionController,
                   label: 'وصف إضافي',
-                  icon: Icons.description,
+                  icon: Iconsax.document,
                   maxLines: 3,
-                  theme: theme,
+                  isDark: isDark,
                 ),
                 const SizedBox(height: 12),
-                _buildPhotoPicker(theme),
+                _buildPhotoPicker(isDark),
               ],
             ),
             const SizedBox(height: 24),
-            _buildSubmitButton(theme),
+            _buildSubmitButton(isDark),
             const SizedBox(height: 32),
           ],
         ),
@@ -215,7 +224,7 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
   }
 
   Widget _buildCollapsibleSection({
-    required ThemeData theme,
+    required bool isDark,
     required int index,
     required IconData icon,
     required String title,
@@ -226,24 +235,18 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
       return AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
-          borderRadius: BorderRadius.circular(16),
+          color: isDark ? AppColors.cardDark : AppColors.card,
+          borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: theme.colorScheme.outline.withValues(alpha: 0.15),
+            color: isDark ? AppColors.cardBorderDark : AppColors.cardBorder,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          boxShadow: isDark ? null : AppColors.cardShadow,
         ),
         child: Column(
           children: [
             InkWell(
               onTap: () => controller.toggleSection(index),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(18),
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Row(
@@ -251,37 +254,42 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF8B5CF6).withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(8),
+                        gradient: AppColors.heroGradient,
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      child:
-                          Icon(icon, size: 20, color: const Color(0xFF8B5CF6)),
+                      child: Icon(icon, size: 18, color: Colors.white),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
                         title,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
+                          color: isDark ? AppColors.textOnDark : AppColors.textPrimary,
                         ),
                       ),
                     ),
                     Icon(
-                      isExpanded
-                          ? Icons.keyboard_arrow_up
-                          : Icons.keyboard_arrow_down,
-                      color: theme.colorScheme.onSurfaceVariant,
+                      isExpanded ? Iconsax.arrow_up_2 : Iconsax.arrow_down_1,
+                      color: AppColors.textLight,
+                      size: 20,
                     ),
                   ],
                 ),
               ),
             ),
-            if (isExpanded)
-              Padding(
+            AnimatedCrossFade(
+              duration: const Duration(milliseconds: 250),
+              firstChild: const SizedBox.shrink(),
+              secondChild: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                 child: Column(children: children),
               ),
+              crossFadeState: isExpanded
+                  ? CrossFadeState.showSecond
+                  : CrossFadeState.showFirst,
+            ),
           ],
         ),
       );
@@ -292,7 +300,7 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
     required TextEditingController controller,
     required String label,
     required IconData icon,
-    required ThemeData theme,
+    required bool isDark,
     String? hint,
     int maxLines = 1,
     TextInputType? keyboardType,
@@ -308,44 +316,38 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
         hintText: hint,
         hintTextDirection: TextDirection.rtl,
         filled: true,
-        fillColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+        fillColor: isDark ? AppColors.surfaceSunkenDark : AppColors.surfaceSunken,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(
-            color: theme.colorScheme.primary,
-            width: 1.5,
+            color: isDark ? AppColors.borderDark : AppColors.border,
           ),
         ),
-        prefixIcon: Icon(icon),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+        ),
+        prefixIcon: Icon(icon, size: 20, color: AppColors.primary),
         suffixIcon: suffixWidget,
       ),
     );
   }
 
-  Widget _buildGenderSelector(ThemeData theme) {
+  Widget _buildGenderSelector(bool isDark) {
     return Obx(() => Row(
           children: [
-            Expanded(
-              child: _genderChip(theme, 'male', 'ذكر', Icons.male),
-            ),
+            Expanded(child: _genderChip(isDark, 'male', 'ذكر', Iconsax.man)),
             const SizedBox(width: 10),
-            Expanded(
-              child: _genderChip(theme, 'female', 'أنثى', Icons.female),
-            ),
+            Expanded(child: _genderChip(isDark, 'female', 'أنثى', Iconsax.woman)),
           ],
         ));
   }
 
-  Widget _genderChip(
-      ThemeData theme, String value, String label, IconData icon) {
+  Widget _genderChip(bool isDark, String value, String label, IconData icon) {
     final isSelected = controller.selectedGender.value == value;
     return GestureDetector(
       onTap: () => controller.selectedGender.value = value,
@@ -353,28 +355,27 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
+          gradient: isSelected ? AppColors.heroGradient : null,
           color: isSelected
-              ? theme.colorScheme.primary
-              : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-          borderRadius: BorderRadius.circular(12),
+              ? null
+              : (isDark ? AppColors.surfaceSunkenDark : AppColors.surfaceSunken),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: isSelected
-                ? theme.colorScheme.primary
-                : theme.colorScheme.outline.withValues(alpha: 0.3),
+            color: isSelected ? AppColors.primary : (isDark ? AppColors.borderDark : AppColors.border),
           ),
+          boxShadow: isSelected
+              ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 3))]
+              : null,
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon,
-                size: 20,
-                color: isSelected ? Colors.white : theme.colorScheme.primary),
+            Icon(icon, size: 20, color: isSelected ? Colors.white : AppColors.primary),
             const SizedBox(width: 8),
             Text(
               label,
               style: TextStyle(
-                color:
-                    isSelected ? Colors.white : theme.colorScheme.onSurface,
+                color: isSelected ? Colors.white : (isDark ? AppColors.textOnDark : AppColors.textPrimary),
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
               ),
             ),
@@ -384,26 +385,30 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
     );
   }
 
-  Widget _buildPhotoPicker(ThemeData theme) {
+  Widget _buildPhotoPicker(bool isDark) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            const Icon(Icons.photo_camera_outlined,
-                size: 20, color: Color(0xFF8B5CF6)),
+            const Icon(Iconsax.camera, size: 20, color: AppColors.primary),
             const SizedBox(width: 8),
-            const Text('الصور',
-                style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              'الصور',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: isDark ? AppColors.textOnDark : AppColors.textPrimary,
+              ),
+            ),
             const Spacer(),
             TextButton.icon(
               onPressed: controller.pickImage,
-              icon: const Icon(Icons.photo_library, size: 18),
+              icon: const Icon(Iconsax.gallery, size: 18),
               label: const Text('المعرض'),
             ),
             TextButton.icon(
               onPressed: controller.takePhoto,
-              icon: const Icon(Icons.camera_alt, size: 18),
+              icon: const Icon(Iconsax.camera, size: 18),
               label: const Text('الكاميرا'),
             ),
           ],
@@ -414,22 +419,19 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
               width: double.infinity,
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(12),
+                color: isDark ? AppColors.surfaceSunkenDark : AppColors.surfaceSunken,
+                borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                  color: theme.colorScheme.outline.withValues(alpha: 0.2),
+                  color: isDark ? AppColors.borderDark : AppColors.border,
                   style: BorderStyle.solid,
                 ),
               ),
               child: Column(
                 children: [
-                  Icon(Icons.add_photo_alternate_outlined,
-                      size: 40,
-                      color: theme.colorScheme.onSurfaceVariant),
+                  Icon(Iconsax.gallery_add, size: 40, color: AppColors.textLight),
                   const SizedBox(height: 8),
                   Text('لم يتم اختيار صور',
-                      style: TextStyle(
-                          color: theme.colorScheme.onSurfaceVariant)),
+                      style: TextStyle(color: AppColors.textSecondary)),
                 ],
               ),
             );
@@ -445,7 +447,7 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
                   child: Stack(
                     children: [
                       ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(12),
                         child: Image.file(
                           File(controller.selectedPhotos[index].path),
                           width: 100,
@@ -461,11 +463,10 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
                           child: Container(
                             padding: const EdgeInsets.all(4),
                             decoration: const BoxDecoration(
-                              color: Colors.red,
+                              color: AppColors.accent,
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(Icons.close,
-                                size: 14, color: Colors.white),
+                            child: const Icon(Icons.close, size: 14, color: Colors.white),
                           ),
                         ),
                       ),
@@ -480,7 +481,7 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
     );
   }
 
-  Widget _buildSubmitButton(ThemeData theme) {
+  Widget _buildSubmitButton(bool isDark) {
     return Obx(() => GestureDetector(
           onTap: controller.isSubmitting.value
               ? null
@@ -493,20 +494,14 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 16),
             decoration: BoxDecoration(
-              gradient: controller.isSubmitting.value
-                  ? null
-                  : const LinearGradient(
-                      colors: [Color(0xFF8B5CF6), Color(0xFFD946EF)],
-                      begin: Alignment.centerRight,
-                      end: Alignment.centerLeft,
-                    ),
-              color: controller.isSubmitting.value ? Colors.grey : null,
-              borderRadius: BorderRadius.circular(14),
+              gradient: controller.isSubmitting.value ? null : AppColors.heroGradient,
+              color: controller.isSubmitting.value ? AppColors.textLight : null,
+              borderRadius: BorderRadius.circular(16),
               boxShadow: controller.isSubmitting.value
                   ? null
                   : [
                       BoxShadow(
-                        color: const Color(0xFF8B5CF6).withValues(alpha: 0.4),
+                        color: AppColors.primary.withValues(alpha: 0.4),
                         blurRadius: 12,
                         offset: const Offset(0, 4),
                       ),
@@ -514,18 +509,14 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
             ),
             child: Center(
               child: controller.isSubmitting.value
-                  ? const SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2.5,
-                        color: Colors.white,
-                      ),
+                  ? LoadingAnimationWidget.staggeredDotsWave(
+                      color: Colors.white,
+                      size: 24,
                     )
                   : const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.send, color: Colors.white),
+                        Icon(Iconsax.send_1, color: Colors.white),
                         SizedBox(width: 10),
                         Text(
                           'إرسال البلاغ',
@@ -538,7 +529,7 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
                       ],
                     ),
             ),
-          ),
+          ).animate().fadeIn(delay: 200.ms),
         ));
   }
 }

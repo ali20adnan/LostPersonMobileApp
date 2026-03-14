@@ -91,7 +91,7 @@ class NotificationsController extends GetxController {
     if (!Get.isRegistered<SocketService>()) return;
     final socket = Get.find<SocketService>();
 
-    socket.on('newAlert', (data) {
+    socket.on('newAlert', 'notifications', (data) {
       if (data is Map<String, dynamic>) {
         final alert = Alert.fromJson(data);
         alerts.insert(0, alert);
@@ -99,7 +99,7 @@ class NotificationsController extends GetxController {
       }
     });
 
-    socket.on('alertUnreadCount', (data) {
+    socket.on('alertUnreadCount', 'notifications', (data) {
       if (data is Map<String, dynamic>) {
         unreadCount.value = data['count'] as int? ?? 0;
       }
@@ -110,8 +110,8 @@ class NotificationsController extends GetxController {
   void onClose() {
     if (Get.isRegistered<SocketService>()) {
       final socket = Get.find<SocketService>();
-      socket.off('newAlert');
-      socket.off('alertUnreadCount');
+      socket.off('newAlert', 'notifications');
+      socket.off('alertUnreadCount', 'notifications');
     }
     super.onClose();
   }
