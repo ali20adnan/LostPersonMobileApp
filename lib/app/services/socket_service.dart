@@ -83,7 +83,18 @@ class SocketService extends GetxService {
     _socket!.onConnectError((data) {
       connectionState.value = SocketConnectionState.error;
       debugPrint('SocketService: Connection error - $data');
-      _scheduleReconnect();
+      // If connection error looks auth-related, try refreshing the token
+      final errorStr = data.toString().toLowerCase();
+      if (errorStr.contains('unauthorized') ||
+          errorStr.contains('jwt') ||
+          errorStr.contains('token') ||
+          errorStr.contains('403') ||
+          errorStr.contains('401')) {
+        debugPrint('SocketService: Auth error detected, refreshing token...');
+        _refreshTokenAndReconnect();
+      } else {
+        _scheduleReconnect();
+      }
     });
 
     _socket!.on('pong', (_) {
@@ -100,6 +111,8 @@ class SocketService extends GetxService {
   /// Called after every reconnect so controllers don't lose their listeners.
   void _reRegisterAllListeners() {
     for (final event in _listeners.keys) {
+      // Remove stale handler from previous socket instance to prevent stacking
+      _socket?.off(event);
       _socket?.on(event, (data) => _dispatchEvent(event, data));
     }
   }
@@ -114,6 +127,25 @@ class SocketService extends GetxService {
       } catch (e) {
         debugPrint('SocketService: Error in listener for $event - $e');
       }
+    }
+  }
+
+  /// Refresh the auth token and reconnect
+  Future<void> _refreshTokenAndReconnect() async {
+    try {
+      final newToken = await Get.find<ApiService>().getToken();
+      if (newToken != null && newToken != _token) {
+        _token = newToken;
+        debugPrint('SocketService: Token refreshed, reconnecting...');
+        _reconnectAttempts = 0;
+        _connect(_token!);
+      } else {
+        // Token didn't change — fall back to normal reconnect
+        _scheduleReconnect();
+      }
+    } catch (e) {
+      debugPrint('SocketService: Token refresh failed - $e');
+      _scheduleReconnect();
     }
   }
 
