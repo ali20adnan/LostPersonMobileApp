@@ -50,8 +50,8 @@ class SocketService extends GetxService {
 
     connectionState.value = SocketConnectionState.connecting;
 
-    // Use same base URL as the API (Android emulator → 10.0.2.2)
-    const baseUrl = 'http://10.0.2.2:3003';
+    // Use same base URL as the API
+    const baseUrl = 'https://api.almuntazer.net/losts';
 
     _socket = io.io(
       '$baseUrl/messages',

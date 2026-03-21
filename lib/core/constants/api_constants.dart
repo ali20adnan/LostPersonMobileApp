@@ -2,11 +2,10 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ApiConstants {
   // ── Backend API ────────────────────────────────────────────────
-  // For Android emulator use 10.0.2.2, for real devices use your PC's local IP
-  static const String apiBaseUrl = 'http://10.0.2.2:3003/api';
+  static const String apiBaseUrl = 'https://api.almuntazer.net/losts/api';
 
   /// Server root (without /api) – used for static files like uploads
-  static const String serverBaseUrl = 'http://10.0.2.2:3003';
+  static const String serverBaseUrl = 'https://api.almuntazer.net/losts';
 
   // Auth
   static const String login = '/auth/login';
