@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:get/get.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../../../app/themes/app_colors.dart';
 import '../../../data/models/missing_person_report_model.dart';
@@ -65,7 +65,7 @@ class MissingPersonsPage extends GetView<MissingPersonsController> {
         decoration: InputDecoration(
           hintText: 'ابحث بالاسم أو البلد أو الوصف...',
           hintTextDirection: TextDirection.rtl,
-          prefixIcon: Icon(Iconsax.search_normal_1, color: AppColors.primary, size: 20),
+          prefixIcon: Icon(PhosphorIcons.magnifyingGlass(), color: AppColors.primary, size: 20),
           filled: true,
           fillColor: isDark
               ? AppColors.surfaceDark
@@ -105,9 +105,9 @@ class MissingPersonsPage extends GetView<MissingPersonsController> {
         padding: const EdgeInsets.all(4),
         child: Row(
           children: [
-            _buildTab(isDark, 'المبلغ عنهم', Iconsax.search_normal, 0,
+            _buildTab(isDark, 'المبلغ عنهم', PhosphorIcons.magnifyingGlass(), 0,
                 controller.reportedPersons.length),
-            _buildTab(isDark, 'تم العثور', Iconsax.tick_circle, 1,
+            _buildTab(isDark, 'تم العثور', PhosphorIcons.checkCircle(), 1,
                 controller.foundPersons.length),
           ],
         ),
@@ -193,8 +193,8 @@ class MissingPersonsPage extends GetView<MissingPersonsController> {
       return _buildEmptyState(
         isDark,
         hasSearch
-            ? Iconsax.search_normal
-            : (isFound ? Iconsax.tick_circle : Iconsax.search_status),
+            ? PhosphorIcons.magnifyingGlass()
+            : (isFound ? PhosphorIcons.checkCircle() : PhosphorIcons.magnifyingGlass()),
         hasSearch
             ? 'لا توجد نتائج'
             : (isFound ? 'لا يوجد أشخاص تم العثور عليهم' : 'لا توجد بلاغات حالياً'),

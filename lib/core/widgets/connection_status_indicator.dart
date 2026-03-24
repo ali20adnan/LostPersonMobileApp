@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../../app/services/soniox_service.dart';
 import '../../app/themes/app_colors.dart';
@@ -47,13 +47,13 @@ class ConnectionStatusIndicator extends StatelessWidget {
   IconData _getStatusIcon() {
     switch (status) {
       case ConnectionStatus.connected:
-        return Iconsax.wifi;
+        return PhosphorIcons.wifiHigh();
       case ConnectionStatus.connecting:
-        return Iconsax.refresh;
+        return PhosphorIcons.arrowsClockwise();
       case ConnectionStatus.disconnected:
-        return Iconsax.wifi_square;
+        return PhosphorIcons.wifiSlash();
       case ConnectionStatus.error:
-        return Iconsax.danger;
+        return PhosphorIcons.warning();
     }
   }
 

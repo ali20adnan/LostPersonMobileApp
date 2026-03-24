@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:gap/gap.dart';
 import 'package:get/get.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../../../app/themes/app_colors.dart';
 import '../../../app/routes/app_routes.dart';
@@ -100,15 +100,15 @@ class HomePage extends GetView<HomeController> {
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         _NavItem(
-                          icon: Iconsax.translate,
-                          activeIcon: Iconsax.translate,
+                          icon: PhosphorIcons.translate(),
+                          activeIcon: PhosphorIcons.translate(),
                           label: 'الترجمة',
                           isSelected: controller.currentIndex.value == 0,
                           onTap: () => _onTabTap(0),
                         ),
                         _NavItem(
-                          icon: Iconsax.people,
-                          activeIcon: Iconsax.people,
+                          icon: PhosphorIcons.users(),
+                          activeIcon: PhosphorIcons.users(),
                           label: 'المفقودون',
                           isSelected: controller.currentIndex.value == 1,
                           badgeCount: _getAlertsBadge(),
@@ -124,16 +124,16 @@ class HomePage extends GetView<HomeController> {
                           },
                         ),
                         _NavItem(
-                          icon: Iconsax.document_text,
-                          activeIcon: Iconsax.document_text,
+                          icon: PhosphorIcons.fileText(),
+                          activeIcon: PhosphorIcons.fileText(),
                           label: 'البلاغات',
                           isSelected: controller.currentIndex.value == 2,
                           badgeCount: _getReportsBadge(),
                           onTap: () => _onTabTap(2),
                         ),
                         _NavItem(
-                          icon: Iconsax.user,
-                          activeIcon: Iconsax.user,
+                          icon: PhosphorIcons.user(),
+                          activeIcon: PhosphorIcons.user(),
                           label: 'حسابي',
                           isSelected: controller.currentIndex.value == 3,
                           onTap: () => _onTabTap(3),
@@ -229,7 +229,7 @@ class HomePage extends GetView<HomeController> {
                   gradient: AppColors.heroGradient,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Iconsax.warning_2, color: Colors.white),
+                child: Icon(PhosphorIcons.warningCircle(), color: Colors.white),
               ),
               title: Text('بلاغ عادي',
                   style: TextStyle(
@@ -258,7 +258,7 @@ class HomePage extends GetView<HomeController> {
                   gradient: AppColors.accentGradient,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Iconsax.people, color: Colors.white),
+                child: Icon(PhosphorIcons.users(), color: Colors.white),
               ),
               title: Text('إبلاغ عن مفقود',
                   style: TextStyle(
@@ -386,8 +386,8 @@ class _CenterFab extends StatelessWidget {
             ),
           ],
         ),
-        child: const Icon(
-          Iconsax.add,
+        child: Icon(
+          PhosphorIcons.plus(),
           color: Colors.white,
           size: 24,
         ),

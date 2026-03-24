@@ -4,7 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:gap/gap.dart';
 import 'package:get/get.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 import '../../../app/themes/app_colors.dart';
@@ -64,7 +64,7 @@ class IncidentsListPage extends GetView<IncidentsListController> {
                         decoration: InputDecoration(
                           hintText: 'ابحث بالعنوان أو الوصف أو الموقع...',
                           hintTextDirection: TextDirection.rtl,
-                          prefixIcon: const Icon(Iconsax.search_normal_1,
+                          prefixIcon: Icon(PhosphorIcons.magnifyingGlass(),
                               size: 20, color: AppColors.primary),
                           filled: true,
                           fillColor: isDark
@@ -96,7 +96,7 @@ class IncidentsListPage extends GetView<IncidentsListController> {
                           isDense: true,
                           hintStyle: TextStyle(
                             color: isDark
-                                ? AppColors.textOnDarkSecondary
+                                ? AppColors.textSecondaryDark
                                 : AppColors.textLight,
                           ),
                         ),
@@ -134,7 +134,7 @@ class IncidentsListPage extends GetView<IncidentsListController> {
                             backgroundColor: Colors.white,
                             smallSize: 8,
                             child: Icon(
-                              Iconsax.setting_4,
+                              PhosphorIcons.funnelSimple(),
                               size: 20,
                               color: hasFilter
                                   ? Colors.white
@@ -181,7 +181,7 @@ class IncidentsListPage extends GetView<IncidentsListController> {
                             ),
                           ],
                         ),
-                        child: const Icon(Iconsax.document,
+                        child: Icon(PhosphorIcons.file(),
                             size: 48, color: Colors.white),
                       ),
                       const Gap(16),

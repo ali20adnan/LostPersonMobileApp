@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:gap/gap.dart';
 import 'package:get/get.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 
@@ -80,7 +80,7 @@ class IncidentDetailPage extends GetView<IncidentDetailController> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Iconsax.warning_2, size: 64, color: AppColors.error),
+          Icon(PhosphorIcons.warningCircle(), size: 64, color: AppColors.error),
           const Gap(16),
           Text(
             'لم يتم العثور على البلاغ',
@@ -93,7 +93,7 @@ class IncidentDetailPage extends GetView<IncidentDetailController> {
           const Gap(8),
           TextButton.icon(
             onPressed: controller.loadReport,
-            icon: const Icon(Iconsax.refresh),
+            icon: Icon(PhosphorIcons.arrowsClockwise()),
             label: const Text('إعادة المحاولة'),
           ),
         ],
@@ -221,7 +221,7 @@ class IncidentDetailPage extends GetView<IncidentDetailController> {
           // Severity bar
           Row(
             children: [
-              Icon(Iconsax.danger, size: 16, color: severity.color),
+              Icon(PhosphorIcons.warning(), size: 16, color: severity.color),
               const Gap(6),
               Text(
                 'الخطورة:',
@@ -260,7 +260,7 @@ class IncidentDetailPage extends GetView<IncidentDetailController> {
   Widget _buildDescriptionSection(Report report, bool isDark) {
     return _buildSection(
       isDark: isDark,
-      icon: Iconsax.document_text,
+      icon: PhosphorIcons.fileText(),
       title: 'الوصف',
       children: [
         Text(
@@ -278,7 +278,7 @@ class IncidentDetailPage extends GetView<IncidentDetailController> {
   Widget _buildDetailsSection(Report report, bool isDark) {
     return _buildSection(
       isDark: isDark,
-      icon: Iconsax.info_circle,
+      icon: PhosphorIcons.info(),
       title: 'تفاصيل البلاغ',
       children: [
         _buildInfoRow(isDark, 'رقم البلاغ', '#${report.id}'),
@@ -301,7 +301,7 @@ class IncidentDetailPage extends GetView<IncidentDetailController> {
 
     return _buildSection(
       isDark: isDark,
-      icon: Iconsax.location,
+      icon: PhosphorIcons.mapPin(),
       title: 'الموقع',
       children: [
         if (report.addressLine != null && report.addressLine!.isNotEmpty)
@@ -324,7 +324,7 @@ class IncidentDetailPage extends GetView<IncidentDetailController> {
 
     return _buildSection(
       isDark: isDark,
-      icon: Iconsax.people,
+      icon: PhosphorIcons.users(),
       title: 'الأشخاص',
       children: [
         if (hasCreator) ...[

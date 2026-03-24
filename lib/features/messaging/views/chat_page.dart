@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:gap/gap.dart';
 import 'package:get/get.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 import '../../../app/themes/app_colors.dart';
@@ -117,7 +117,7 @@ class ChatPage extends GetView<ChatController> {
               ),
             )),
       leading: IconButton(
-        icon: const Icon(Iconsax.arrow_right_3, color: Colors.white),
+        icon: Icon(PhosphorIcons.arrowRight(), color: Colors.white),
         onPressed: () => Get.back(),
       ),
       iconTheme: const IconThemeData(color: Colors.white),
@@ -144,7 +144,7 @@ class ChatPage extends GetView<ChatController> {
                   ),
                 ],
               ),
-              child: const Icon(Iconsax.message_text_1,
+              child: Icon(PhosphorIcons.chatText(),
                   size: 48, color: Colors.white),
             ),
             const Gap(24),
@@ -197,7 +197,7 @@ class ChatPage extends GetView<ChatController> {
               ),
               child: IconButton(
                 onPressed: controller.pickAndSendImage,
-                icon: const Icon(Iconsax.image, color: AppColors.primary, size: 22),
+                icon: Icon(PhosphorIcons.image(), color: AppColors.primary, size: 22),
                 tooltip: 'إرسال صورة',
               ),
             ),
@@ -260,7 +260,7 @@ class ChatPage extends GetView<ChatController> {
                     icon: controller.isSending.value
                         ? LoadingAnimationWidget.staggeredDotsWave(
                             color: Colors.white, size: 20)
-                        : const Icon(Iconsax.send_1,
+                        : Icon(PhosphorIcons.paperPlaneTilt(),
                             color: Colors.white, size: 22),
                   ),
                 )),
@@ -353,7 +353,7 @@ class _MessageBubble extends StatelessWidget {
                         color: AppColors.errorLight,
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Icon(Iconsax.gallery_slash,
+                      child: Icon(PhosphorIcons.imageBroken(),
                           color: AppColors.error),
                     ),
                   ),

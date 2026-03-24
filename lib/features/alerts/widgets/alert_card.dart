@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../../../app/themes/app_colors.dart';
 import '../../../data/models/alert_model.dart';
@@ -140,7 +140,7 @@ class AlertCard extends StatelessWidget {
                         const SizedBox(height: 8),
                         Row(
                           children: [
-                            Icon(Iconsax.user, size: 14, color: AppColors.primary),
+                            Icon(PhosphorIcons.user(), size: 14, color: AppColors.primary),
                             const SizedBox(width: 6),
                             Text(
                               alert.report!.personName!,
@@ -159,7 +159,7 @@ class AlertCard extends StatelessWidget {
                         const SizedBox(height: 4),
                         Row(
                           children: [
-                            Icon(Iconsax.location, size: 14, color: AppColors.textLight),
+                            Icon(PhosphorIcons.mapPin(), size: 14, color: AppColors.textLight),
                             const SizedBox(width: 6),
                             Expanded(
                               child: Text(
@@ -177,7 +177,7 @@ class AlertCard extends StatelessWidget {
                       const SizedBox(height: 6),
                       Row(
                         children: [
-                          Icon(Iconsax.call, size: 14, color: AppColors.textLight),
+                          Icon(PhosphorIcons.phone(), size: 14, color: AppColors.textLight),
                           const SizedBox(width: 6),
                           Text(
                             alert.reporterPhone,
@@ -199,15 +199,15 @@ class AlertCard extends StatelessWidget {
   IconData _typeIcon(String type) {
     switch (type) {
       case 'sighting':
-        return Iconsax.eye;
+        return PhosphorIcons.eye();
       case 'tip':
-        return Iconsax.lamp_on;
+        return PhosphorIcons.lightbulb();
       case 'found':
-        return Iconsax.tick_circle;
+        return PhosphorIcons.checkCircle();
       case 'information':
-        return Iconsax.info_circle;
+        return PhosphorIcons.info();
       default:
-        return Iconsax.notification;
+        return PhosphorIcons.bell();
     }
   }
 

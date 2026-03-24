@@ -47,6 +47,10 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <!-- Use thin ML Kit model (downloaded from Play Services instead of bundled) -->
+        <meta-data
+            android:name="com.google.mlkit.vision.DEPENDENCIES"
+            android:value="ocr" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

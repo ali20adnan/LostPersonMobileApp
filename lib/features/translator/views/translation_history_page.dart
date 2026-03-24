@@ -4,7 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:gap/gap.dart';
 import 'package:get/get.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 
@@ -57,7 +57,7 @@ class _TranslationHistoryPageState extends State<TranslationHistoryPage> {
                   color: AppColors.error.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Iconsax.trash, color: AppColors.error, size: 20),
+                child: Icon(PhosphorIcons.trash(), color: AppColors.error, size: 20),
               ),
               const Gap(10),
               Text('حذف المحادثة',
@@ -131,7 +131,7 @@ class _TranslationHistoryPageState extends State<TranslationHistoryPage> {
                   color: AppColors.error.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Iconsax.trash, color: AppColors.error, size: 20),
+                child: Icon(PhosphorIcons.trash(), color: AppColors.error, size: 20),
               ),
               const Gap(10),
               Text('حذف الكل',
@@ -209,13 +209,13 @@ class _TranslationHistoryPageState extends State<TranslationHistoryPage> {
           ),
           iconTheme: const IconThemeData(color: Colors.white),
           leading: IconButton(
-            icon: const Icon(Iconsax.arrow_right_3),
+            icon: Icon(PhosphorIcons.arrowRight()),
             onPressed: () => Get.back(),
           ),
           actions: [
             if (_conversations.isNotEmpty)
               IconButton(
-                icon: const Icon(Iconsax.trash, color: Colors.white),
+                icon: Icon(PhosphorIcons.trash(), color: Colors.white),
                 onPressed: _clearAll,
                 tooltip: 'حذف الكل',
               ),
@@ -277,7 +277,7 @@ class _TranslationHistoryPageState extends State<TranslationHistoryPage> {
                 ),
               ],
             ),
-            child: const Icon(Iconsax.clock, size: 52, color: Colors.white),
+            child: Icon(PhosphorIcons.clock(), size: 52, color: Colors.white),
           ),
           const Gap(20),
           Text(
@@ -369,7 +369,7 @@ class _TranslationHistoryPageState extends State<TranslationHistoryPage> {
                           color: AppColors.error.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Icon(Iconsax.trash,
+                        child: Icon(PhosphorIcons.trash(),
                             size: 18, color: AppColors.error),
                       ),
                     ),
@@ -378,7 +378,7 @@ class _TranslationHistoryPageState extends State<TranslationHistoryPage> {
                 const Gap(10),
                 Row(
                   children: [
-                    Icon(Iconsax.clock, size: 14, color: AppColors.textLight),
+                    Icon(PhosphorIcons.clock(), size: 14, color: AppColors.textLight),
                     const Gap(4),
                     Text(
                       dateFormat.format(conversation.startTime),
@@ -389,7 +389,7 @@ class _TranslationHistoryPageState extends State<TranslationHistoryPage> {
                     ),
                     if (duration != null) ...[
                       const Gap(12),
-                      Icon(Iconsax.timer_1, size: 14, color: AppColors.textLight),
+                      Icon(PhosphorIcons.timer(), size: 14, color: AppColors.textLight),
                       const Gap(4),
                       Text(
                         duration,
@@ -400,7 +400,7 @@ class _TranslationHistoryPageState extends State<TranslationHistoryPage> {
                       ),
                     ],
                     const Gap(12),
-                    Icon(Iconsax.message_text, size: 14, color: AppColors.textLight),
+                    Icon(PhosphorIcons.chatText(), size: 14, color: AppColors.textLight),
                     const Gap(4),
                     Text(
                       '$translationCount جملة',
@@ -483,7 +483,7 @@ class _TranslationHistoryPageState extends State<TranslationHistoryPage> {
                             gradient: AppColors.heroGradient,
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          child: const Icon(Iconsax.translate,
+                          child: Icon(PhosphorIcons.translate(),
                               size: 20, color: Colors.white),
                         ),
                         const Gap(10),
@@ -540,7 +540,7 @@ class _TranslationHistoryPageState extends State<TranslationHistoryPage> {
                               color: AppColors.primary.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: const Icon(Iconsax.copy,
+                            child: Icon(PhosphorIcons.copy(),
                                 color: AppColors.primary, size: 20),
                           ),
                         ),

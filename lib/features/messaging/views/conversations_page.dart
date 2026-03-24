@@ -4,7 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:gap/gap.dart';
 import 'package:get/get.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 import '../../../app/themes/app_colors.dart';
@@ -44,7 +44,7 @@ class ConversationsPage extends GetView<ConversationsController> {
                 decoration: InputDecoration(
                   hintText: 'بحث في المحادثات...',
                   hintStyle: TextStyle(color: AppColors.textLight),
-                  prefixIcon: const Icon(Iconsax.search_normal_1,
+                  prefixIcon: Icon(PhosphorIcons.magnifyingGlass(),
                       color: AppColors.primary, size: 20),
                   filled: false,
                   border: InputBorder.none,
@@ -124,7 +124,7 @@ class ConversationsPage extends GetView<ConversationsController> {
           },
           backgroundColor: Colors.transparent,
           elevation: 0,
-          child: const Icon(Iconsax.message_add_1, color: Colors.white),
+          child: Icon(PhosphorIcons.chatDots(), color: Colors.white),
         ),
       ).animate().scale(delay: 300.ms, duration: 400.ms),
     );
@@ -198,7 +198,7 @@ class ConversationsPage extends GetView<ConversationsController> {
                 ),
               ],
             ),
-            child: const Icon(Iconsax.messages_3,
+            child: Icon(PhosphorIcons.chats(),
                 size: 48, color: Colors.white),
           ),
           const Gap(20),
@@ -282,7 +282,7 @@ class ConversationsPage extends GetView<ConversationsController> {
                   decoration: InputDecoration(
                     hintText: 'ابحث عن مستخدم...',
                     hintStyle: TextStyle(color: AppColors.textLight),
-                    prefixIcon: const Icon(Iconsax.search_normal_1,
+                    prefixIcon: Icon(PhosphorIcons.magnifyingGlass(),
                         color: AppColors.primary, size: 20),
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.symmetric(
@@ -364,7 +364,7 @@ class ConversationsPage extends GetView<ConversationsController> {
         ),
       ),
       isScrollControlled: true,
-    );
+    ).then((_) => searchCtrl.dispose());
   }
 }
 

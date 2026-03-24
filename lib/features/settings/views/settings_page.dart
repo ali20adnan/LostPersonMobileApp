@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:gap/gap.dart';
 import 'package:get/get.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../../../app/themes/app_colors.dart';
 import '../controllers/settings_controller.dart';
@@ -13,7 +13,8 @@ class SettingsPage extends GetView<SettingsController> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Obx(() {
+    final isDark = controller.isDarkMode.value;
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -32,7 +33,7 @@ class SettingsPage extends GetView<SettingsController> {
           ),
           iconTheme: const IconThemeData(color: Colors.white),
           leading: IconButton(
-            icon: const Icon(Iconsax.arrow_right_3),
+            icon: Icon(PhosphorIcons.arrowRight()),
             onPressed: () => Get.back(),
           ),
         ),
@@ -40,7 +41,7 @@ class SettingsPage extends GetView<SettingsController> {
           padding: const EdgeInsets.all(16),
           children: [
             // Translation settings section
-            _buildSectionTitle('إعدادات الترجمة', Iconsax.translate, isDark)
+            _buildSectionTitle('إعدادات الترجمة', PhosphorIcons.translate(), isDark)
                 .animate()
                 .fadeIn(duration: 300.ms)
                 .slideX(begin: 0.05),
@@ -50,7 +51,7 @@ class SettingsPage extends GetView<SettingsController> {
               children: [
                 _buildSettingTile(
                   isDark,
-                  icon: Iconsax.microphone,
+                  icon: PhosphorIcons.microphone(),
                   iconGradient: AppColors.heroGradient,
                   title: 'الكشف التلقائي للغة',
                   subtitle: 'كشف لغة المتحدث تلقائياً',
@@ -59,7 +60,7 @@ class SettingsPage extends GetView<SettingsController> {
                 _buildDivider(isDark),
                 _buildSettingTile(
                   isDark,
-                  icon: Iconsax.volume_high,
+                  icon: PhosphorIcons.speakerHigh(),
                   iconGradient: AppColors.successGradient,
                   title: 'نطق الترجمة تلقائياً',
                   subtitle: 'تشغيل صوت الترجمة بعد اكتمالها',
@@ -68,7 +69,7 @@ class SettingsPage extends GetView<SettingsController> {
                 _buildDivider(isDark),
                 _buildSettingTile(
                   isDark,
-                  icon: Iconsax.save_2,
+                  icon: PhosphorIcons.floppyDisk(),
                   iconGradient: AppColors.heroGradient,
                   title: 'حفظ المحادثات تلقائياً',
                   subtitle: 'حفظ سجل الترجمة بشكل تلقائي',
@@ -80,7 +81,7 @@ class SettingsPage extends GetView<SettingsController> {
             const Gap(24),
 
             // App settings section
-            _buildSectionTitle('إعدادات التطبيق', Iconsax.setting_2, isDark)
+            _buildSectionTitle('إعدادات التطبيق', PhosphorIcons.gear(), isDark)
                 .animate()
                 .fadeIn(delay: 200.ms, duration: 300.ms)
                 .slideX(begin: 0.05),
@@ -90,26 +91,26 @@ class SettingsPage extends GetView<SettingsController> {
               children: [
                 _buildSettingTile(
                   isDark,
-                  icon: Iconsax.moon,
+                  icon: PhosphorIcons.moon(),
                   iconGradient: AppColors.darkGradient,
                   title: 'الوضع الداكن',
                   subtitle: isDark ? 'مفعل' : 'معطل',
-                  trailing: _buildSwitch(isDark),
-                  onTap: () {
+                  trailing: _buildSwitch(isDark, onChanged: (v) {
                     HapticFeedback.lightImpact();
-                    Get.changeThemeMode(
-                      isDark ? ThemeMode.light : ThemeMode.dark,
-                    );
-                  },
+                    controller.toggleDarkMode(v);
+                  }),
                 ),
                 _buildDivider(isDark),
                 _buildSettingTile(
                   isDark,
-                  icon: Iconsax.notification,
+                  icon: PhosphorIcons.bell(),
                   iconGradient: AppColors.warmGradient,
                   title: 'الإشعارات',
-                  subtitle: 'تلقي إشعارات التطبيق',
-                  trailing: _buildSwitch(true),
+                  subtitle: controller.isNotificationsEnabled.value ? 'مفعل' : 'معطل',
+                  trailing: _buildSwitch(controller.isNotificationsEnabled.value, onChanged: (v) {
+                    HapticFeedback.lightImpact();
+                    controller.toggleNotifications(v);
+                  }),
                 ),
               ],
             ).animate().fadeIn(delay: 300.ms, duration: 400.ms).slideY(begin: 0.05),
@@ -117,7 +118,7 @@ class SettingsPage extends GetView<SettingsController> {
             const Gap(24),
 
             // About section
-            _buildSectionTitle('حول التطبيق', Iconsax.info_circle, isDark)
+            _buildSectionTitle('حول التطبيق', PhosphorIcons.info(), isDark)
                 .animate()
                 .fadeIn(delay: 400.ms, duration: 300.ms)
                 .slideX(begin: 0.05),
@@ -127,7 +128,7 @@ class SettingsPage extends GetView<SettingsController> {
               children: [
                 _buildSettingTile(
                   isDark,
-                  icon: Iconsax.mobile,
+                  icon: PhosphorIcons.deviceMobile(),
                   iconGradient: AppColors.heroGradient,
                   title: 'إصدار التطبيق',
                   subtitle: '1.0.0',
@@ -135,11 +136,11 @@ class SettingsPage extends GetView<SettingsController> {
                 _buildDivider(isDark),
                 _buildSettingTile(
                   isDark,
-                  icon: Iconsax.code,
+                  icon: PhosphorIcons.code(),
                   iconGradient: AppColors.accentGradient,
                   title: 'عن المطور',
                   subtitle: 'معلومات عن فريق التطوير',
-                  trailing: Icon(Iconsax.arrow_left_2,
+                  trailing: Icon(PhosphorIcons.arrowLeft(),
                       size: 18, color: AppColors.textLight),
                 ),
               ],
@@ -164,7 +165,7 @@ class SettingsPage extends GetView<SettingsController> {
                         ),
                       ],
                     ),
-                    child: const Icon(Iconsax.translate,
+                    child: Icon(PhosphorIcons.translate(),
                         color: Colors.white, size: 28),
                   ),
                   const Gap(10),
@@ -194,6 +195,7 @@ class SettingsPage extends GetView<SettingsController> {
         ),
       ),
     );
+    });
   }
 
   Widget _buildSectionTitle(String title, IconData icon, bool isDark) {
@@ -294,10 +296,10 @@ class SettingsPage extends GetView<SettingsController> {
     );
   }
 
-  Widget _buildSwitch(bool value) {
+  Widget _buildSwitch(bool value, {ValueChanged<bool>? onChanged}) {
     return Switch(
       value: value,
-      onChanged: (_) {},
+      onChanged: onChanged ?? (_) {},
       activeColor: AppColors.primary,
       activeTrackColor: AppColors.primarySoft,
       inactiveThumbColor: AppColors.textLight,

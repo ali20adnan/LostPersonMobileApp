@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:gap/gap.dart';
 import 'package:get/get.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 import '../../../app/themes/app_colors.dart';
@@ -166,8 +166,8 @@ class ProfilePage extends GetView<ProfileController> {
                       ),
                     ],
                   ),
-                  child: const Icon(
-                    Iconsax.camera,
+                  child: Icon(
+                    PhosphorIcons.camera(),
                     size: 16,
                     color: Colors.white,
                   ),
@@ -220,7 +220,7 @@ class ProfilePage extends GetView<ProfileController> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Iconsax.warning_2,
+                  Icon(PhosphorIcons.warningCircle(),
                       color: AppColors.warningLight, size: 18),
                   const Gap(6),
                   const Text(
@@ -264,7 +264,7 @@ class ProfilePage extends GetView<ProfileController> {
                   gradient: AppColors.heroGradient,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Iconsax.user, color: Colors.white, size: 18),
+                child: Icon(PhosphorIcons.user(), color: Colors.white, size: 18),
               ),
               const Gap(10),
               Text(
@@ -280,7 +280,7 @@ class ProfilePage extends GetView<ProfileController> {
           const Gap(18),
           _buildInfoRow(
             isDark,
-            icon: Iconsax.user_tag,
+            icon: PhosphorIcons.userCircle(),
             label: 'اسم المستخدم',
             value: user.userName,
           ),
@@ -290,7 +290,7 @@ class ProfilePage extends GetView<ProfileController> {
           ),
           _buildInfoRow(
             isDark,
-            icon: Iconsax.personalcard,
+            icon: PhosphorIcons.identificationCard(),
             label: 'الاسم الكامل',
             value: user.fullName,
           ),
@@ -300,7 +300,7 @@ class ProfilePage extends GetView<ProfileController> {
           ),
           _buildInfoRow(
             isDark,
-            icon: Iconsax.security_user,
+            icon: PhosphorIcons.shieldCheck(),
             label: 'الصلاحية',
             value: user.roleDisplayAr,
           ),
@@ -311,7 +311,7 @@ class ProfilePage extends GetView<ProfileController> {
             ),
             _buildInfoRow(
               isDark,
-              icon: Iconsax.timer_1,
+              icon: PhosphorIcons.timer(),
               label: 'انتهاء الحساب',
               value: _formatDate(user.accountExpiresAt!),
               valueColor: user.accountExpiresAt!.isBefore(DateTime.now())
@@ -350,7 +350,7 @@ class ProfilePage extends GetView<ProfileController> {
                 label,
                 style: TextStyle(
                   fontSize: 12,
-                  color: AppColors.textSecondary,
+                  color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
                 ),
               ),
               const Gap(2),
@@ -408,7 +408,7 @@ class ProfilePage extends GetView<ProfileController> {
                           ),
                         ],
                       ),
-                      child: const Icon(Iconsax.setting_2, color: Colors.white, size: 20),
+                      child: Icon(PhosphorIcons.gear(), color: Colors.white, size: 20),
                     ),
                     const Gap(14),
                     Expanded(
@@ -430,14 +430,14 @@ class ProfilePage extends GetView<ProfileController> {
                             'تخصيص إعدادات التطبيق',
                             style: TextStyle(
                               fontSize: 12,
-                              color: AppColors.textSecondary,
+                              color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
                             ),
                           ),
                         ],
                       ),
                     ),
-                    Icon(Iconsax.arrow_left_2,
-                        color: AppColors.textLight, size: 20),
+                    Icon(PhosphorIcons.arrowLeft(),
+                        color: isDark ? AppColors.textSecondaryDark : AppColors.textLight, size: 20),
                   ],
                 ),
               ),
@@ -475,7 +475,7 @@ class ProfilePage extends GetView<ProfileController> {
                           ),
                         ],
                       ),
-                      child: const Icon(Iconsax.lock, color: Colors.white, size: 20),
+                      child: Icon(PhosphorIcons.lock(), color: Colors.white, size: 20),
                     ),
                     const Gap(14),
                     Expanded(
@@ -497,14 +497,14 @@ class ProfilePage extends GetView<ProfileController> {
                             'تحديث كلمة مرور حسابك',
                             style: TextStyle(
                               fontSize: 12,
-                              color: AppColors.textSecondary,
+                              color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
                             ),
                           ),
                         ],
                       ),
                     ),
-                    Icon(Iconsax.arrow_left_2,
-                        color: AppColors.textLight, size: 20),
+                    Icon(PhosphorIcons.arrowLeft(),
+                        color: isDark ? AppColors.textSecondaryDark : AppColors.textLight, size: 20),
                   ],
                 ),
               ),
@@ -538,10 +538,10 @@ class ProfilePage extends GetView<ProfileController> {
             HapticFeedback.mediumImpact();
             _showLogoutConfirmation(Get.context!);
           },
-          child: const Row(
+          child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Iconsax.logout, color: Colors.white, size: 22),
+              Icon(PhosphorIcons.signOut(), color: Colors.white, size: 22),
               Gap(10),
               Text(
                 'تسجيل الخروج',
@@ -576,7 +576,7 @@ class ProfilePage extends GetView<ProfileController> {
                   color: AppColors.error.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Iconsax.logout, color: AppColors.error, size: 20),
+                child: Icon(PhosphorIcons.signOut(), color: AppColors.error, size: 20),
               ),
               const Gap(10),
               Text('تسجيل الخروج',
@@ -675,7 +675,7 @@ class ProfilePage extends GetView<ProfileController> {
                         gradient: AppColors.heroGradient,
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Icon(Iconsax.lock, color: Colors.white, size: 20),
+                      child: Icon(PhosphorIcons.lock(), color: Colors.white, size: 20),
                     ),
                     const Gap(10),
                     Text(
@@ -697,7 +697,7 @@ class ProfilePage extends GetView<ProfileController> {
                       obscure: controller.obscureCurrent.value,
                       toggleObscure: () => controller.obscureCurrent.toggle(),
                       label: 'كلمة المرور الحالية',
-                      icon: Iconsax.lock,
+                      icon: PhosphorIcons.lock(),
                       isDark: isDark,
                     )),
                 const Gap(16),
@@ -707,7 +707,7 @@ class ProfilePage extends GetView<ProfileController> {
                       obscure: controller.obscureNew.value,
                       toggleObscure: () => controller.obscureNew.toggle(),
                       label: 'كلمة المرور الجديدة',
-                      icon: Iconsax.lock_1,
+                      icon: PhosphorIcons.lock(),
                       isDark: isDark,
                       helperText: '6 أحرف على الأقل',
                     )),
@@ -718,7 +718,7 @@ class ProfilePage extends GetView<ProfileController> {
                       obscure: controller.obscureConfirm.value,
                       toggleObscure: () => controller.obscureConfirm.toggle(),
                       label: 'تأكيد كلمة المرور الجديدة',
-                      icon: Iconsax.lock_1,
+                      icon: PhosphorIcons.lock(),
                       isDark: isDark,
                     )),
                 // Error message
@@ -739,7 +739,7 @@ class ProfilePage extends GetView<ProfileController> {
                       ),
                       child: Row(
                         children: [
-                          const Icon(Iconsax.warning_2,
+                          Icon(PhosphorIcons.warningCircle(),
                               color: AppColors.error, size: 18),
                           const Gap(8),
                           Expanded(
@@ -839,7 +839,7 @@ class ProfilePage extends GetView<ProfileController> {
           prefixIcon: Icon(icon, color: AppColors.primary, size: 20),
           suffixIcon: IconButton(
             icon: Icon(
-              obscure ? Iconsax.eye_slash : Iconsax.eye,
+              obscure ? PhosphorIcons.eyeSlash() : PhosphorIcons.eye(),
               color: AppColors.textLight,
               size: 20,
             ),

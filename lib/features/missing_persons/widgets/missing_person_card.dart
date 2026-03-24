@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../../../app/themes/app_colors.dart';
 import '../../../app/routes/app_routes.dart';
@@ -87,14 +87,14 @@ class MissingPersonCard extends StatelessWidget {
                               const SizedBox(height: 4),
                               Row(
                                 children: [
-                                  Icon(Iconsax.cake, size: 13, color: AppColors.textLight),
+                                  Icon(PhosphorIcons.cake(), size: 13, color: AppColors.textLight),
                                   const SizedBox(width: 3),
                                   Text(
                                     '${person.age ?? '?'} سنة',
                                     style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                                   ),
                                   const SizedBox(width: 8),
-                                  Icon(Iconsax.user, size: 13, color: AppColors.textLight),
+                                  Icon(PhosphorIcons.user(), size: 13, color: AppColors.textLight),
                                   const SizedBox(width: 3),
                                   Expanded(
                                     child: Text(
@@ -129,7 +129,7 @@ class MissingPersonCard extends StatelessWidget {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(Iconsax.document_text, size: 14, color: AppColors.primary),
+                        Icon(PhosphorIcons.fileText(), size: 14, color: AppColors.primary),
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
@@ -146,7 +146,7 @@ class MissingPersonCard extends StatelessWidget {
 
                     Row(
                       children: [
-                        Icon(Iconsax.location, size: 14, color: AppColors.primary),
+                        Icon(PhosphorIcons.mapPin(), size: 14, color: AppColors.primary),
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
@@ -167,7 +167,7 @@ class MissingPersonCard extends StatelessWidget {
                       const SizedBox(height: 6),
                       Row(
                         children: [
-                          const Icon(Iconsax.tick_circle, size: 14, color: AppColors.teal),
+                          Icon(PhosphorIcons.checkCircle(), size: 14, color: AppColors.teal),
                           const SizedBox(width: 6),
                           Text(
                             'تم العثور عليه ${_relativeTime(person.updatedAt)}',
@@ -204,12 +204,12 @@ class MissingPersonCard extends StatelessWidget {
                                     },
                                   ),
                                   borderRadius: BorderRadius.circular(12),
-                                  child: const Padding(
+                                  child: Padding(
                                     padding: EdgeInsets.symmetric(vertical: 10),
                                     child: Row(
                                       mainAxisAlignment: MainAxisAlignment.center,
                                       children: [
-                                        Icon(Iconsax.eye, size: 16, color: AppColors.info),
+                                        Icon(PhosphorIcons.eye(), size: 16, color: AppColors.info),
                                         SizedBox(width: 6),
                                         Text(
                                           'إبلاغ عن مشاهدة',
@@ -246,12 +246,12 @@ class MissingPersonCard extends StatelessWidget {
                                 child: InkWell(
                                   onTap: onMarkFound,
                                   borderRadius: BorderRadius.circular(12),
-                                  child: const Padding(
+                                  child: Padding(
                                     padding: EdgeInsets.symmetric(vertical: 10),
                                     child: Row(
                                       mainAxisAlignment: MainAxisAlignment.center,
                                       children: [
-                                        Icon(Iconsax.tick_circle, size: 16, color: Colors.white),
+                                        Icon(PhosphorIcons.checkCircle(), size: 16, color: Colors.white),
                                         SizedBox(width: 6),
                                         Text(
                                           'تم العثور',

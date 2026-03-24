@@ -48,6 +48,7 @@ class AppColors {
   static const textOnPrimary = Colors.white;
   static const textOnDark = Color(0xFFF5F5F0);
   static const textOnDarkSecondary = Color(0xFF95A5A6);
+  static const textSecondaryDark = Color(0xFFB0BEC5);
 
   // ── Status Colors ────────────────────────────────────────────
   static const success = Color(0xFF22C55E);

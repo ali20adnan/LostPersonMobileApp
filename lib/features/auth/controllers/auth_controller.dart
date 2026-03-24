@@ -42,11 +42,12 @@ class AuthController extends GetxController {
 
   @override
   void onClose() {
-    // Defer disposal to avoid 'used after being disposed' during navigation
-    Future.microtask(() {
+    try {
       userNameController.dispose();
+    } catch (_) {}
+    try {
       passwordController.dispose();
-    });
+    } catch (_) {}
     super.onClose();
   }
 }

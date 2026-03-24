@@ -19,12 +19,11 @@ dependencies:
   # UI & Design
   google_fonts: ^6.1.0
   flutter_svg: ^2.0.9
-  cupertino_icons: ^1.0.8
   flutter_animate: ^4.5.2
   animations: ^2.0.11
   shimmer: ^3.0.0
   flutter_staggered_animations: ^1.1.1
-  iconsax_flutter: ^1.0.0+1
+  phosphor_flutter: ^2.1.0
   lottie: ^3.3.1
   flutter_slidable: ^3.1.1
   badges: ^3.1.2

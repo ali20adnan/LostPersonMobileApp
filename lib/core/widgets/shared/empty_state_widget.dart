@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../../../app/themes/app_colors.dart';
 
@@ -12,14 +12,14 @@ class EmptyStateWidget extends StatelessWidget {
   final Widget? action;
   final double iconSize;
 
-  const EmptyStateWidget({
+  EmptyStateWidget({
     super.key,
-    this.icon = Iconsax.box_1,
+    IconData? icon,
     required this.title,
     this.subtitle,
     this.action,
     this.iconSize = 80,
-  });
+  }) : icon = icon ?? PhosphorIcons.package();
 
   @override
   Widget build(BuildContext context) {

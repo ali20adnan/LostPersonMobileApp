@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../../app/themes/app_colors.dart';
 
@@ -90,7 +90,7 @@ class _TranslationDisplayState extends State<TranslationDisplay> {
             Row(
               children: [
                 Icon(
-                  widget.isTranslation ? Iconsax.translate : Iconsax.microphone,
+                  widget.isTranslation ? PhosphorIcons.translate() : PhosphorIcons.microphone(),
                   size: 16,
                   color: widget.isTranslation
                       ? AppColors.teal

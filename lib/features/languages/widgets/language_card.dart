@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:gap/gap.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../../../app/themes/app_colors.dart';
 import '../../../data/models/language_model.dart';
@@ -123,7 +123,7 @@ class LanguageCard extends StatelessWidget {
               ),
               child: isSelected
                   ? Icon(
-                      Iconsax.tick_circle,
+                      PhosphorIcons.checkCircle(),
                       size: 18,
                       color: AppColors.primary,
                     )

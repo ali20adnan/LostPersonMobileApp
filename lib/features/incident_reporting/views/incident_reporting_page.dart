@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:gap/gap.dart';
 import 'package:get/get.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 import '../../../app/themes/app_colors.dart';
@@ -110,7 +110,7 @@ class IncidentReportingPage extends GetView<IncidentReportingController> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Incident type selector
-            _buildSectionHeader(Iconsax.category, 'نوع الحادثة', isDark)
+            _buildSectionHeader(PhosphorIcons.squaresFour(), 'نوع الحادثة', isDark)
                 .animate().fadeIn(duration: 400.ms).slideX(begin: -0.1),
             const Gap(12),
             Obx(() => GridView.count(
@@ -182,8 +182,8 @@ class IncidentReportingPage extends GetView<IncidentReportingController> {
                               ),
                             ),
                             if (isSelected)
-                              const Icon(
-                                Iconsax.tick_circle,
+                              Icon(
+                                PhosphorIcons.checkCircle(),
                                 color: Colors.white,
                                 size: 16,
                               ),
@@ -197,7 +197,7 @@ class IncidentReportingPage extends GetView<IncidentReportingController> {
             const Gap(24),
 
             // Title field
-            _buildSectionHeader(Iconsax.document_text, 'تفاصيل الحادثة', isDark)
+            _buildSectionHeader(PhosphorIcons.fileText(), 'تفاصيل الحادثة', isDark)
                 .animate().fadeIn(duration: 400.ms, delay: 200.ms).slideX(begin: -0.1),
             const Gap(12),
             TextField(
@@ -205,7 +205,7 @@ class IncidentReportingPage extends GetView<IncidentReportingController> {
               decoration: _inputDecoration(
                 label: 'عنوان الحادثة *',
                 hint: 'مثال: شخص مفقود في المنطقة الشرقية',
-                icon: Iconsax.text,
+                icon: PhosphorIcons.textT(),
                 isDark: isDark,
               ),
               textDirection: TextDirection.rtl,
@@ -222,7 +222,7 @@ class IncidentReportingPage extends GetView<IncidentReportingController> {
               decoration: _inputDecoration(
                 label: 'وصف الحادثة *',
                 hint: 'أدخل تفاصيل الحادثة بشكل دقيق',
-                icon: Iconsax.note_text,
+                icon: PhosphorIcons.notepad(),
                 isDark: isDark,
               ),
               maxLines: 4,
@@ -235,7 +235,7 @@ class IncidentReportingPage extends GetView<IncidentReportingController> {
             const Gap(24),
 
             // Location field
-            _buildSectionHeader(Iconsax.location, 'الموقع', isDark)
+            _buildSectionHeader(PhosphorIcons.mapPin(), 'الموقع', isDark)
                 .animate().fadeIn(duration: 400.ms, delay: 350.ms).slideX(begin: -0.1),
             const Gap(12),
             TextField(
@@ -243,7 +243,7 @@ class IncidentReportingPage extends GetView<IncidentReportingController> {
               decoration: _inputDecoration(
                 label: 'الموقع *',
                 hint: 'مثال: بوابة رقم 3',
-                icon: Iconsax.location,
+                icon: PhosphorIcons.mapPin(),
                 isDark: isDark,
                 suffixIcon: Obx(() => controller.isLoadingLocation.value
                     ? Padding(
@@ -258,7 +258,7 @@ class IncidentReportingPage extends GetView<IncidentReportingController> {
                         ),
                       )
                     : IconButton(
-                        icon: const Icon(Iconsax.gps, color: AppColors.primary),
+                        icon: Icon(PhosphorIcons.crosshair(), color: AppColors.primary),
                         onPressed: controller.getCurrentLocation,
                         tooltip: 'تحديد الموقع الحالي',
                       )),
@@ -272,7 +272,7 @@ class IncidentReportingPage extends GetView<IncidentReportingController> {
             const Gap(24),
 
             // Severity selector
-            _buildSectionHeader(Iconsax.warning_2, 'مستوى الخطورة', isDark)
+            _buildSectionHeader(PhosphorIcons.warningCircle(), 'مستوى الخطورة', isDark)
                 .animate().fadeIn(duration: 400.ms, delay: 450.ms).slideX(begin: -0.1),
             const Gap(12),
             Obx(() {
@@ -286,7 +286,7 @@ class IncidentReportingPage extends GetView<IncidentReportingController> {
             const Gap(24),
 
             // Media picker
-            _buildSectionHeader(Iconsax.camera, 'الصور والفيديو', isDark)
+            _buildSectionHeader(PhosphorIcons.camera(), 'الصور والفيديو', isDark)
                 .animate().fadeIn(duration: 400.ms, delay: 550.ms).slideX(begin: -0.1),
             const Gap(12),
             Obx(() {
@@ -337,7 +337,7 @@ class IncidentReportingPage extends GetView<IncidentReportingController> {
                             size: 28,
                           )
                         else ...[
-                          const Icon(Iconsax.send_1, color: Colors.white),
+                          Icon(PhosphorIcons.paperPlaneTilt(), color: Colors.white),
                           const Gap(8),
                           const Text(
                             'إرسال البلاغ',

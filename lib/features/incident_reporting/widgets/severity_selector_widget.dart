@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../../../app/themes/app_colors.dart';
 import '../../../core/constants/incident_constants.dart';
@@ -65,7 +65,7 @@ class SeveritySelectorWidget extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
-                  isSelected ? Iconsax.tick_circle : Iconsax.record,
+                  isSelected ? PhosphorIcons.checkCircle() : PhosphorIcons.record(),
                   color: isSelected
                       ? Colors.white
                       : severity.color,

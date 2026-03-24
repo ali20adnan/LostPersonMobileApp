@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../../../app/themes/app_colors.dart';
 import '../../../core/widgets/islamic/dome_silhouette.dart';
@@ -120,7 +120,7 @@ class LoginPage extends GetView<AuthController> {
                               color: AppColors.error.withValues(alpha: 0.1),
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(Iconsax.warning_2,
+                            child: Icon(PhosphorIcons.warningCircle(),
                                 color: AppColors.error, size: 18),
                           ),
                           const SizedBox(width: 10),
@@ -145,7 +145,7 @@ class LoginPage extends GetView<AuthController> {
                   _InputField(
                     controller: controller.userNameController,
                     label: 'اسم المستخدم',
-                    icon: Iconsax.user,
+                    icon: PhosphorIcons.user(),
                     textInputAction: TextInputAction.next,
                   )
                       .animate()
@@ -162,15 +162,15 @@ class LoginPage extends GetView<AuthController> {
                     () => _InputField(
                       controller: controller.passwordController,
                       label: 'كلمة المرور',
-                      icon: Iconsax.lock,
+                      icon: PhosphorIcons.lock(),
                       obscureText: controller.obscurePassword.value,
                       textInputAction: TextInputAction.done,
                       onSubmitted: (_) => controller.login(),
                       suffixIcon: IconButton(
                         icon: Icon(
                           controller.obscurePassword.value
-                              ? Iconsax.eye_slash
-                              : Iconsax.eye,
+                              ? PhosphorIcons.eyeSlash()
+                              : PhosphorIcons.eye(),
                           size: 20,
                           color: theme.colorScheme.onSurface
                               .withValues(alpha: 0.4),

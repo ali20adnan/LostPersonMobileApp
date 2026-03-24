@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../../../app/themes/app_colors.dart';
 import '../controllers/conversations_controller.dart';
@@ -58,8 +58,8 @@ class MessagingOverlay extends StatelessWidget {
                 children: [
                   Icon(
                     controller.isMessagingPanelOpen.value
-                        ? Iconsax.message
-                        : Iconsax.message,
+                        ? PhosphorIcons.chatCircle()
+                        : PhosphorIcons.chatCircle(),
                     color: AppColors.primary,
                     size: 22,
                   ),
@@ -208,7 +208,7 @@ class _PanelHeader extends StatelessWidget {
                     .withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Iconsax.arrow_right_3, size: 18),
+              child: Icon(PhosphorIcons.arrowRight(), size: 18),
             ),
             tooltip: 'إغلاق',
           ),
@@ -253,7 +253,7 @@ class _PanelHeader extends StatelessWidget {
                 gradient: AppColors.heroGradient,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Iconsax.edit, size: 18, color: Colors.white),
+              child: Icon(PhosphorIcons.pencilSimple(), size: 18, color: Colors.white),
             ),
             tooltip: 'محادثة جديدة',
           ),
@@ -292,7 +292,7 @@ class _PanelHeader extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
-                  const Icon(Iconsax.message_add, color: AppColors.primary, size: 22),
+                  Icon(PhosphorIcons.chatDots(), color: AppColors.primary, size: 22),
                   const SizedBox(width: 8),
                   Text('محادثة جديدة',
                       style: theme.textTheme.titleLarge?.copyWith(
@@ -316,7 +316,7 @@ class _PanelHeader extends StatelessWidget {
                 },
                 decoration: InputDecoration(
                   hintText: 'ابحث عن مستخدم...',
-                  prefixIcon: const Icon(Iconsax.search_normal, size: 20),
+                  prefixIcon: Icon(PhosphorIcons.magnifyingGlass(), size: 20),
                   filled: true,
                   fillColor: theme.colorScheme.surfaceContainerHighest
                       .withValues(alpha: 0.5),
@@ -340,7 +340,7 @@ class _PanelHeader extends StatelessWidget {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Iconsax.search_normal,
+                        Icon(PhosphorIcons.magnifyingGlass(),
                             size: 40,
                             color: theme.colorScheme.onSurface
                                 .withValues(alpha: 0.2)),
@@ -407,7 +407,7 @@ class _PanelHeader extends StatelessWidget {
         ),
       ),
       isScrollControlled: true,
-    );
+    ).then((_) => searchCtrl.dispose());
   }
 }
 
@@ -425,7 +425,7 @@ class _PanelSearchBar extends StatelessWidget {
         onChanged: (val) => controller.searchQuery.value = val,
         decoration: InputDecoration(
           hintText: 'بحث في المحادثات...',
-          prefixIcon: const Icon(Iconsax.search_normal, size: 20),
+          prefixIcon: Icon(PhosphorIcons.magnifyingGlass(), size: 20),
           filled: true,
           fillColor:
               theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
@@ -467,7 +467,7 @@ class _PanelConversationList extends StatelessWidget {
                       alpha: theme.brightness == Brightness.dark ? 0.2 : 1),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(Iconsax.message,
+                child: Icon(PhosphorIcons.chatCircle(),
                     size: 40,
                     color: AppColors.primary.withValues(alpha: 0.5)),
               ),

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../../../app/themes/app_colors.dart';
 import '../controllers/notifications_page_controller.dart';
@@ -68,7 +68,7 @@ class NotificationItem extends StatelessWidget {
                       const Spacer(),
                       Text(
                         _formatTime(entry.createdAt),
-                        style: TextStyle(fontSize: 11, color: AppColors.textLight),
+                        style: TextStyle(fontSize: 11, color: isDark ? AppColors.textSecondaryDark : AppColors.textLight),
                       ),
                     ],
                   ),
@@ -95,22 +95,22 @@ class NotificationItem extends StatelessWidget {
       case 'alert':
         switch (entry.alertType) {
           case 'sighting':
-            return Iconsax.eye;
+            return PhosphorIcons.eye();
           case 'tip':
-            return Iconsax.lamp_on;
+            return PhosphorIcons.lightbulb();
           case 'found':
-            return Iconsax.tick_circle;
+            return PhosphorIcons.checkCircle();
           case 'information':
-            return Iconsax.info_circle;
+            return PhosphorIcons.info();
           default:
-            return Iconsax.notification;
+            return PhosphorIcons.bell();
         }
       case 'message':
-        return Iconsax.message;
+        return PhosphorIcons.chatCircle();
       case 'report':
-        return Iconsax.document_text;
+        return PhosphorIcons.fileText();
       default:
-        return Iconsax.notification;
+        return PhosphorIcons.bell();
     }
   }
 

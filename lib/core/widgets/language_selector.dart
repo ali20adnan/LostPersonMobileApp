@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../../app/themes/app_colors.dart';
 import '../../data/models/language_model.dart';
@@ -67,7 +67,7 @@ class LanguageSelector extends StatelessWidget {
             ),
             const SizedBox(width: 4),
             Icon(
-              Iconsax.arrow_down_1,
+              PhosphorIcons.caretDown(),
               size: 16,
               color: AppColors.textLight,
             ),

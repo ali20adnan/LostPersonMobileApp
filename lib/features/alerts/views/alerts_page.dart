@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:get/get.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../../../app/themes/app_colors.dart';
 import '../controllers/alerts_controller.dart';
@@ -38,14 +38,14 @@ class AlertsPage extends GetView<AlertsController> {
       pinned: true,
       stretch: true,
       leading: IconButton(
-        icon: const Icon(Iconsax.arrow_right_3),
+        icon: Icon(PhosphorIcons.arrowRight()),
         onPressed: () => Get.back(),
       ),
       actions: [
         Obx(() => controller.unreadCount.value > 0
             ? TextButton.icon(
                 onPressed: controller.markAllAsRead,
-                icon: const Icon(Iconsax.tick_circle, size: 16),
+                icon: Icon(PhosphorIcons.checkCircle(), size: 16),
                 label: const Text('قراءة الكل', style: TextStyle(fontSize: 12)),
               )
             : const SizedBox.shrink()),
@@ -70,7 +70,7 @@ class AlertsPage extends GetView<AlertsController> {
                             color: Colors.white.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(14),
                           ),
-                          child: const Icon(Iconsax.eye, color: Colors.white, size: 24),
+                          child: Icon(PhosphorIcons.eye(), color: Colors.white, size: 24),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -175,7 +175,7 @@ class AlertsPage extends GetView<AlertsController> {
                     ],
                   ),
                 ),
-                child: const Icon(Iconsax.eye, size: 56, color: AppColors.primary),
+                child: Icon(PhosphorIcons.eye(), size: 56, color: AppColors.primary),
               ).animate().scale(duration: 500.ms, curve: Curves.elasticOut),
               const SizedBox(height: 20),
               Text(

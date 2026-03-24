@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../controllers/ocr_reader_controller.dart';
 
@@ -23,7 +24,7 @@ class OcrReaderPage extends GetView<OcrReaderController> {
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.info_outline),
+            icon: Icon(PhosphorIcons.info()),
             onPressed: () => _showInfoDialog(context),
             tooltip: 'معلومات',
           ),
@@ -89,7 +90,7 @@ class OcrReaderPage extends GetView<OcrReaderController> {
                 ),
               ),
               IconButton(
-                icon: Icon(Icons.swap_horiz, color: theme.colorScheme.primary),
+                icon: Icon(PhosphorIcons.arrowsLeftRight(), color: theme.colorScheme.primary),
                 onPressed: controller.swapLanguages,
                 tooltip: 'تبديل اللغات',
               ),
@@ -138,7 +139,7 @@ class OcrReaderPage extends GetView<OcrReaderController> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
-                        Icons.document_scanner_outlined,
+                        PhosphorIcons.scan(),
                         size: 64,
                         color: Colors.white.withValues(alpha: 0.6),
                       ),
@@ -204,7 +205,7 @@ class OcrReaderPage extends GetView<OcrReaderController> {
                       borderRadius: BorderRadius.circular(16),
                     ),
                   ),
-                  icon: const Icon(Icons.camera_alt, size: 22),
+                  icon: Icon(PhosphorIcons.camera(), size: 22),
                   label: Text(
                     'التقاط صورة',
                     style: theme.textTheme.titleSmall?.copyWith(
@@ -231,7 +232,7 @@ class OcrReaderPage extends GetView<OcrReaderController> {
                       borderRadius: BorderRadius.circular(16),
                     ),
                   ),
-                  icon: const Icon(Icons.photo_library, size: 22),
+                  icon: Icon(PhosphorIcons.images(), size: 22),
                   label: Text(
                     'من المعرض',
                     style: theme.textTheme.titleSmall?.copyWith(
@@ -265,7 +266,7 @@ class OcrReaderPage extends GetView<OcrReaderController> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
-                        Icons.text_fields,
+                        PhosphorIcons.textT(),
                         size: 48,
                         color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
                       ),
@@ -294,7 +295,7 @@ class OcrReaderPage extends GetView<OcrReaderController> {
                             ),
                           ),
                           IconButton(
-                            icon: const Icon(Icons.clear, size: 20),
+                            icon: Icon(PhosphorIcons.x(), size: 20),
                             onPressed: controller.clearText,
                             tooltip: 'مسح النص',
                           ),

@@ -1,14 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../../../app/themes/app_colors.dart';
 import '../controllers/alerts_controller.dart';
 
 /// Page for creating a new alert (sighting report) for a missing person
-class CreateAlertPage extends GetView<AlertsController> {
+class CreateAlertPage extends StatefulWidget {
   const CreateAlertPage({super.key});
+
+  @override
+  State<CreateAlertPage> createState() => _CreateAlertPageState();
+}
+
+class _CreateAlertPageState extends State<CreateAlertPage> {
+  final nameController = TextEditingController();
+  final phoneController = TextEditingController();
+  final descController = TextEditingController();
+  final selectedType = 'sighting'.obs;
+
+  AlertsController get controller => Get.find<AlertsController>();
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    phoneController.dispose();
+    descController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,16 +40,11 @@ class CreateAlertPage extends GetView<AlertsController> {
     final reportId = args['missingPersonReportId'] as int? ?? 0;
     final personName = args['personName'] as String? ?? 'شخص مفقود';
 
-    final nameController = TextEditingController();
-    final phoneController = TextEditingController();
-    final descController = TextEditingController();
-    final selectedType = 'sighting'.obs;
-
     final types = [
-      {'key': 'sighting', 'label': 'مشاهدة', 'icon': Iconsax.eye, 'color': AppColors.info},
-      {'key': 'tip', 'label': 'معلومة', 'icon': Iconsax.lamp_on, 'color': AppColors.warning},
-      {'key': 'found', 'label': 'تم العثور', 'icon': Iconsax.tick_circle, 'color': AppColors.success},
-      {'key': 'information', 'label': 'معلومات عامة', 'icon': Iconsax.info_circle, 'color': AppColors.primary},
+      {'key': 'sighting', 'label': 'مشاهدة', 'icon': PhosphorIcons.eye(), 'color': AppColors.info},
+      {'key': 'tip', 'label': 'معلومة', 'icon': PhosphorIcons.lightbulb(), 'color': AppColors.warning},
+      {'key': 'found', 'label': 'تم العثور', 'icon': PhosphorIcons.checkCircle(), 'color': AppColors.success},
+      {'key': 'information', 'label': 'معلومات عامة', 'icon': PhosphorIcons.info(), 'color': AppColors.primary},
     ];
 
     return Scaffold(
@@ -38,7 +53,7 @@ class CreateAlertPage extends GetView<AlertsController> {
         title: const Text('الإبلاغ عن مشاهدة'),
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Iconsax.arrow_right_3),
+          icon: Icon(PhosphorIcons.arrowRight()),
           onPressed: () => Get.back(),
         ),
       ),
@@ -62,7 +77,7 @@ class CreateAlertPage extends GetView<AlertsController> {
                       color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(Iconsax.search_status, color: Colors.white, size: 24),
+                    child: Icon(PhosphorIcons.magnifyingGlass(), color: Colors.white, size: 24),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -143,7 +158,7 @@ class CreateAlertPage extends GetView<AlertsController> {
               theme: theme,
               isDark: isDark,
               label: 'اسم المُبلِّغ',
-              icon: Iconsax.user,
+              icon: PhosphorIcons.user(),
               controller: nameController,
               hint: 'أدخل اسمك الكامل',
             ),
@@ -155,7 +170,7 @@ class CreateAlertPage extends GetView<AlertsController> {
               theme: theme,
               isDark: isDark,
               label: 'رقم الهاتف',
-              icon: Iconsax.call,
+              icon: PhosphorIcons.phone(),
               controller: phoneController,
               hint: '07XXXXXXXXX',
               keyboardType: TextInputType.phone,
@@ -168,7 +183,7 @@ class CreateAlertPage extends GetView<AlertsController> {
               theme: theme,
               isDark: isDark,
               label: 'الوصف والتفاصيل',
-              icon: Iconsax.document_text,
+              icon: PhosphorIcons.fileText(),
               controller: descController,
               hint: 'صف ما شاهدته أو المعلومات التي لديك...',
               maxLines: 4,
@@ -215,10 +230,10 @@ class CreateAlertPage extends GetView<AlertsController> {
                                     strokeWidth: 2.5,
                                   ),
                                 )
-                              : const Row(
+                              : Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(Iconsax.send_1, color: Colors.white, size: 20),
+                                    Icon(PhosphorIcons.paperPlaneTilt(), color: Colors.white, size: 20),
                                     SizedBox(width: 8),
                                     Text(
                                       'إرسال البلاغ',

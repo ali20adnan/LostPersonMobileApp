@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../../app/services/socket_service.dart';
 import '../../../data/models/missing_person_report_model.dart';
 import '../../../data/repositories/missing_persons_repository.dart';
+import '../widgets/found_info_dialog.dart';
 
 class MissingPersonDetailController extends GetxController {
   final MissingPersonsRepository _repository =
@@ -42,7 +43,13 @@ class MissingPersonDetailController extends GetxController {
   }
 
   Future<void> markAsFound() async {
-    final response = await _repository.requestFound(reportId);
+    final context = Get.context;
+    if (context == null) return;
+
+    final data = await FoundInfoDialog.show(context);
+    if (data == null) return;
+
+    final response = await _repository.requestFound(reportId, data: data);
     if (response.isSuccess) {
       Get.snackbar('تم', 'تم إرسال طلب تأكيد العثور',
           snackPosition: SnackPosition.BOTTOM,

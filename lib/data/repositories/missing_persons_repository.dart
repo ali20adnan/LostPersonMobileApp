@@ -165,9 +165,11 @@ class MissingPersonsRepository {
   }
 
   /// Request marking a person as found
-  Future<ApiResponse> requestFound(int reportId) async {
+  Future<ApiResponse> requestFound(int reportId,
+      {Map<String, dynamic>? data}) async {
     return await _api.post(
-        '${ApiConstants.missingPersonReports}/$reportId/request-found');
+        '${ApiConstants.missingPersonReports}/$reportId/request-found',
+        body: data);
   }
 }
 

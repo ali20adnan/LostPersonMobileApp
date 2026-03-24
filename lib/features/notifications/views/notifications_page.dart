@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:get/get.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../../../app/themes/app_colors.dart';
 import '../../../app/services/unread_count_service.dart';
@@ -39,13 +39,13 @@ class NotificationsPage extends GetView<NotificationsPageController> {
       pinned: true,
       stretch: true,
       leading: IconButton(
-        icon: const Icon(Iconsax.arrow_right_3),
+        icon: Icon(PhosphorIcons.arrowRight()),
         onPressed: () => Get.back(),
       ),
       actions: [
         TextButton.icon(
           onPressed: controller.markAllAsRead,
-          icon: const Icon(Iconsax.tick_circle, size: 16),
+          icon: Icon(PhosphorIcons.checkCircle(), size: 16),
           label: const Text('قراءة الكل', style: TextStyle(fontSize: 12)),
         ),
       ],
@@ -63,7 +63,7 @@ class NotificationsPage extends GetView<NotificationsPageController> {
                       color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(14),
                     ),
-                    child: const Icon(Iconsax.notification, color: Colors.white, size: 24),
+                    child: Icon(PhosphorIcons.bell(), color: Colors.white, size: 24),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -110,10 +110,10 @@ class NotificationsPage extends GetView<NotificationsPageController> {
 
   Widget _buildFilterChips(ThemeData theme, bool isDark) {
     final filters = [
-      {'key': 'all', 'label': 'الكل', 'icon': Iconsax.category},
-      {'key': 'alerts', 'label': 'التنبيهات', 'icon': Iconsax.eye},
-      {'key': 'messages', 'label': 'الرسائل', 'icon': Iconsax.message},
-      {'key': 'reports', 'label': 'البلاغات', 'icon': Iconsax.document_text},
+      {'key': 'all', 'label': 'الكل', 'icon': PhosphorIcons.squaresFour()},
+      {'key': 'alerts', 'label': 'التنبيهات', 'icon': PhosphorIcons.eye()},
+      {'key': 'messages', 'label': 'الرسائل', 'icon': PhosphorIcons.chatCircle()},
+      {'key': 'reports', 'label': 'البلاغات', 'icon': PhosphorIcons.fileText()},
     ];
 
     return Padding(
@@ -175,7 +175,7 @@ class NotificationsPage extends GetView<NotificationsPageController> {
                     ],
                   ),
                 ),
-                child: const Icon(Iconsax.notification_bing, size: 56, color: AppColors.primary),
+                child: Icon(PhosphorIcons.bellRinging(), size: 56, color: AppColors.primary),
               ).animate().scale(duration: 500.ms, curve: Curves.elasticOut),
               const SizedBox(height: 20),
               Text(

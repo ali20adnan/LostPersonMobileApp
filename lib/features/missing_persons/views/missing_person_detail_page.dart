@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:gap/gap.dart';
 import 'package:get/get.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 import '../../../app/themes/app_colors.dart';
@@ -43,6 +43,9 @@ class MissingPersonDetailPage extends GetView<MissingPersonDetailController> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _buildStatusHeader(report, isDark),
+                      if (report.isFound) ...[                        const Gap(12),
+                        _buildFoundInfoSection(report, isDark),
+                      ],
                       const Gap(16),
                       _buildPersonInfoSection(report, isDark),
                       const Gap(12),
@@ -84,7 +87,7 @@ class MissingPersonDetailPage extends GetView<MissingPersonDetailController> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Iconsax.warning_2, size: 64, color: AppColors.error),
+          Icon(PhosphorIcons.warningCircle(), size: 64, color: AppColors.error),
           const Gap(16),
           Text(
             'لم يتم العثور على البيانات',
@@ -97,7 +100,7 @@ class MissingPersonDetailPage extends GetView<MissingPersonDetailController> {
           const Gap(8),
           TextButton.icon(
             onPressed: controller.loadReport,
-            icon: const Icon(Iconsax.refresh),
+            icon: Icon(PhosphorIcons.arrowsClockwise()),
             label: const Text('إعادة المحاولة'),
           ),
         ],
@@ -124,7 +127,7 @@ class MissingPersonDetailPage extends GetView<MissingPersonDetailController> {
                     fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) => Container(
                       color: AppColors.primary,
-                      child: const Icon(Iconsax.user, size: 80, color: Colors.white38),
+                      child: Icon(PhosphorIcons.user(), size: 80, color: Colors.white38),
                     ),
                   ),
                   Container(
@@ -157,7 +160,7 @@ class MissingPersonDetailPage extends GetView<MissingPersonDetailController> {
     final isMissing = report.isMissing;
     final statusColor = isMissing ? AppColors.error : AppColors.teal;
     final statusText = isMissing ? 'مفقود' : 'تم العثور عليه';
-    final statusIcon = isMissing ? Iconsax.search_status : Iconsax.tick_circle;
+    final statusIcon = isMissing ? PhosphorIcons.magnifyingGlass() : PhosphorIcons.checkCircle();
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -191,7 +194,9 @@ class MissingPersonDetailPage extends GetView<MissingPersonDetailController> {
                 ),
                 const Gap(4),
                 Text(
-                  'تاريخ الفقدان: ${report.missingDate}',
+                  report.isFound && report.foundDate != null
+                      ? 'تاريخ العثور: ${report.foundDate}'
+                      : 'تاريخ الفقدان: ${report.missingDate}',
                   style: TextStyle(
                     fontSize: 12,
                     color: isDark
@@ -216,10 +221,58 @@ class MissingPersonDetailPage extends GetView<MissingPersonDetailController> {
     ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.1);
   }
 
+  Widget _buildFoundInfoSection(MissingPersonReport report, bool isDark) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.teal.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.teal.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.teal.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(PhosphorIcons.checkCircle(),
+                    size: 18, color: AppColors.teal),
+              ),
+              const Gap(10),
+              Text(
+                'معلومات العثور',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? AppColors.textOnDark : AppColors.textPrimary,
+                ),
+              ),
+            ],
+          ),
+          const Gap(12),
+          if (report.foundDate != null)
+            _buildInfoRow(isDark, 'تاريخ العثور', report.foundDate!),
+          if (report.foundLocation != null && report.foundLocation!.isNotEmpty)
+            _buildInfoRow(isDark, 'مكان العثور', report.foundLocation!),
+          if (report.foundReason != null && report.foundReason!.isNotEmpty)
+            _buildInfoRow(isDark, 'سبب العثور', report.foundReason!),
+          if (report.foundNotes != null && report.foundNotes!.isNotEmpty)
+            _buildInfoRow(isDark, 'ملاحظات', report.foundNotes!),
+        ],
+      ),
+    ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.05);
+  }
+
   Widget _buildPersonInfoSection(MissingPersonReport report, bool isDark) {
     return _buildSection(
       isDark: isDark,
-      icon: Iconsax.user,
+      icon: PhosphorIcons.user(),
       title: 'معلومات الشخص',
       children: [
         _buildInfoRow(isDark, 'الاسم', report.fullName ?? 'غير معروف'),
@@ -232,7 +285,7 @@ class MissingPersonDetailPage extends GetView<MissingPersonDetailController> {
   Widget _buildDescriptionSection(MissingPersonReport report, bool isDark) {
     return _buildSection(
       isDark: isDark,
-      icon: Iconsax.document_text,
+      icon: PhosphorIcons.fileText(),
       title: 'الوصف',
       children: [
         Text(
@@ -278,7 +331,7 @@ class MissingPersonDetailPage extends GetView<MissingPersonDetailController> {
 
     return _buildSection(
       isDark: isDark,
-      icon: Iconsax.personalcard,
+      icon: PhosphorIcons.identificationCard(),
       title: 'الأوصاف والسمات',
       children: features.map((e) => _buildInfoRow(isDark, e.key, e.value)).toList(),
     );
@@ -287,7 +340,7 @@ class MissingPersonDetailPage extends GetView<MissingPersonDetailController> {
   Widget _buildLocationSection(MissingPersonReport report, bool isDark) {
     return _buildSection(
       isDark: isDark,
-      icon: Iconsax.location,
+      icon: PhosphorIcons.mapPin(),
       title: 'آخر موقع شوهد فيه',
       children: [
         if (report.lastSeenAddress != null && report.lastSeenAddress!.isNotEmpty)
@@ -306,7 +359,7 @@ class MissingPersonDetailPage extends GetView<MissingPersonDetailController> {
   Widget _buildReporterSection(MissingPersonReport report, bool isDark) {
     return _buildSection(
       isDark: isDark,
-      icon: Iconsax.call,
+      icon: PhosphorIcons.phone(),
       title: 'معلومات المُبلغ',
       children: [
         _buildInfoRow(isDark, 'الاسم', report.reporterName),
@@ -341,12 +394,12 @@ class MissingPersonDetailPage extends GetView<MissingPersonDetailController> {
                   },
                 ),
                 borderRadius: BorderRadius.circular(14),
-                child: const Padding(
+                child: Padding(
                   padding: EdgeInsets.symmetric(vertical: 14),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Iconsax.eye, size: 20, color: AppColors.info),
+                      Icon(PhosphorIcons.eye(), size: 20, color: AppColors.info),
                       Gap(8),
                       Text(
                         'إبلاغ عن مشاهدة',
@@ -384,12 +437,12 @@ class MissingPersonDetailPage extends GetView<MissingPersonDetailController> {
               child: InkWell(
                 onTap: controller.markAsFound,
                 borderRadius: BorderRadius.circular(14),
-                child: const Padding(
+                child: Padding(
                   padding: EdgeInsets.symmetric(vertical: 14),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Iconsax.tick_circle, size: 20, color: Colors.white),
+                      Icon(PhosphorIcons.checkCircle(), size: 20, color: Colors.white),
                       Gap(8),
                       Text(
                         'تم العثور عليه',
@@ -528,7 +581,7 @@ class MissingPersonDetailPage extends GetView<MissingPersonDetailController> {
 
     return _buildSection(
       isDark: isDark,
-      icon: Iconsax.gallery,
+      icon: PhosphorIcons.images(),
       title: 'الصور (${report.photos.length})',
       children: [
         SizedBox(
@@ -564,7 +617,7 @@ class MissingPersonDetailPage extends GetView<MissingPersonDetailController> {
       width: 120,
       height: 120,
       color: AppColors.surfaceSunken,
-      child: const Icon(Iconsax.gallery, color: AppColors.textLight, size: 32),
+      child: Icon(PhosphorIcons.images(), color: AppColors.textLight, size: 32),
     );
   }
 }

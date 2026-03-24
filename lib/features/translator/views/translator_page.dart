@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:gap/gap.dart';
 import 'package:get/get.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../../../app/themes/app_colors.dart';
 import '../../../core/widgets/audio_visualizer.dart';
@@ -161,8 +161,8 @@ class TranslatorPage extends GetView<TranslatorController> {
                 ),
               ],
             ),
-            child: const Icon(
-              Iconsax.translate,
+            child: Icon(
+              PhosphorIcons.translate(),
               size: 48,
               color: Colors.white,
             ),
@@ -233,8 +233,8 @@ class TranslatorPage extends GetView<TranslatorController> {
                     ),
                   ],
                 ),
-                child: const Icon(
-                  Iconsax.arrow_swap_horizontal,
+                child: Icon(
+                  PhosphorIcons.arrowsLeftRight(),
                   color: Colors.white,
                   size: 22,
                 ),
@@ -268,7 +268,7 @@ class TranslatorPage extends GetView<TranslatorController> {
           if (controller.currentTranslation.value.isNotEmpty)
             _buildFab(
               heroTag: 'speak',
-              icon: Iconsax.volume_high,
+              icon: PhosphorIcons.speakerHigh(),
               onPressed: controller.speakTranslation,
               gradient: AppColors.successGradient,
               shadowColor: AppColors.success,
@@ -276,7 +276,7 @@ class TranslatorPage extends GetView<TranslatorController> {
           if (controller.currentTranslation.value.isNotEmpty) const Gap(12),
           _buildFab(
             heroTag: 'history',
-            icon: Iconsax.clock,
+            icon: PhosphorIcons.clock(),
             onPressed: controller.goToHistory,
             gradient: AppColors.heroGradient,
             shadowColor: AppColors.primary,
@@ -284,7 +284,7 @@ class TranslatorPage extends GetView<TranslatorController> {
           const Gap(12),
           _buildFab(
             heroTag: 'settings',
-            icon: Iconsax.setting_2,
+            icon: PhosphorIcons.gear(),
             onPressed: controller.goToSettings,
             gradient: AppColors.warmGradient,
             shadowColor: AppColors.accent,

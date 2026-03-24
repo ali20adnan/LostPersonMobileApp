@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:gap/gap.dart';
 import 'package:get/get.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../../../app/themes/app_colors.dart';
 import '../controllers/languages_controller.dart';
@@ -33,7 +33,7 @@ class LanguagesPage extends GetView<LanguagesController> {
           ),
           iconTheme: const IconThemeData(color: Colors.white),
           leading: IconButton(
-            icon: const Icon(Iconsax.arrow_right_3),
+            icon: Icon(PhosphorIcons.arrowRight()),
             onPressed: () => Get.back(),
           ),
         ),
@@ -47,7 +47,7 @@ class LanguagesPage extends GetView<LanguagesController> {
                     isDark,
                     'اللغة المصدر',
                     'Source Language',
-                    Iconsax.microphone,
+                    PhosphorIcons.microphone(),
                   ).animate().fadeIn(duration: 300.ms).slideX(begin: 0.05),
                   const Gap(8),
                   Obx(() => _buildLanguageList(isDark, isSource: true)),
@@ -61,7 +61,7 @@ class LanguagesPage extends GetView<LanguagesController> {
                     isDark,
                     'اللغة الهدف',
                     'Target Language',
-                    Iconsax.translate,
+                    PhosphorIcons.translate(),
                   ).animate().fadeIn(delay: 300.ms, duration: 300.ms).slideX(begin: 0.05),
                   const Gap(8),
                   Obx(() => _buildLanguageList(isDark, isSource: false)),
@@ -176,7 +176,7 @@ class LanguagesPage extends GetView<LanguagesController> {
                   gradient: AppColors.heroGradient,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Iconsax.arrow_swap_horizontal,
+                child: Icon(PhosphorIcons.arrowsLeftRight(),
                     color: Colors.white, size: 18),
               ),
               const Gap(10),
@@ -219,10 +219,10 @@ class LanguagesPage extends GetView<LanguagesController> {
             HapticFeedback.mediumImpact();
             controller.saveAndGoBack();
           },
-          child: const Row(
+          child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Iconsax.tick_circle, color: Colors.white, size: 20),
+              Icon(PhosphorIcons.checkCircle(), color: Colors.white, size: 20),
               Gap(10),
               Text(
                 'حفظ التغييرات',

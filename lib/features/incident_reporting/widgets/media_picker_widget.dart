@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../app/themes/app_colors.dart';
@@ -36,7 +36,7 @@ class MediaPickerWidget extends StatelessWidget {
           children: [
             Expanded(
               child: _buildActionButton(
-                icon: Iconsax.camera,
+                icon: PhosphorIcons.camera(),
                 label: 'التقاط صورة',
                 onPressed: onTakePhoto,
                 isDark: isDark,
@@ -45,7 +45,7 @@ class MediaPickerWidget extends StatelessWidget {
             const Gap(12),
             Expanded(
               child: _buildActionButton(
-                icon: Iconsax.gallery,
+                icon: PhosphorIcons.images(),
                 label: 'اختيار صورة',
                 onPressed: onPickImage,
                 isDark: isDark,
@@ -59,7 +59,7 @@ class MediaPickerWidget extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: _buildActionButton(
-              icon: Iconsax.video,
+              icon: PhosphorIcons.videoCamera(),
               label: 'اختيار فيديو',
               onPressed: onPickVideo!,
               isDark: isDark,
@@ -109,8 +109,8 @@ class MediaPickerWidget extends StatelessWidget {
                                   gradient: AppColors.heroGradient,
                                   shape: BoxShape.circle,
                                 ),
-                                child: const Icon(
-                                  Iconsax.play,
+                                child: Icon(
+                                  PhosphorIcons.play(),
                                   size: 28,
                                   color: Colors.white,
                                 ),
@@ -124,7 +124,7 @@ class MediaPickerWidget extends StatelessWidget {
                               errorBuilder: (context, error, stackTrace) {
                                 return Center(
                                   child: Icon(
-                                    Iconsax.image,
+                                    PhosphorIcons.image(),
                                     color: AppColors.error,
                                   ),
                                 );
@@ -152,8 +152,8 @@ class MediaPickerWidget extends StatelessWidget {
                             ),
                           ],
                         ),
-                        child: const Icon(
-                          Iconsax.close_circle,
+                        child: Icon(
+                          PhosphorIcons.xCircle(),
                           color: Colors.white,
                           size: 18,
                         ),
@@ -175,11 +175,11 @@ class MediaPickerWidget extends StatelessWidget {
                           color: Colors.black.withValues(alpha: 0.7),
                           borderRadius: BorderRadius.circular(6),
                         ),
-                        child: const Row(
+                        child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
-                              Iconsax.video,
+                              PhosphorIcons.videoCamera(),
                               color: Colors.white,
                               size: 12,
                             ),
@@ -233,8 +233,8 @@ class MediaPickerWidget extends StatelessWidget {
                         ),
                       ],
                     ),
-                    child: const Icon(
-                      Iconsax.gallery_add,
+                    child: Icon(
+                      PhosphorIcons.cameraPlus(),
                       size: 32,
                       color: Colors.white,
                     ),

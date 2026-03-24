@@ -24,6 +24,9 @@ class MissingPersonReport {
   final String? reporterRelationship;
   final String status; // missing | found
   final String missingDate;
+  final String? foundDate;
+  final String? foundReason;
+  final String? foundLocation;
   final String? foundNotes;
   final String? description;
   final List<ReportPhoto> photos;
@@ -54,6 +57,9 @@ class MissingPersonReport {
     this.reporterRelationship,
     required this.status,
     required this.missingDate,
+    this.foundDate,
+    this.foundReason,
+    this.foundLocation,
     this.foundNotes,
     this.description,
     this.photos = const [],
@@ -107,6 +113,9 @@ class MissingPersonReport {
       reporterRelationship: json['reporterRelationship'] as String?,
       status: json['status'] as String? ?? 'missing',
       missingDate: json['missingDate'] as String? ?? '',
+      foundDate: json['foundDate'] as String?,
+      foundReason: json['foundReason'] as String?,
+      foundLocation: json['foundLocation'] as String?,
       foundNotes: json['foundNotes'] as String?,
       description: json['description'] as String?,
       photos: json['photos'] != null

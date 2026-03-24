@@ -1,7 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../../../app/themes/app_colors.dart';
 
@@ -68,7 +68,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
-                      Iconsax.arrow_right_3,
+                      PhosphorIcons.arrowRight(),
                       size: 20,
                       color: theme.colorScheme.onSurface,
                     ),

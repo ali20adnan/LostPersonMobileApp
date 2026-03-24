@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 import '../../../app/themes/app_colors.dart';
@@ -31,13 +31,13 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
             _buildCollapsibleSection(
               isDark: isDark,
               index: 0,
-              icon: Iconsax.user,
+              icon: PhosphorIcons.user(),
               title: 'معلومات الشخص',
               children: [
                 _buildTextField(
                   controller: controller.fullNameController,
                   label: 'الاسم الكامل *',
-                  icon: Iconsax.user,
+                  icon: PhosphorIcons.user(),
                   isDark: isDark,
                 ),
                 const SizedBox(height: 12),
@@ -46,7 +46,7 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
                 _buildTextField(
                   controller: controller.dateOfBirthController,
                   label: 'تاريخ الميلاد',
-                  icon: Iconsax.cake,
+                  icon: PhosphorIcons.cake(),
                   hint: 'YYYY-MM-DD',
                   isDark: isDark,
                 ),
@@ -57,7 +57,7 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
                       child: _buildTextField(
                         controller: controller.heightController,
                         label: 'الطول (سم)',
-                        icon: Iconsax.ruler,
+                        icon: PhosphorIcons.ruler(),
                         keyboardType: TextInputType.number,
                         isDark: isDark,
                       ),
@@ -67,7 +67,7 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
                       child: _buildTextField(
                         controller: controller.weightController,
                         label: 'الوزن (كغ)',
-                        icon: Iconsax.weight,
+                        icon: PhosphorIcons.scales(),
                         keyboardType: TextInputType.number,
                         isDark: isDark,
                       ),
@@ -81,7 +81,7 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
                       child: _buildTextField(
                         controller: controller.hairColorController,
                         label: 'لون الشعر',
-                        icon: Iconsax.activity,
+                        icon: PhosphorIcons.palette(),
                         isDark: isDark,
                       ),
                     ),
@@ -90,7 +90,7 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
                       child: _buildTextField(
                         controller: controller.eyeColorController,
                         label: 'لون العين',
-                        icon: Iconsax.eye,
+                        icon: PhosphorIcons.eye(),
                         isDark: isDark,
                       ),
                     ),
@@ -100,7 +100,7 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
                 _buildTextField(
                   controller: controller.distinguishingFeaturesController,
                   label: 'علامات مميزة',
-                  icon: Iconsax.star,
+                  icon: PhosphorIcons.star(),
                   maxLines: 2,
                   isDark: isDark,
                 ),
@@ -108,7 +108,7 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
                 _buildTextField(
                   controller: controller.medicalConditionsController,
                   label: 'حالات طبية',
-                  icon: Iconsax.health,
+                  icon: PhosphorIcons.firstAid(),
                   maxLines: 2,
                   isDark: isDark,
                 ),
@@ -116,7 +116,7 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
                 _buildTextField(
                   controller: controller.clothingDescriptionController,
                   label: 'وصف الملابس',
-                  icon: Iconsax.bag_2,
+                  icon: PhosphorIcons.tShirt(),
                   maxLines: 2,
                   isDark: isDark,
                 ),
@@ -126,13 +126,13 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
             _buildCollapsibleSection(
               isDark: isDark,
               index: 1,
-              icon: Iconsax.location,
+              icon: PhosphorIcons.mapPin(),
               title: 'آخر موقع شوهد فيه',
               children: [
                 _buildTextField(
                   controller: controller.addressLineController,
                   label: 'العنوان',
-                  icon: Iconsax.location,
+                  icon: PhosphorIcons.mapPin(),
                   isDark: isDark,
                   suffixWidget: Obx(() => controller.isLoadingLocation.value
                       ? Padding(
@@ -147,7 +147,7 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
                           ),
                         )
                       : IconButton(
-                          icon: const Icon(Iconsax.gps, color: AppColors.primary),
+                          icon: Icon(PhosphorIcons.crosshair(), color: AppColors.primary),
                           onPressed: controller.getCurrentLocation,
                           tooltip: 'تحديد الموقع الحالي',
                         )),
@@ -158,20 +158,20 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
             _buildCollapsibleSection(
               isDark: isDark,
               index: 3,
-              icon: Iconsax.call,
+              icon: PhosphorIcons.phone(),
               title: 'معلومات المُبلّغ',
               children: [
                 _buildTextField(
                   controller: controller.reporterNameController,
                   label: 'اسم المُبلّغ *',
-                  icon: Iconsax.user,
+                  icon: PhosphorIcons.user(),
                   isDark: isDark,
                 ),
                 const SizedBox(height: 12),
                 _buildTextField(
                   controller: controller.reporterPhoneController,
                   label: 'رقم الهاتف *',
-                  icon: Iconsax.call,
+                  icon: PhosphorIcons.phone(),
                   keyboardType: TextInputType.phone,
                   isDark: isDark,
                 ),
@@ -179,7 +179,7 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
                 _buildTextField(
                   controller: controller.reporterRelationshipController,
                   label: 'صلة القرابة',
-                  icon: Iconsax.people,
+                  icon: PhosphorIcons.users(),
                   isDark: isDark,
                 ),
               ],
@@ -188,7 +188,7 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
             _buildCollapsibleSection(
               isDark: isDark,
               index: 4,
-              icon: Iconsax.document_text,
+              icon: PhosphorIcons.fileText(),
               title: 'تفاصيل البلاغ',
               children: [
                 GestureDetector(
@@ -197,7 +197,7 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
                     child: _buildTextField(
                       controller: controller.missingDateController,
                       label: 'تاريخ الفقدان *',
-                      icon: Iconsax.calendar,
+                      icon: PhosphorIcons.calendar(),
                       isDark: isDark,
                     ),
                   ),
@@ -206,7 +206,7 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
                 _buildTextField(
                   controller: controller.descriptionController,
                   label: 'وصف إضافي',
-                  icon: Iconsax.document,
+                  icon: PhosphorIcons.file(),
                   maxLines: 3,
                   isDark: isDark,
                 ),
@@ -271,7 +271,7 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
                       ),
                     ),
                     Icon(
-                      isExpanded ? Iconsax.arrow_up_2 : Iconsax.arrow_down_1,
+                  isExpanded ? PhosphorIcons.caretUp() : PhosphorIcons.caretDown(),
                       color: AppColors.textLight,
                       size: 20,
                     ),
@@ -340,9 +340,9 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
   Widget _buildGenderSelector(bool isDark) {
     return Obx(() => Row(
           children: [
-            Expanded(child: _genderChip(isDark, 'male', 'ذكر', Iconsax.man)),
+            Expanded(child: _genderChip(isDark, 'male', 'ذكر', PhosphorIcons.genderMale())),
             const SizedBox(width: 10),
-            Expanded(child: _genderChip(isDark, 'female', 'أنثى', Iconsax.woman)),
+            Expanded(child: _genderChip(isDark, 'female', 'أنثى', PhosphorIcons.genderFemale())),
           ],
         ));
   }
@@ -391,7 +391,7 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
       children: [
         Row(
           children: [
-            const Icon(Iconsax.camera, size: 20, color: AppColors.primary),
+            Icon(PhosphorIcons.camera(), size: 20, color: AppColors.primary),
             const SizedBox(width: 8),
             Text(
               'الصور',
@@ -403,12 +403,12 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
             const Spacer(),
             TextButton.icon(
               onPressed: controller.pickImage,
-              icon: const Icon(Iconsax.gallery, size: 18),
+              icon: Icon(PhosphorIcons.images(), size: 18),
               label: const Text('المعرض'),
             ),
             TextButton.icon(
               onPressed: controller.takePhoto,
-              icon: const Icon(Iconsax.camera, size: 18),
+              icon: Icon(PhosphorIcons.camera(), size: 18),
               label: const Text('الكاميرا'),
             ),
           ],
@@ -428,7 +428,7 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
               ),
               child: Column(
                 children: [
-                  Icon(Iconsax.gallery_add, size: 40, color: AppColors.textLight),
+                  Icon(PhosphorIcons.cameraPlus(), size: 40, color: AppColors.textLight),
                   const SizedBox(height: 8),
                   Text('لم يتم اختيار صور',
                       style: TextStyle(color: AppColors.textSecondary)),
@@ -466,7 +466,7 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
                               color: AppColors.accent,
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(Icons.close, size: 14, color: Colors.white),
+                            child: Icon(PhosphorIcons.x(), size: 14, color: Colors.white),
                           ),
                         ),
                       ),
@@ -513,10 +513,10 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
                       color: Colors.white,
                       size: 24,
                     )
-                  : const Row(
+                  : Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Iconsax.send_1, color: Colors.white),
+                        Icon(PhosphorIcons.paperPlaneTilt(), color: Colors.white),
                         SizedBox(width: 10),
                         Text(
                           'إرسال البلاغ',

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../../../app/themes/app_colors.dart';
 import '../../../app/routes/app_routes.dart';
@@ -54,8 +54,8 @@ class NotificationOverlay extends StatelessWidget {
                     children: [
                       Icon(
                         controller.isOverlayOpen.value
-                            ? Iconsax.notification
-                            : Iconsax.notification,
+                            ? PhosphorIcons.bell()
+                            : PhosphorIcons.bell(),
                         color: AppColors.primary,
                         size: 22,
                       ),
@@ -173,7 +173,7 @@ class _NotificationDropdown extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
                 child: Row(
                   children: [
-                    Icon(Iconsax.notification, size: 20, color: AppColors.primary),
+                    Icon(PhosphorIcons.bell(), size: 20, color: AppColors.primary),
                     const SizedBox(width: 8),
                     Text(
                       'الإشعارات',
@@ -185,7 +185,7 @@ class _NotificationDropdown extends StatelessWidget {
                     Obx(() => controller.unreadCount.value > 0
                         ? TextButton.icon(
                             onPressed: controller.markAllAsRead,
-                            icon: const Icon(Iconsax.tick_circle, size: 14),
+                            icon: Icon(PhosphorIcons.checkCircle(), size: 14),
                             label: const Text('قراءة الكل',
                                 style: TextStyle(fontSize: 11)),
                             style: TextButton.styleFrom(
@@ -200,7 +200,7 @@ class _NotificationDropdown extends StatelessWidget {
                         controller.isOverlayOpen.value = false;
                         Get.toNamed(AppRoutes.notifications);
                       },
-                      icon: const Icon(Iconsax.arrow_left_2, size: 14),
+                      icon: Icon(PhosphorIcons.arrowLeft(), size: 14),
                       label: const Text('عرض الكل',
                           style: TextStyle(fontSize: 11)),
                       style: TextButton.styleFrom(
@@ -238,7 +238,7 @@ class _NotificationDropdown extends StatelessWidget {
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
-                              Iconsax.notification_bing,
+                              PhosphorIcons.bellRinging(),
                               size: 32,
                               color: AppColors.primary.withValues(alpha: 0.5),
                             ),
@@ -385,15 +385,15 @@ class _AlertTile extends StatelessWidget {
   IconData _typeIcon(String type) {
     switch (type) {
       case 'sighting':
-        return Iconsax.eye;
+        return PhosphorIcons.eye();
       case 'tip':
-        return Iconsax.lamp_on;
+        return PhosphorIcons.lightbulb();
       case 'found':
-        return Iconsax.tick_circle;
+        return PhosphorIcons.checkCircle();
       case 'information':
-        return Iconsax.info_circle;
+        return PhosphorIcons.info();
       default:
-        return Iconsax.notification;
+        return PhosphorIcons.bell();
     }
   }
 

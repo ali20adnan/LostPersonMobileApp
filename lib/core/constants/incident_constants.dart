@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 /// Report types matching the API
 enum ReportType {
@@ -17,9 +18,9 @@ enum ReportType {
   IconData get icon {
     switch (this) {
       case ReportType.emergency:
-        return Icons.warning_amber;
+        return PhosphorIcons.warning();
       case ReportType.other:
-        return Icons.report_problem;
+        return PhosphorIcons.warningCircle();
     }
   }
 
@@ -148,13 +149,13 @@ enum AlertType {
   IconData get icon {
     switch (this) {
       case AlertType.sighting:
-        return Icons.visibility;
+        return PhosphorIcons.eye();
       case AlertType.tip:
-        return Icons.lightbulb;
+        return PhosphorIcons.lightbulb();
       case AlertType.found:
-        return Icons.check_circle;
+        return PhosphorIcons.checkCircle();
       case AlertType.information:
-        return Icons.info;
+        return PhosphorIcons.info();
     }
   }
 

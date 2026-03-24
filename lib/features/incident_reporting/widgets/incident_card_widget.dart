@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:intl/intl.dart';
 
 import '../../../app/themes/app_colors.dart';
@@ -181,7 +181,7 @@ class IncidentCardWidget extends StatelessWidget {
                             Row(
                               children: [
                                 Icon(
-                                  Iconsax.location,
+                                  PhosphorIcons.mapPin(),
                                   size: 14,
                                   color: isDark
                                       ? AppColors.textOnDarkSecondary
@@ -230,7 +230,7 @@ class IncidentCardWidget extends StatelessWidget {
                                 Row(
                                   children: [
                                     Icon(
-                                      Iconsax.clock,
+                                      PhosphorIcons.clock(),
                                       size: 13,
                                       color: isDark
                                           ? AppColors.textOnDarkSecondary

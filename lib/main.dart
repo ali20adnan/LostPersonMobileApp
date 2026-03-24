@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -11,9 +14,23 @@ import 'app/services/api_service.dart';
 import 'app/services/auth_service.dart';
 import 'app/services/socket_service.dart';
 import 'app/services/unread_count_service.dart';
+import 'core/widgets/app_error_widget.dart';
+import 'features/settings/controllers/settings_controller.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Replace the default red error screen with a user-friendly Arabic widget
+  ErrorWidget.builder = (FlutterErrorDetails details) {
+    debugPrint('ErrorWidget: ${details.exception}');
+    return AppErrorWidget(errorDetails: details);
+  };
+
+  // Catch Flutter framework errors (render, build, layout)
+  FlutterError.onError = (FlutterErrorDetails details) {
+    debugPrint('FlutterError: ${details.exception}');
+    debugPrint('${details.stack}');
+  };
 
   // Load environment variables
   try {
@@ -32,6 +49,9 @@ void main() async {
   await Get.putAsync<ApiService>(() async => ApiService());
   await Get.putAsync<AuthService>(() => AuthService().init());
 
+  // Initialize settings (dark mode, notifications)
+  Get.put(SettingsController(), permanent: true);
+
   // Initialize Socket.IO if user is already logged in
   final authService = Get.find<AuthService>();
   if (authService.isLoggedIn) {
@@ -39,7 +59,14 @@ void main() async {
     await Get.putAsync<UnreadCountService>(() => UnreadCountService().init());
   }
 
-  runApp(const SpeechTranslatorApp());
+  // Wrap runApp in runZonedGuarded to catch uncaught async errors
+  runZonedGuarded(
+    () => runApp(const SpeechTranslatorApp()),
+    (error, stack) {
+      debugPrint('Uncaught async error: $error');
+      debugPrint('$stack');
+    },
+  );
 }
 
 class SpeechTranslatorApp extends StatelessWidget {
@@ -68,7 +95,7 @@ class SpeechTranslatorApp extends StatelessWidget {
       // Theme configuration
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.light,
+      themeMode: ThemeMode.system,
 
       // GetX Navigation
       initialRoute: AppRoutes.splash,

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:gap/gap.dart';
 import 'package:get/get.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 import '../../../app/themes/app_colors.dart';
@@ -144,7 +144,7 @@ class TranslatorToolsPage extends GetView<TranslatorController> {
           Obx(() {
             if (controller.toolMode.value == 1) {
               return IconButton(
-                icon: Icon(Iconsax.info_circle,
+                icon: Icon(PhosphorIcons.info(),
                     color: isDark
                         ? AppColors.textOnDark
                         : AppColors.textSecondary),
@@ -182,7 +182,7 @@ class TranslatorToolsPage extends GetView<TranslatorController> {
               _buildModeTab(
                 theme: theme,
                 isDark: isDark,
-                icon: Iconsax.microphone,
+                icon: PhosphorIcons.microphone(),
                 label: 'مترجم صوتي',
                 isSelected: selected == 0,
                 onTap: () => _switchMode(0),
@@ -190,7 +190,7 @@ class TranslatorToolsPage extends GetView<TranslatorController> {
               _buildModeTab(
                 theme: theme,
                 isDark: isDark,
-                icon: Iconsax.scan,
+                icon: PhosphorIcons.scan(),
                 label: 'قارئ نصوص',
                 isSelected: selected == 1,
                 onTap: () => _switchMode(1),
@@ -264,9 +264,9 @@ class TranslatorToolsPage extends GetView<TranslatorController> {
         margin: const EdgeInsets.all(16),
         borderRadius: 16,
         duration: const Duration(seconds: 2),
-        icon: const Padding(
+        icon: Padding(
           padding: EdgeInsets.only(right: 12),
-          child: Icon(Iconsax.warning_2, color: Colors.white),
+          child: Icon(PhosphorIcons.warningCircle(), color: Colors.white),
         ),
       );
       return;
@@ -364,8 +364,8 @@ class TranslatorToolsPage extends GetView<TranslatorController> {
                 ),
               ],
             ),
-            child: const Icon(
-              Iconsax.message,
+            child: Icon(
+              PhosphorIcons.chatCircle(),
               size: 44,
               color: Colors.white,
             ),
@@ -434,8 +434,8 @@ class TranslatorToolsPage extends GetView<TranslatorController> {
                     ),
                   ],
                 ),
-                child: const Icon(
-                  Iconsax.arrow_swap_horizontal,
+                child: Icon(
+                  PhosphorIcons.arrowsLeftRight(),
                   color: Colors.white,
                   size: 20,
                 ),
@@ -499,14 +499,14 @@ class TranslatorToolsPage extends GetView<TranslatorController> {
           if (controller.currentTranslation.value.isNotEmpty)
             _buildGradientFab(
               heroTag: 'speak',
-              icon: Iconsax.volume_high,
+              icon: PhosphorIcons.speakerHigh(),
               gradient: AppColors.accentGradient,
               onPressed: controller.speakTranslation,
             ),
           if (controller.currentTranslation.value.isNotEmpty) const Gap(12),
           _buildGradientFab(
             heroTag: 'history',
-            icon: Iconsax.clock,
+            icon: PhosphorIcons.clock(),
             gradient: AppColors.heroGradient,
             onPressed: controller.goToHistory,
           ),
@@ -551,200 +551,202 @@ class TranslatorToolsPage extends GetView<TranslatorController> {
   Widget _buildOcrContent(ThemeData theme, bool isDark) {
     final ocrCtrl = Get.find<OcrReaderController>();
 
-    return Stack(
+    return Column(
       children: [
-        Column(
-          children: [
-            // Language selector for OCR
-            _buildOcrLanguageSelector(theme, isDark, ocrCtrl),
+        // Language selector — always visible at top
+        _buildOcrLanguageSelector(theme, isDark, ocrCtrl),
 
-            const Gap(12),
+        const Gap(12),
 
-            // Image preview with tappable text block overlays
-            Expanded(
-              child: Obx(() {
-                final imagePath = ocrCtrl.capturedImagePath.value;
-                final blocks = ocrCtrl.recognizedBlocks.toList();
-                final selected = ocrCtrl.selectedBlockIndices.toSet();
-                final imgSize = ocrCtrl.imageSize.value;
-                final scanning = ocrCtrl.isScanning.value;
+        // Image preview + draggable results sheet (stacked)
+        Expanded(
+          child: Stack(
+            children: [
+              // Image preview with tappable text block overlays
+              Positioned.fill(
+                child: Obx(() {
+                  final imagePath = ocrCtrl.capturedImagePath.value;
+                  final blocks = ocrCtrl.recognizedBlocks.toList();
+                  final selected = ocrCtrl.selectedBlockIndices.toSet();
+                  final imgSize = ocrCtrl.imageSize.value;
+                  final scanning = ocrCtrl.isScanning.value;
 
-                return Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 20),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF0A0A1A),
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(
-                      color: AppColors.primary.withValues(alpha: 0.3),
-                      width: 2,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.primary.withValues(alpha: 0.1),
-                        blurRadius: 20,
-                        spreadRadius: 2,
+                  return Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 20),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0A0A1A),
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(
+                        color: AppColors.primary.withValues(alpha: 0.3),
+                        width: 2,
                       ),
-                    ],
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(22),
-                    child: Stack(
-                      children: [
-                        if (imagePath.isNotEmpty)
-                          Positioned.fill(
-                            child: LayoutBuilder(
-                              builder: (context, constraints) {
-                                return Stack(
-                                  children: [
-                                    Positioned.fill(
-                                      child: Image.file(
-                                        File(imagePath),
-                                        fit: BoxFit.contain,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withValues(alpha: 0.1),
+                          blurRadius: 20,
+                          spreadRadius: 2,
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(22),
+                      child: Stack(
+                        children: [
+                          if (imagePath.isNotEmpty)
+                            Positioned.fill(
+                              child: LayoutBuilder(
+                                builder: (context, constraints) {
+                                  return Stack(
+                                    children: [
+                                      Positioned.fill(
+                                        child: Image.file(
+                                          File(imagePath),
+                                          fit: BoxFit.contain,
+                                        ),
                                       ),
+                                      if (blocks.isNotEmpty &&
+                                          imgSize != Size.zero)
+                                        ..._buildBlockOverlays(
+                                          constraints.biggest,
+                                          imgSize,
+                                          blocks,
+                                          selected,
+                                          ocrCtrl,
+                                        ),
+                                    ],
+                                  );
+                                },
+                              ),
+                            )
+                          else
+                            Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  ShaderMask(
+                                    shaderCallback: (bounds) =>
+                                        AppColors.heroGradient
+                                            .createShader(bounds),
+                                    child: Icon(
+                                      PhosphorIcons.scan(),
+                                      size: 72,
+                                      color: Colors.white,
                                     ),
-                                    if (blocks.isNotEmpty &&
-                                        imgSize != Size.zero)
-                                      ..._buildBlockOverlays(
-                                        constraints.biggest,
-                                        imgSize,
-                                        blocks,
-                                        selected,
-                                        ocrCtrl,
+                                  ),
+                                  const Gap(16),
+                                  Text(
+                                    'وجه الكاميرا نحو النص',
+                                    style:
+                                        theme.textTheme.titleMedium?.copyWith(
+                                      color:
+                                          Colors.white.withValues(alpha: 0.6),
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          if (scanning)
+                            Positioned.fill(
+                              child: Container(
+                                color: Colors.black54,
+                                child: Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      LoadingAnimationWidget.staggeredDotsWave(
+                                        color: AppColors.primary,
+                                        size: 50,
                                       ),
-                                  ],
-                                );
-                              },
-                            ),
-                          )
-                        else
-                          Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                ShaderMask(
-                                  shaderCallback: (bounds) =>
-                                      AppColors.heroGradient
-                                          .createShader(bounds),
-                                  child: const Icon(
-                                    Iconsax.scan,
-                                    size: 72,
-                                    color: Colors.white,
+                                      const Gap(16),
+                                      Text(
+                                        'جاري استخراج النص...',
+                                        style: theme.textTheme.titleMedium
+                                            ?.copyWith(color: Colors.white),
+                                      ),
+                                    ],
                                   ),
-                                ),
-                                const Gap(16),
-                                Text(
-                                  'وجه الكاميرا نحو النص',
-                                  style:
-                                      theme.textTheme.titleMedium?.copyWith(
-                                    color:
-                                        Colors.white.withValues(alpha: 0.6),
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        if (scanning)
-                          Positioned.fill(
-                            child: Container(
-                              color: Colors.black54,
-                              child: Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    LoadingAnimationWidget.staggeredDotsWave(
-                                      color: AppColors.primary,
-                                      size: 50,
-                                    ),
-                                    const Gap(16),
-                                    Text(
-                                      'جاري استخراج النص...',
-                                      style: theme.textTheme.titleMedium
-                                          ?.copyWith(color: Colors.white),
-                                    ),
-                                  ],
                                 ),
                               ),
                             ),
-                          ),
-                      ],
-                    ),
-                  ),
-                );
-              }),
-            ).animate().fadeIn(duration: 400.ms, delay: 300.ms).scale(
-                begin: const Offset(0.95, 0.95)),
-
-            // Selection hint & actions
-            Obx(() {
-              if (!ocrCtrl.hasBlocks || ocrCtrl.isScanning.value) {
-                return const SizedBox.shrink();
-              }
-              final totalBlocks = ocrCtrl.recognizedBlocks.length;
-              final selectedCount = ocrCtrl.selectedBlockIndices.length;
-              return Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-                child: Row(
-                  children: [
-                    Icon(Iconsax.finger_scan,
-                        size: 16,
-                        color: isDark
-                            ? AppColors.textOnDarkSecondary
-                            : AppColors.textSecondary),
-                    const Gap(6),
-                    Expanded(
-                      child: Text(
-                        selectedCount == 0
-                            ? 'اضغط على النص في الصورة لتحديد جزء للترجمة'
-                            : 'تم تحديد $selectedCount من $totalBlocks',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: selectedCount == 0
-                              ? (isDark
-                                  ? AppColors.textOnDarkSecondary
-                                  : AppColors.textSecondary)
-                              : AppColors.primary,
-                          fontWeight: selectedCount > 0
-                              ? FontWeight.w600
-                              : FontWeight.normal,
-                        ),
+                        ],
                       ),
                     ),
-                    if (selectedCount > 0) ...[
-                      _buildSmallAction(
-                        label: 'ترجمة المحدد',
-                        icon: Iconsax.translate,
-                        color: AppColors.teal,
-                        onTap: ocrCtrl.translateSelected,
-                      ),
-                      const Gap(6),
-                      _buildSmallAction(
-                        label: 'إلغاء',
-                        icon: Iconsax.close_circle,
-                        color: AppColors.textSecondary,
-                        onTap: ocrCtrl.clearSelection,
-                      ),
-                    ] else if (totalBlocks > 1)
-                      _buildSmallAction(
-                        label: 'تحديد الكل',
-                        icon: Iconsax.tick_square,
-                        color: AppColors.primary,
-                        onTap: ocrCtrl.selectAllBlocks,
-                      ),
-                  ],
-                ),
-              );
-            }),
+                  );
+                }),
+              ),
 
-            // Bottom action bar: Settings | Camera | Gallery
-            _buildOcrBottomBar(theme, isDark, ocrCtrl),
-
-            const Gap(8),
-          ],
+              // Draggable results sheet — confined within the image area
+              _buildOcrResultsSheet(theme, isDark, ocrCtrl),
+            ],
+          ),
         ),
 
-        // Draggable results bottom sheet
-        _buildOcrResultsSheet(theme, isDark, ocrCtrl),
+        // Selection hint & actions — always visible above buttons
+        Obx(() {
+          if (!ocrCtrl.hasBlocks || ocrCtrl.isScanning.value) {
+            return const SizedBox.shrink();
+          }
+          final totalBlocks = ocrCtrl.recognizedBlocks.length;
+          final selectedCount = ocrCtrl.selectedBlockIndices.length;
+          return Padding(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+            child: Row(
+              children: [
+                Icon(PhosphorIcons.fingerprint(),
+                    size: 16,
+                    color: isDark
+                        ? AppColors.textOnDarkSecondary
+                        : AppColors.textSecondary),
+                const Gap(6),
+                Expanded(
+                  child: Text(
+                    selectedCount == 0
+                        ? 'اضغط على النص في الصورة لتحديد جزء للترجمة'
+                        : 'تم تحديد $selectedCount من $totalBlocks',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: selectedCount == 0
+                          ? (isDark
+                              ? AppColors.textOnDarkSecondary
+                              : AppColors.textSecondary)
+                          : AppColors.primary,
+                      fontWeight: selectedCount > 0
+                          ? FontWeight.w600
+                          : FontWeight.normal,
+                    ),
+                  ),
+                ),
+                if (selectedCount > 0) ...[
+                  _buildSmallAction(
+                    label: 'ترجمة المحدد',
+                    icon: PhosphorIcons.translate(),
+                    color: AppColors.teal,
+                    onTap: ocrCtrl.translateSelected,
+                  ),
+                  const Gap(6),
+                  _buildSmallAction(
+                    label: 'إلغاء',
+                    icon: PhosphorIcons.xCircle(),
+                    color: AppColors.textSecondary,
+                    onTap: ocrCtrl.clearSelection,
+                  ),
+                ] else if (totalBlocks > 1)
+                  _buildSmallAction(
+                    label: 'تحديد الكل',
+                    icon: PhosphorIcons.checkSquare(),
+                    color: AppColors.primary,
+                    onTap: ocrCtrl.selectAllBlocks,
+                  ),
+              ],
+            ),
+          );
+        }),
+
+        // Bottom action bar — always visible
+        _buildOcrBottomBar(theme, isDark, ocrCtrl),
+
+        const Gap(8),
       ],
     );
   }
@@ -775,7 +777,7 @@ class TranslatorToolsPage extends GetView<TranslatorController> {
                   onTap: busy ? null : () => _showOcrSettingsSheet(theme, isDark, ocrCtrl),
                   borderRadius: BorderRadius.circular(26),
                   child: Icon(
-                    Iconsax.setting_2,
+                    PhosphorIcons.gear(),
                     size: 24,
                     color: isDark
                         ? AppColors.textOnDarkSecondary
@@ -807,8 +809,8 @@ class TranslatorToolsPage extends GetView<TranslatorController> {
                         : null,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
-                    Iconsax.camera,
+                  child: Icon(
+                    PhosphorIcons.camera(),
                     size: 28,
                     color: Colors.white,
                   ),
@@ -832,7 +834,7 @@ class TranslatorToolsPage extends GetView<TranslatorController> {
                   onTap: busy ? null : ocrCtrl.pickFromGallery,
                   borderRadius: BorderRadius.circular(26),
                   child: Icon(
-                    Iconsax.gallery,
+                    PhosphorIcons.images(),
                     size: 24,
                     color: isDark
                         ? AppColors.textOnDarkSecondary
@@ -877,7 +879,7 @@ class TranslatorToolsPage extends GetView<TranslatorController> {
             ),
             const Gap(20),
             ListTile(
-              leading: const Icon(Iconsax.info_circle, color: AppColors.primary),
+              leading: Icon(PhosphorIcons.info(), color: AppColors.primary),
               title: const Text('حول قارئ النصوص'),
               subtitle: const Text(
                 'التقط صورة أو اختر من المعرض لاستخراج النص وترجمته تلقائياً',
@@ -953,7 +955,7 @@ class TranslatorToolsPage extends GetView<TranslatorController> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
-                            Icons.keyboard_arrow_up,
+                            PhosphorIcons.caretUp(),
                             size: 16,
                             color: isDark
                                 ? AppColors.textOnDarkSecondary
@@ -981,7 +983,7 @@ class TranslatorToolsPage extends GetView<TranslatorController> {
                             children: [
                               const Gap(32),
                               Icon(
-                                Iconsax.text,
+                                PhosphorIcons.textT(),
                                 size: 48,
                                 color: isDark
                                     ? AppColors.textOnDarkSecondary
@@ -1011,7 +1013,7 @@ class TranslatorToolsPage extends GetView<TranslatorController> {
                                 children: [
                                   Row(
                                     children: [
-                                      const Icon(Iconsax.document_text,
+                                      Icon(PhosphorIcons.fileText(),
                                           size: 18,
                                           color: AppColors.primary),
                                       const Gap(6),
@@ -1028,7 +1030,7 @@ class TranslatorToolsPage extends GetView<TranslatorController> {
                                     ],
                                   ),
                                   IconButton(
-                                    icon: Icon(Iconsax.close_circle,
+                                    icon: Icon(PhosphorIcons.xCircle(),
                                         size: 20,
                                         color: AppColors.textLight),
                                     onPressed: ocrCtrl.clearText,
@@ -1048,7 +1050,7 @@ class TranslatorToolsPage extends GetView<TranslatorController> {
                                       : AppColors.divider),
                               Row(
                                 children: [
-                                  const Icon(Iconsax.translate,
+                                  Icon(PhosphorIcons.translate(),
                                       size: 18, color: AppColors.teal),
                                   const Gap(6),
                                   Text(
@@ -1152,8 +1154,8 @@ class TranslatorToolsPage extends GetView<TranslatorController> {
                           color: AppColors.primary,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(
-                          Icons.check,
+                        child: Icon(
+                          PhosphorIcons.check(),
                           color: Colors.white,
                           size: 10,
                         ),
@@ -1244,8 +1246,8 @@ class TranslatorToolsPage extends GetView<TranslatorController> {
                     ),
                   ],
                 ),
-                child: const Icon(
-                  Iconsax.arrow_swap_horizontal,
+                child: Icon(
+                  PhosphorIcons.arrowsLeftRight(),
                   color: Colors.white,
                   size: 20,
                 ),
@@ -1275,7 +1277,7 @@ class TranslatorToolsPage extends GetView<TranslatorController> {
             isDark ? AppColors.surfaceDark : AppColors.surface,
         title: Row(
           children: [
-            const Icon(Iconsax.scan, color: AppColors.primary),
+            Icon(PhosphorIcons.scan(), color: AppColors.primary),
             const Gap(10),
             const Text('قارئ اللافتات'),
           ],

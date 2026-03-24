@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 import '../../app/themes/app_colors.dart';
@@ -89,8 +89,8 @@ class _RecordButtonState extends State<RecordButton>
                     )
                   : Icon(
                       widget.isRecording
-                          ? Iconsax.stop
-                          : Iconsax.microphone,
+                          ? PhosphorIcons.stop()
+                          : PhosphorIcons.microphone(),
                       color: Colors.white,
                       size: widget.size * 0.4,
                     ),
