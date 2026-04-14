@@ -29,31 +29,46 @@ class MissingPersonsRepository {
       if (sortOrder != null) 'sortOrder': sortOrder,
     };
 
-    // Add status[] params
-    if (status != null) {
-      for (int i = 0; i < status.length; i++) {
-        params['status[$i]'] = status[i];
-      }
+    // Separate status (multi-value) from the rest
+    final multiParams = <String, List<String>>{};
+    if (status != null && status.isNotEmpty) {
+      multiParams['status'] = status;
     }
+
+    debugPrint('MissingPersonsRepository: Fetching with params: $params, status: $status');
 
     final response = await _api.get(
       ApiConstants.missingPersonReports,
       queryParams: params,
+      multiQueryParams: multiParams.isNotEmpty ? multiParams : null,
     );
 
+    debugPrint('MissingPersonsRepository: Response isSuccess=${response.isSuccess}, statusCode=${response.statusCode}');
+    debugPrint('MissingPersonsRepository: Response data=${response.data}');
+    debugPrint('MissingPersonsRepository: Response errorMessage=${response.errorMessage}');
+
     if (response.isSuccess && response.data != null) {
-      final data = response.data as Map<String, dynamic>;
-      final items = (data['items'] as List)
-          .map((e) => MissingPersonReport.fromJson(e as Map<String, dynamic>))
-          .toList();
-      final pagination = data['pagination'] as Map<String, dynamic>;
-      return PaginatedReports(
-        items: items,
-        currentPage: pagination['current_page'] as int,
-        perPage: pagination['per_page'] as int,
-        totalItems: pagination['total_items'] as int,
-        totalPages: pagination['total_pages'] as int,
-      );
+      try {
+        final data = response.data as Map<String, dynamic>;
+        debugPrint('MissingPersonsRepository: data keys=${data.keys.toList()}');
+        final rawItems = data['items'] as List?;
+        debugPrint('MissingPersonsRepository: items count=${rawItems?.length}');
+        final items = (rawItems ?? [])
+            .map((e) => MissingPersonReport.fromJson(e as Map<String, dynamic>))
+            .toList();
+        final pagination = data['pagination'] as Map<String, dynamic>;
+        return PaginatedReports(
+          items: items,
+          currentPage: pagination['current_page'] as int,
+          perPage: pagination['per_page'] as int,
+          totalItems: pagination['total_items'] as int,
+          totalPages: pagination['total_pages'] as int,
+        );
+      } catch (e, stack) {
+        debugPrint('MissingPersonsRepository: Exception while parsing response - $e');
+        debugPrint('$stack');
+        return PaginatedReports.empty();
+      }
     }
 
     debugPrint(

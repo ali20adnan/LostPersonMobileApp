@@ -40,9 +40,10 @@ class ApiService extends GetxService {
   // ── Core HTTP Methods ─────────────────────────────────────────
 
   Future<ApiResponse> get(String endpoint,
-      {Map<String, String>? queryParams}) async {
+      {Map<String, String>? queryParams,
+      Map<String, List<String>>? multiQueryParams}) async {
     try {
-      final uri = _buildUri(endpoint, queryParams);
+      final uri = _buildUriMulti(endpoint, queryParams, multiQueryParams);
       final response = await _client
           .get(uri, headers: await _headers())
           .timeout(const Duration(seconds: 30));
@@ -190,11 +191,23 @@ class ApiService extends GetxService {
   // ── Helpers ───────────────────────────────────────────────────
 
   Uri _buildUri(String endpoint, [Map<String, String>? queryParams]) {
+    return _buildUriMulti(endpoint, queryParams, null);
+  }
+
+  Uri _buildUriMulti(String endpoint, Map<String, String>? queryParams,
+      Map<String, List<String>>? multiQueryParams) {
     final url = '$_baseUrl$endpoint';
-    if (queryParams != null && queryParams.isNotEmpty) {
-      return Uri.parse(url).replace(queryParameters: queryParams);
-    }
-    return Uri.parse(url);
+    final parts = <String>[];
+    queryParams?.forEach((k, v) {
+      parts.add('${Uri.encodeQueryComponent(k)}=${Uri.encodeQueryComponent(v)}');
+    });
+    multiQueryParams?.forEach((k, vs) {
+      for (final v in vs) {
+        parts.add('${Uri.encodeQueryComponent(k)}=${Uri.encodeQueryComponent(v)}');
+      }
+    });
+    if (parts.isEmpty) return Uri.parse(url);
+    return Uri.parse('$url?${parts.join('&')}');
   }
 
   ApiResponse _handleResponse(http.Response response) {
