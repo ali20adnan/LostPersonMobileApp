@@ -305,23 +305,39 @@ class IncidentDetailPage extends GetView<IncidentDetailController> {
                       ? _IncidentVideoCard(
                           videoUrl: photoUrl,
                           fileName: photo.attachment.originalName,
+                          onPreview: () => _showRemoteMediaPreview(
+                            context,
+                            title: photo.attachment.originalName,
+                            url: photoUrl,
+                            isVideo: true,
+                          ),
                         )
                       : _videoPlaceholder(photo.attachment.originalName),
                 );
               }
 
-              return ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: photoUrl != null
-                    ? Image.network(
-                        photoUrl,
-                        width: 120,
-                        height: 120,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) =>
-                            _photoPlaceholder(),
-                      )
-                    : _photoPlaceholder(),
+              return GestureDetector(
+                onTap: photoUrl == null
+                    ? null
+                    : () => _showRemoteMediaPreview(
+                          context,
+                          title: photo.attachment.originalName,
+                          url: photoUrl,
+                          isVideo: false,
+                        ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: photoUrl != null
+                      ? Image.network(
+                          photoUrl,
+                          width: 120,
+                          height: 120,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              _photoPlaceholder(),
+                        )
+                      : _photoPlaceholder(),
+                ),
               );
             },
           ),
@@ -592,15 +608,33 @@ class IncidentDetailPage extends GetView<IncidentDetailController> {
       ),
     );
   }
+
+  Future<void> _showRemoteMediaPreview(
+    BuildContext context, {
+    required String title,
+    required String url,
+    required bool isVideo,
+  }) {
+    return showDialog<void>(
+      context: context,
+      builder: (context) => _RemoteMediaPreviewDialog(
+        title: title,
+        url: url,
+        isVideo: isVideo,
+      ),
+    );
+  }
 }
 
 class _IncidentVideoCard extends StatefulWidget {
   final String videoUrl;
   final String fileName;
+  final VoidCallback onPreview;
 
   const _IncidentVideoCard({
     required this.videoUrl,
     required this.fileName,
+    required this.onPreview,
   });
 
   @override
@@ -733,6 +767,17 @@ class _IncidentVideoCardState extends State<_IncidentVideoCard> {
                 ),
               ),
               Positioned(
+                top: 8,
+                left: 8,
+                child: IconButton(
+                  onPressed: widget.onPreview,
+                  icon: const Icon(Icons.fullscreen, color: Colors.white),
+                  style: IconButton.styleFrom(
+                    backgroundColor: Colors.black54,
+                  ),
+                ),
+              ),
+              Positioned(
                 right: 8,
                 left: 8,
                 bottom: 8,
@@ -752,6 +797,161 @@ class _IncidentVideoCardState extends State<_IncidentVideoCard> {
               ),
             ],
           ),
+        );
+      },
+    );
+  }
+}
+
+class _RemoteMediaPreviewDialog extends StatelessWidget {
+  final String title;
+  final String url;
+  final bool isVideo;
+
+  const _RemoteMediaPreviewDialog({
+    required this.title,
+    required this.url,
+    required this.isVideo,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      insetPadding: const EdgeInsets.all(16),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title.isNotEmpty ? title : 'معاينة الملف',
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            const Gap(12),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: isVideo
+                  ? SizedBox(
+                      height: 320,
+                      width: double.infinity,
+                      child: _RemoteVideoPreviewPlayer(videoUrl: url),
+                    )
+                  : InteractiveViewer(
+                      child: Image.network(
+                        url,
+                        fit: BoxFit.contain,
+                        height: 420,
+                        width: double.infinity,
+                      ),
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RemoteVideoPreviewPlayer extends StatefulWidget {
+  final String videoUrl;
+
+  const _RemoteVideoPreviewPlayer({required this.videoUrl});
+
+  @override
+  State<_RemoteVideoPreviewPlayer> createState() => _RemoteVideoPreviewPlayerState();
+}
+
+class _RemoteVideoPreviewPlayerState extends State<_RemoteVideoPreviewPlayer> {
+  late final VideoPlayerController _controller;
+  late final Future<void> _initializeFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl));
+    _initializeFuture = _controller.initialize();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<void>(
+      future: _initializeFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.hasError || !_controller.value.isInitialized) {
+          return Center(
+            child: Icon(PhosphorIcons.videoCamera(), size: 42, color: AppColors.primary),
+          );
+        }
+
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            FittedBox(
+              fit: BoxFit.cover,
+              child: SizedBox(
+                width: _controller.value.size.width,
+                height: _controller.value.size.height,
+                child: VideoPlayer(_controller),
+              ),
+            ),
+            Positioned.fill(
+              child: Material(
+                color: Colors.black26,
+                child: InkWell(
+                  onTap: () async {
+                    if (_controller.value.isPlaying) {
+                      await _controller.pause();
+                    } else {
+                      await _controller.play();
+                    }
+
+                    if (mounted) {
+                      setState(() {});
+                    }
+                  },
+                  child: Center(
+                    child: Icon(
+                      _controller.value.isPlaying
+                          ? Icons.pause_circle_filled
+                          : Icons.play_circle_fill,
+                      color: Colors.white,
+                      size: 56,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              right: 8,
+              left: 8,
+              bottom: 8,
+              child: VideoProgressIndicator(
+                _controller,
+                allowScrubbing: true,
+                colors: const VideoProgressColors(
+                  playedColor: Colors.white,
+                  bufferedColor: Colors.white38,
+                  backgroundColor: Colors.black38,
+                ),
+              ),
+            ),
+          ],
         );
       },
     );

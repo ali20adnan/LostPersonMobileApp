@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:video_player/video_player.dart';
 
 import '../../../app/themes/app_colors.dart';
 
@@ -90,49 +91,52 @@ class MediaPickerWidget extends StatelessWidget {
               return Stack(
                 children: [
                   // Media preview
-                  Container(
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? AppColors.surfaceElevatedDark
-                          : AppColors.surfaceSunken,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
+                  GestureDetector(
+                    onTap: () => _showMediaPreview(context, file, isVideo),
+                    child: Container(
+                      decoration: BoxDecoration(
                         color: isDark
-                            ? AppColors.cardBorderDark
-                            : AppColors.cardBorder,
+                            ? AppColors.surfaceElevatedDark
+                            : AppColors.surfaceSunken,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: isDark
+                              ? AppColors.cardBorderDark
+                              : AppColors.cardBorder,
+                        ),
                       ),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(14),
-                      child: isVideo
-                          ? Center(
-                              child: Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  gradient: AppColors.heroGradient,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Icon(
-                                  PhosphorIcons.play(),
-                                  size: 28,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            )
-                          : Image.file(
-                              File(file.path),
-                              fit: BoxFit.cover,
-                              width: double.infinity,
-                              height: double.infinity,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Center(
-                                  child: Icon(
-                                    PhosphorIcons.image(),
-                                    color: AppColors.error,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(14),
+                        child: isVideo
+                            ? Center(
+                                child: Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    gradient: AppColors.heroGradient,
+                                    shape: BoxShape.circle,
                                   ),
-                                );
-                              },
-                            ),
+                                  child: Icon(
+                                    PhosphorIcons.play(),
+                                    size: 28,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              )
+                            : Image.file(
+                                File(file.path),
+                                fit: BoxFit.cover,
+                                width: double.infinity,
+                                height: double.infinity,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Center(
+                                    child: Icon(
+                                      PhosphorIcons.image(),
+                                      color: AppColors.error,
+                                    ),
+                                  );
+                                },
+                              ),
+                      ),
                     ),
                   ),
 
@@ -294,6 +298,173 @@ class MediaPickerWidget extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Future<void> _showMediaPreview(
+    BuildContext context,
+    XFile file,
+    bool isVideo,
+  ) {
+    return showDialog<void>(
+      context: context,
+      builder: (context) => _LocalMediaPreviewDialog(
+        file: file,
+        isVideo: isVideo,
+      ),
+    );
+  }
+}
+
+class _LocalMediaPreviewDialog extends StatelessWidget {
+  final XFile file;
+  final bool isVideo;
+
+  const _LocalMediaPreviewDialog({
+    required this.file,
+    required this.isVideo,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      insetPadding: const EdgeInsets.all(16),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              file.name.isNotEmpty ? file.name : 'معاينة الملف',
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            const Gap(12),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: isVideo
+                  ? SizedBox(
+                      height: 300,
+                      width: double.infinity,
+                      child: _LocalVideoPreviewPlayer(filePath: file.path),
+                    )
+                  : InteractiveViewer(
+                      child: Image.file(
+                        File(file.path),
+                        fit: BoxFit.contain,
+                        height: 380,
+                        width: double.infinity,
+                      ),
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LocalVideoPreviewPlayer extends StatefulWidget {
+  final String filePath;
+
+  const _LocalVideoPreviewPlayer({required this.filePath});
+
+  @override
+  State<_LocalVideoPreviewPlayer> createState() => _LocalVideoPreviewPlayerState();
+}
+
+class _LocalVideoPreviewPlayerState extends State<_LocalVideoPreviewPlayer> {
+  late final VideoPlayerController _controller;
+  late final Future<void> _initializeFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = VideoPlayerController.file(File(widget.filePath));
+    _initializeFuture = _controller.initialize();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<void>(
+      future: _initializeFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.hasError || !_controller.value.isInitialized) {
+          return Center(
+            child: Icon(PhosphorIcons.videoCamera(), size: 42, color: AppColors.primary),
+          );
+        }
+
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            FittedBox(
+              fit: BoxFit.cover,
+              child: SizedBox(
+                width: _controller.value.size.width,
+                height: _controller.value.size.height,
+                child: VideoPlayer(_controller),
+              ),
+            ),
+            Positioned.fill(
+              child: Material(
+                color: Colors.black26,
+                child: InkWell(
+                  onTap: () async {
+                    if (_controller.value.isPlaying) {
+                      await _controller.pause();
+                    } else {
+                      await _controller.play();
+                    }
+
+                    if (mounted) {
+                      setState(() {});
+                    }
+                  },
+                  child: Center(
+                    child: Icon(
+                      _controller.value.isPlaying
+                          ? Icons.pause_circle_filled
+                          : Icons.play_circle_fill,
+                      color: Colors.white,
+                      size: 56,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              right: 8,
+              left: 8,
+              bottom: 8,
+              child: VideoProgressIndicator(
+                _controller,
+                allowScrubbing: true,
+                colors: const VideoProgressColors(
+                  playedColor: Colors.white,
+                  bufferedColor: Colors.white38,
+                  backgroundColor: Colors.black38,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
