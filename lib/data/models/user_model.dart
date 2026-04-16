@@ -28,7 +28,11 @@ class User {
       accountExpiresAt: json['accountExpiresAt'] != null
           ? DateTime.tryParse(json['accountExpiresAt'].toString())
           : null,
-      avatarUrl: json['avatarUrl'] as String?,
+      avatarUrl: (json['avatarUrl'] ?? 
+                  json['avatarPath'] ?? 
+                  json['avatar'] ?? 
+                  json['photo'] ?? 
+                  json['image'])?.toString(),
     );
   }
 

@@ -27,6 +27,9 @@ class MediaPickerWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final emptyStateLabel = onPickVideo != null
+        ? 'لم يتم إضافة صور أو فيديو بعد'
+        : 'لم يتم إضافة صور بعد';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -241,7 +244,7 @@ class MediaPickerWidget extends StatelessWidget {
                   ),
                   const Gap(12),
                   Text(
-                    'لم يتم إضافة صور أو فيديو بعد',
+                    emptyStateLabel,
                     style: TextStyle(
                       color: isDark
                           ? AppColors.textOnDarkSecondary

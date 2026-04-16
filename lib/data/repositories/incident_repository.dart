@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
-import 'package:get/get.dart';
+import 'package:get/get.dart' hide MultipartFile;
+import 'package:image_picker/image_picker.dart';
 
 import '../../app/services/api_service.dart';
 import '../../core/constants/api_constants.dart';
@@ -100,6 +101,64 @@ class ReportRepository {
       if (longitude != null) 'longitude': longitude,
       if (addressLine != null) 'addressLine': addressLine,
     });
+  }
+
+  /// Create a new report with attached files
+  Future<ApiResponse> createReportWithPhotos({
+    required String type,
+    String? severity,
+    String? title,
+    String? description,
+    double? latitude,
+    double? longitude,
+    String? addressLine,
+    required List<XFile> files,
+  }) async {
+    final fields = <String, String>{
+      'type': type,
+      if (severity != null) 'severity': severity,
+      if (title != null) 'title': title,
+      if (description != null) 'description': description,
+      if (latitude != null) 'latitude': latitude.toString(),
+      if (longitude != null) 'longitude': longitude.toString(),
+      if (addressLine != null) 'addressLine': addressLine,
+    };
+
+    final multipartFiles = files
+        .map((file) => MultipartFile(
+              field: 'photos',
+              path: file.path,
+              mimeType: _inferFileMimeType(file.path),
+            ))
+        .toList();
+
+    return await _api.multipartPost(
+      '${ApiConstants.reports}/with-photos',
+      fields: fields,
+      files: multipartFiles,
+    );
+  }
+
+  String _inferFileMimeType(String path) {
+    final extension = path.split('.').last.toLowerCase();
+    switch (extension) {
+      case 'png':
+        return 'image/png';
+      case 'webp':
+        return 'image/webp';
+      case 'gif':
+        return 'image/gif';
+      case 'mp4':
+        return 'video/mp4';
+      case 'mov':
+        return 'video/quicktime';
+      case 'avi':
+        return 'video/x-msvideo';
+      case 'webm':
+        return 'video/webm';
+      default:
+        return 'image/jpeg';
+    }
   }
 
   /// Mark report as read

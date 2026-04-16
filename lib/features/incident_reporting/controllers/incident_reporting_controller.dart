@@ -9,6 +9,8 @@ import '../../../core/constants/incident_constants.dart';
 
 /// Controller for incident reporting page - uses API
 class IncidentReportingController extends GetxController {
+  static const int _maxMediaFiles = 5;
+
   late final ReportRepository _reportRepository;
   late final PermissionService _permissionService;
 
@@ -42,8 +44,22 @@ class IncidentReportingController extends GetxController {
     selectedSeverity.value = severity;
   }
 
+  bool _canAddMoreMediaFiles() {
+    if (selectedMediaFiles.length >= _maxMediaFiles) {
+      Get.snackbar('الحد الأقصى', 'يمكن إرفاق 5 ملفات كحد أقصى',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.orange.withValues(alpha: 0.8),
+          colorText: Colors.white);
+      return false;
+    }
+
+    return true;
+  }
+
   /// Pick image from gallery
   Future<void> pickImage() async {
+    if (!_canAddMoreMediaFiles()) return;
+
     try {
       final hasPermission =
           await _permissionService.requestPhotoLibraryPermission();
@@ -74,6 +90,8 @@ class IncidentReportingController extends GetxController {
 
   /// Take photo with camera
   Future<void> takePhoto() async {
+    if (!_canAddMoreMediaFiles()) return;
+
     try {
       final hasPermission = await _permissionService.requestCameraPermission();
       if (!hasPermission) {
@@ -95,6 +113,38 @@ class IncidentReportingController extends GetxController {
     } catch (e) {
       debugPrint('IncidentReportingController: Error taking photo - $e');
       Get.snackbar('خطأ', 'فشل التقاط الصورة',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red.withValues(alpha: 0.8),
+          colorText: Colors.white);
+    }
+  }
+
+  /// Pick video from gallery
+  Future<void> pickVideo() async {
+    if (!_canAddMoreMediaFiles()) return;
+
+    try {
+      final hasPermission =
+          await _permissionService.requestPhotoLibraryPermission();
+      if (!hasPermission) {
+        Get.snackbar('إذن مطلوب', 'يتطلب الوصول إلى مكتبة الملفات',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.orange.withValues(alpha: 0.8),
+            colorText: Colors.white);
+        return;
+      }
+
+      final XFile? video = await _imagePicker.pickVideo(
+        source: ImageSource.gallery,
+        maxDuration: const Duration(minutes: 5),
+      );
+
+      if (video != null) {
+        selectedMediaFiles.add(video);
+      }
+    } catch (e) {
+      debugPrint('IncidentReportingController: Error picking video - $e');
+      Get.snackbar('خطأ', 'فشل اختيار الفيديو',
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: Colors.red.withValues(alpha: 0.8),
           colorText: Colors.white);
@@ -184,23 +234,42 @@ class IncidentReportingController extends GetxController {
     try {
       isSubmitting.value = true;
 
-      final response = await _reportRepository.createReport(
-        type: selectedType.value.name,
-        severity: selectedType.value == ReportType.emergency
+      final response = selectedMediaFiles.isNotEmpty
+        ? await _reportRepository.createReportWithPhotos(
+          type: selectedType.value.name,
+          severity: selectedType.value == ReportType.emergency
             ? selectedSeverity.value.name
             : null,
-        title: titleController.text.trim().isNotEmpty
+          title: titleController.text.trim().isNotEmpty
             ? titleController.text.trim()
             : null,
-        description: descriptionController.text.trim().isNotEmpty
+          description: descriptionController.text.trim().isNotEmpty
             ? descriptionController.text.trim()
             : null,
-        addressLine: locationController.text.trim().isNotEmpty
+          addressLine: locationController.text.trim().isNotEmpty
             ? locationController.text.trim()
             : null,
-        latitude: currentLocation.value?.latitude,
-        longitude: currentLocation.value?.longitude,
-      );
+          latitude: currentLocation.value?.latitude,
+          longitude: currentLocation.value?.longitude,
+          files: selectedMediaFiles.toList(),
+        )
+        : await _reportRepository.createReport(
+          type: selectedType.value.name,
+          severity: selectedType.value == ReportType.emergency
+            ? selectedSeverity.value.name
+            : null,
+          title: titleController.text.trim().isNotEmpty
+            ? titleController.text.trim()
+            : null,
+          description: descriptionController.text.trim().isNotEmpty
+            ? descriptionController.text.trim()
+            : null,
+          addressLine: locationController.text.trim().isNotEmpty
+            ? locationController.text.trim()
+            : null,
+          latitude: currentLocation.value?.latitude,
+          longitude: currentLocation.value?.longitude,
+        );
 
       isSubmitting.value = false;
 

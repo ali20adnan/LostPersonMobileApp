@@ -5,6 +5,7 @@ import 'package:gap/gap.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../app/themes/app_colors.dart';
 import '../../../app/routes/app_routes.dart';
@@ -93,14 +94,15 @@ class ProfilePage extends GetView<ProfileController> {
         ],
       ),
       child: Column(
-            children: [
-              // Avatar
-              Stack(
-                alignment: Alignment.bottomLeft,
+        children: [
+          // Avatar
+          Stack(
+            alignment: Alignment.bottomLeft,
             children: [
               Obx(() {
                 final user = controller.user.value!;
                 final avatarUrl = ApiConstants.resolveAvatarUrl(user.avatarUrl);
+                
                 return Container(
                   width: 104,
                   height: 104,
@@ -125,24 +127,21 @@ class ProfilePage extends GetView<ProfileController> {
                             size: 30,
                           ),
                         )
-                      : CircleAvatar(
-                          radius: 48,
-                          backgroundColor: AppColors.primarySoft,
-                          backgroundImage: avatarUrl != null
-                              ? NetworkImage(avatarUrl)
-                              : null,
-                          child: avatarUrl == null
-                              ? Text(
-                                  user.fullName.isNotEmpty
-                                      ? user.fullName[0].toUpperCase()
-                                      : '?',
-                                  style: const TextStyle(
-                                    fontSize: 36,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.primary,
+                      : ClipOval(
+                          child: avatarUrl != null
+                              ? CachedNetworkImage(
+                                  imageUrl: avatarUrl,
+                                  fit: BoxFit.cover,
+                                  placeholder: (context, url) => Container(
+                                    color: AppColors.primarySoft,
+                                    child: LoadingAnimationWidget.staggeredDotsWave(
+                                      color: Colors.white,
+                                      size: 24,
+                                    ),
                                   ),
+                                  errorWidget: (context, url, error) => _buildPlaceholderAvatar(user),
                                 )
-                              : null,
+                              : _buildPlaceholderAvatar(user),
                         ),
                 );
               }),
@@ -236,6 +235,21 @@ class ProfilePage extends GetView<ProfileController> {
             ),
           ],
         ],
+      ),
+    );
+  }
+
+  Widget _buildPlaceholderAvatar(user) {
+    return Container(
+      color: AppColors.primarySoft,
+      alignment: Alignment.center,
+      child: Text(
+        user.fullName.isNotEmpty ? user.fullName[0].toUpperCase() : '?',
+        style: const TextStyle(
+          fontSize: 36,
+          fontWeight: FontWeight.bold,
+          color: AppColors.primary,
+        ),
       ),
     );
   }

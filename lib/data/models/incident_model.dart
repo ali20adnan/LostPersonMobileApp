@@ -1,3 +1,5 @@
+import '../../core/constants/api_constants.dart';
+
 /// Report model matching the /reports API (emergency & other incident reports)
 class Report {
   final int id;
@@ -16,6 +18,7 @@ class Report {
   final DateTime updatedAt;
   final ReportUser? creator;
   final ReportUser? reviewer;
+  final List<IncidentReportPhoto> photos;
 
   const Report({
     required this.id,
@@ -34,9 +37,19 @@ class Report {
     required this.updatedAt,
     this.creator,
     this.reviewer,
+    this.photos = const [],
   });
 
   bool get isEmergency => type == 'emergency';
+
+  String? get primaryPhotoUrl {
+    if (photos.isEmpty) return null;
+    final primary = photos.firstWhere(
+      (photo) => photo.isPrimary,
+      orElse: () => photos.first,
+    );
+    return primary.displayUrl;
+  }
 
   String get displayTitle {
     if (title != null && title!.isNotEmpty) return title!;
@@ -69,6 +82,12 @@ class Report {
       reviewer: json['reviewer'] != null
           ? ReportUser.fromJson(json['reviewer'] as Map<String, dynamic>)
           : null,
+        photos: json['photos'] != null
+          ? (json['photos'] as List)
+            .map((photo) => IncidentReportPhoto.fromJson(
+              photo as Map<String, dynamic>))
+            .toList()
+          : const [],
     );
   }
 
@@ -82,6 +101,92 @@ class Report {
       if (longitude != null) 'longitude': longitude,
       if (addressLine != null) 'addressLine': addressLine,
     };
+  }
+}
+
+class IncidentReportPhoto {
+  final int? reportId;
+  final int attachmentId;
+  final bool isPrimary;
+  final DateTime? createdAt;
+  final IncidentReportAttachment attachment;
+
+  const IncidentReportPhoto({
+    this.reportId,
+    required this.attachmentId,
+    this.isPrimary = false,
+    this.createdAt,
+    required this.attachment,
+  });
+
+  String? get displayUrl => attachment.displayUrl;
+
+  factory IncidentReportPhoto.fromJson(Map<String, dynamic> json) {
+    final nestedAttachment = json['attachment'];
+    final attachmentJson = nestedAttachment is Map<String, dynamic>
+        ? nestedAttachment
+        : json;
+
+    return IncidentReportPhoto(
+      reportId: json['reportId'] as int?,
+      attachmentId: (json['attachmentId'] as int?) ??
+          (attachmentJson['id'] as int? ?? 0),
+      isPrimary: json['isPrimary'] as bool? ?? false,
+      createdAt: json['createdAt'] != null
+          ? DateTime.tryParse(json['createdAt'].toString())
+          : null,
+      attachment: IncidentReportAttachment.fromJson(attachmentJson),
+    );
+  }
+}
+
+class IncidentReportAttachment {
+  final int id;
+  final String originalName;
+  final String storageKey;
+  final String storageProvider;
+  final String? mimeType;
+  final int? size;
+  final DateTime? createdAt;
+
+  const IncidentReportAttachment({
+    required this.id,
+    required this.originalName,
+    required this.storageKey,
+    required this.storageProvider,
+    this.mimeType,
+    this.size,
+    this.createdAt,
+  });
+
+  bool get isVideo {
+    final normalizedMimeType = mimeType?.toLowerCase();
+    if (normalizedMimeType != null && normalizedMimeType.startsWith('video/')) {
+      return true;
+    }
+
+    final normalizedKey = storageKey.toLowerCase();
+    return normalizedKey.endsWith('.mp4') ||
+        normalizedKey.endsWith('.mov') ||
+        normalizedKey.endsWith('.avi') ||
+        normalizedKey.endsWith('.webm');
+  }
+
+  String? get displayUrl =>
+      ApiConstants.resolveUploadUrl(storageKey, localFolder: 'other');
+
+  factory IncidentReportAttachment.fromJson(Map<String, dynamic> json) {
+    return IncidentReportAttachment(
+      id: json['id'] as int? ?? 0,
+      originalName: json['originalName']?.toString() ?? '',
+      storageKey: json['storageKey']?.toString() ?? '',
+      storageProvider: json['storageProvider']?.toString() ?? 'local',
+      mimeType: json['mimeType']?.toString(),
+      size: json['size'] as int?,
+      createdAt: json['createdAt'] != null
+          ? DateTime.tryParse(json['createdAt'].toString())
+          : null,
+    );
   }
 }
 

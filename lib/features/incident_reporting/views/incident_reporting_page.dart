@@ -295,6 +295,7 @@ class IncidentReportingPage extends GetView<IncidentReportingController> {
                 mediaFiles: files,
                 onPickImage: controller.pickImage,
                 onTakePhoto: controller.takePhoto,
+                onPickVideo: controller.pickVideo,
                 onRemoveFile: controller.removeMediaFile,
               );
             }).animate().fadeIn(duration: 400.ms, delay: 600.ms),

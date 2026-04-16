@@ -4,7 +4,18 @@ class ApiConstants {
   // ── Backend API ────────────────────────────────────────────────
   static const String apiBaseUrl = 'https://api.almuntazer.net/losts/api';
 
-  /// Server root (without /api) – used for static files like uploads
+  /// Server root for static files (images, avatars, etc.)
+  static String get filesBaseUrl =>
+      dotenv.env['FILES_BASE_URL'] ?? 'https://file.almuntazer.net/uploads/losts';
+
+  static String get uploadsBaseUrl {
+    final normalized = filesBaseUrl.replaceAll(RegExp(r'/+$'), '');
+    return normalized.endsWith('/losts')
+        ? normalized.substring(0, normalized.length - 6)
+        : normalized;
+  }
+
+  /// Server root (without /api) – used for some relative paths
   static const String serverBaseUrl = 'https://api.almuntazer.net/losts';
 
   // Auth
@@ -72,10 +83,63 @@ class ApiConstants {
     if (raw == null || raw.isEmpty || raw == 'undefined' || raw == 'null') {
       return null;
     }
+    
     if (raw.startsWith('http://') || raw.startsWith('https://')) {
       return raw;
     }
-    return '$serverBaseUrl$raw';
+    
+    // 1. تنظيف المسار من أي شرطة مائلة في البداية
+    String cleanPath = raw.startsWith('/') ? raw.substring(1) : raw;
+    
+    // 2. حل مشكلة التكرار: إذا كان المسار يبدأ بـ "losts/" والرابط الأساسي ينتهي بـ "losts"
+    // نقوم بحذف الجزء المكرر من المسار
+    if (filesBaseUrl.endsWith('losts') && cleanPath.startsWith('losts/')) {
+      cleanPath = cleanPath.substring(6); // حذف "losts/"
+    }
+    
+    // 3. تأكد أيضاً من عدم تكرار "uploads/losts" بالكامل
+    if (filesBaseUrl.endsWith('uploads/losts') && cleanPath.startsWith('uploads/losts/')) {
+      cleanPath = cleanPath.substring(14); // حذف "uploads/losts/"
+    }
+
+    return '$filesBaseUrl/$cleanPath';
+  }
+
+  /// Resolve a file URL served from the backend uploads route.
+  static String? resolveUploadUrl(String? raw, {String? localFolder}) {
+    if (raw == null || raw.isEmpty || raw == 'undefined' || raw == 'null') {
+      return null;
+    }
+
+    if (raw.startsWith('http://') || raw.startsWith('https://')) {
+      return raw;
+    }
+
+    var cleanPath = raw.replaceAll('\\', '/').replaceFirst(RegExp(r'^/+'), '');
+
+    if (cleanPath.startsWith('uploads/')) {
+      cleanPath = cleanPath.substring('uploads/'.length);
+    }
+
+    if (cleanPath.startsWith('losts/reports/')) {
+      cleanPath =
+          'losts/other/${cleanPath.substring('losts/reports/'.length)}';
+    } else if (cleanPath.startsWith('reports/')) {
+      cleanPath = 'losts/other/${cleanPath.substring('reports/'.length)}';
+    }
+
+    if (cleanPath.startsWith('losts/')) {
+      return '$uploadsBaseUrl/$cleanPath';
+    }
+
+    if (localFolder != null && localFolder.isNotEmpty && !cleanPath.contains('/')) {
+      final normalizedFolder = localFolder
+          .replaceAll('\\', '/')
+          .replaceAll(RegExp(r'^/+|/+$'), '');
+      cleanPath = '$normalizedFolder/$cleanPath';
+    }
+
+    return '$filesBaseUrl/$cleanPath';
   }
 
   // Reconnection settings

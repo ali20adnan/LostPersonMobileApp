@@ -71,6 +71,7 @@ class AuthService extends GetxService {
   Future<ApiResponse> fetchProfile() async {
     final response = await _api.get('/auth/me');
     if (response.isSuccess && response.data != null) {
+      debugPrint('AuthService: Profile Data: ${response.data}');
       final user = User.fromJson(response.data as Map<String, dynamic>);
       await _storage.write(key: _userKey, value: jsonEncode(user.toJson()));
       currentUser.value = user;

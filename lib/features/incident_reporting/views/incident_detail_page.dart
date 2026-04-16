@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:video_player/video_player.dart';
 
 import '../../../app/themes/app_colors.dart';
 import '../../../core/constants/incident_constants.dart';
@@ -47,6 +48,10 @@ class IncidentDetailPage extends GetView<IncidentDetailController> {
                       if (report.description != null &&
                           report.description!.isNotEmpty) ...[
                         _buildDescriptionSection(report, isDark),
+                        const Gap(12),
+                      ],
+                      if (report.photos.isNotEmpty) ...[
+                        _buildPhotosGallery(report, isDark),
                         const Gap(12),
                       ],
                       _buildDetailsSection(report, isDark),
@@ -269,6 +274,56 @@ class IncidentDetailPage extends GetView<IncidentDetailController> {
             fontSize: 14,
             height: 1.6,
             color: isDark ? AppColors.textOnDark : AppColors.textPrimary,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPhotosGallery(Report report, bool isDark) {
+    final hasVideo = report.photos.any((photo) => photo.attachment.isVideo);
+
+    return _buildSection(
+      isDark: isDark,
+      icon: PhosphorIcons.images(),
+      title: 'الملفات المرفقة (${report.photos.length})',
+      children: [
+        SizedBox(
+          height: hasVideo ? 190 : 120,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: report.photos.length,
+            separatorBuilder: (context, index) => const Gap(8),
+            itemBuilder: (context, index) {
+              final photo = report.photos[index];
+              final photoUrl = photo.displayUrl;
+
+              if (photo.attachment.isVideo) {
+                return SizedBox(
+                  width: 220,
+                  child: photoUrl != null
+                      ? _IncidentVideoCard(
+                          videoUrl: photoUrl,
+                          fileName: photo.attachment.originalName,
+                        )
+                      : _videoPlaceholder(photo.attachment.originalName),
+                );
+              }
+
+              return ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: photoUrl != null
+                    ? Image.network(
+                        photoUrl,
+                        width: 120,
+                        height: 120,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) =>
+                            _photoPlaceholder(),
+                      )
+                    : _photoPlaceholder(),
+              );
+            },
           ),
         ),
       ],
@@ -501,5 +556,204 @@ class IncidentDetailPage extends GetView<IncidentDetailController> {
 
   String _formatDate(DateTime date) {
     return DateFormat('yyyy/MM/dd - hh:mm a', 'ar').format(date);
+  }
+
+  Widget _photoPlaceholder() {
+    return Container(
+      width: 120,
+      height: 120,
+      color: AppColors.surfaceSunken,
+      child: Icon(PhosphorIcons.images(), color: AppColors.textLight, size: 32),
+    );
+  }
+
+  Widget _videoPlaceholder(String fileName) {
+    return Container(
+      width: 220,
+      height: 180,
+      color: AppColors.surfaceSunken,
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(PhosphorIcons.videoCamera(), color: AppColors.primary, size: 28),
+          const Gap(8),
+          Text(
+            fileName.isNotEmpty ? fileName : 'ملف فيديو',
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 11,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _IncidentVideoCard extends StatefulWidget {
+  final String videoUrl;
+  final String fileName;
+
+  const _IncidentVideoCard({
+    required this.videoUrl,
+    required this.fileName,
+  });
+
+  @override
+  State<_IncidentVideoCard> createState() => _IncidentVideoCardState();
+}
+
+class _IncidentVideoCardState extends State<_IncidentVideoCard> {
+  VideoPlayerController? _controller;
+  Future<void>? _initializeFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl));
+    _initializeFuture = _controller!.initialize().then((_) {
+      if (mounted) {
+        setState(() {});
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
+  }
+
+  Future<void> _togglePlayback() async {
+    final controller = _controller;
+    if (controller == null) return;
+
+    if (controller.value.isPlaying) {
+      await controller.pause();
+    } else {
+      await controller.play();
+    }
+
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = _controller;
+    if (controller == null) {
+      return const SizedBox.shrink();
+    }
+
+    return FutureBuilder<void>(
+      future: _initializeFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return Container(
+            decoration: BoxDecoration(
+              color: AppColors.surfaceSunken,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Center(
+              child: LoadingAnimationWidget.staggeredDotsWave(
+                color: AppColors.primary,
+                size: 28,
+              ),
+            ),
+          );
+        }
+
+        if (snapshot.hasError || !controller.value.isInitialized) {
+          return Container(
+            decoration: BoxDecoration(
+              color: AppColors.surfaceSunken,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(PhosphorIcons.videoCamera(), color: AppColors.primary, size: 30),
+                const Gap(8),
+                Text(
+                  widget.fileName.isNotEmpty ? widget.fileName : 'فيديو مرفق',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              FittedBox(
+                fit: BoxFit.cover,
+                child: SizedBox(
+                  width: controller.value.size.width,
+                  height: controller.value.size.height,
+                  child: VideoPlayer(controller),
+                ),
+              ),
+              Positioned.fill(
+                child: Material(
+                  color: Colors.black26,
+                  child: InkWell(
+                    onTap: _togglePlayback,
+                    child: Center(
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.black54,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          controller.value.isPlaying
+                              ? PhosphorIcons.pause()
+                              : PhosphorIcons.play(),
+                          color: Colors.white,
+                          size: 26,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                right: 8,
+                left: 8,
+                bottom: 8,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(999),
+                  child: VideoProgressIndicator(
+                    controller,
+                    allowScrubbing: true,
+                    padding: EdgeInsets.zero,
+                    colors: VideoProgressColors(
+                      playedColor: Colors.white,
+                      bufferedColor: Colors.white38,
+                      backgroundColor: Colors.black38,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 }
