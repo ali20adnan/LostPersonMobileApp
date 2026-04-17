@@ -4,6 +4,7 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../../../app/themes/app_colors.dart';
 import '../../../app/routes/app_routes.dart';
+import '../../../core/utils/maps_launcher.dart';
 import '../../../data/models/missing_person_report_model.dart';
 
 /// Reusable card for displaying a missing / found person
@@ -160,6 +161,20 @@ class MissingPersonCard extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
+                        if (person.coordinates != null) ...[
+                          const SizedBox(width: 6),
+                          GestureDetector(
+                            onTap: () => openMapsDirections(
+                              lat: person.coordinates!['latitude'],
+                              lng: person.coordinates!['longitude'],
+                            ),
+                            child: Icon(
+                              PhosphorIcons.navigationArrow(),
+                              size: 18,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ],
                       ],
                     ),
 

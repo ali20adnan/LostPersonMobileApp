@@ -8,6 +8,7 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 import '../../../app/themes/app_colors.dart';
+import '../../../data/models/governorate_model.dart';
 import '../controllers/missing_person_form_controller.dart';
 
 class MissingPersonFormPage extends GetView<MissingPersonFormController> {
@@ -28,6 +29,7 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
+            // Section 0 - Person Info
             _buildCollapsibleSection(
               isDark: isDark,
               index: 0,
@@ -44,10 +46,10 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
                 _buildGenderSelector(isDark),
                 const SizedBox(height: 12),
                 _buildTextField(
-                  controller: controller.dateOfBirthController,
-                  label: 'تاريخ الميلاد',
+                  controller: controller.ageController,
+                  label: 'العمر',
                   icon: PhosphorIcons.cake(),
-                  hint: 'YYYY-MM-DD',
+                  keyboardType: TextInputType.number,
                   isDark: isDark,
                 ),
                 const SizedBox(height: 12),
@@ -75,26 +77,20 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
                   ],
                 ),
                 const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildTextField(
-                        controller: controller.hairColorController,
-                        label: 'لون الشعر',
-                        icon: PhosphorIcons.palette(),
-                        isDark: isDark,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _buildTextField(
-                        controller: controller.eyeColorController,
-                        label: 'لون العين',
-                        icon: PhosphorIcons.eye(),
-                        isDark: isDark,
-                      ),
-                    ),
-                  ],
+                _buildOptionPickerField(
+                  label: 'لون الشعر',
+                  options: MissingPersonFormController.hairColorOptions,
+                  selected: controller.selectedHairColor,
+                  icon: PhosphorIcons.palette(),
+                  isDark: isDark,
+                ),
+                const SizedBox(height: 12),
+                _buildOptionPickerField(
+                  label: 'لون العين',
+                  options: MissingPersonFormController.eyeColorOptions,
+                  selected: controller.selectedEyeColor,
+                  icon: PhosphorIcons.eye(),
+                  isDark: isDark,
                 ),
                 const SizedBox(height: 12),
                 _buildTextField(
@@ -120,12 +116,46 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
                   maxLines: 2,
                   isDark: isDark,
                 ),
+                const SizedBox(height: 12),
+                _buildTextField(
+                  controller: controller.descriptionController,
+                  label: 'وصف إضافي',
+                  icon: PhosphorIcons.file(),
+                  maxLines: 3,
+                  isDark: isDark,
+                ),
+                const SizedBox(height: 12),
+                GestureDetector(
+                  onTap: () => controller.pickDate(context),
+                  child: AbsorbPointer(
+                    child: _buildTextField(
+                      controller: controller.missingDateController,
+                      label: 'تاريخ الفقدان *',
+                      icon: PhosphorIcons.calendar(),
+                      isDark: isDark,
+                    ),
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 12),
+            // Section 1 - Residence
             _buildCollapsibleSection(
               isDark: isDark,
               index: 1,
+              icon: PhosphorIcons.house(),
+              title: 'مكان السكن الأصلي',
+              children: [
+                _buildGovernoratePickerField(isDark),
+                const SizedBox(height: 12),
+                _buildDistrictPickerField(isDark),
+              ],
+            ),
+            const SizedBox(height: 12),
+            // Section 2 - Last seen location
+            _buildCollapsibleSection(
+              isDark: isDark,
+              index: 2,
               icon: PhosphorIcons.mapPin(),
               title: 'آخر موقع شوهد فيه',
               children: [
@@ -134,27 +164,65 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
                   label: 'العنوان',
                   icon: PhosphorIcons.mapPin(),
                   isDark: isDark,
-                  suffixWidget: Obx(() => controller.isLoadingLocation.value
-                      ? Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: LoadingAnimationWidget.staggeredDotsWave(
-                              color: AppColors.primary,
-                              size: 20,
-                            ),
-                          ),
-                        )
-                      : IconButton(
-                          icon: Icon(PhosphorIcons.crosshair(), color: AppColors.primary),
-                          onPressed: controller.getCurrentLocation,
-                          tooltip: 'تحديد الموقع الحالي',
-                        )),
                 ),
+                const SizedBox(height: 12),
+                Obx(() {
+                  final loc = controller.selectedMapLocation.value;
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: () => controller.openMapPicker(context),
+                          icon: Icon(PhosphorIcons.mapPin()),
+                          label: Text(loc == null
+                              ? 'تحديد على الخريطة'
+                              : 'تعديل الموقع'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
+                          ),
+                        ),
+                      ),
+                      if (loc != null) ...[
+                        const SizedBox(height: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                                color:
+                                    AppColors.primary.withValues(alpha: 0.3)),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(PhosphorIcons.mapPin(),
+                                  size: 16, color: AppColors.primary),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  '${loc.latitude.toStringAsFixed(5)}, ${loc.longitude.toStringAsFixed(5)}',
+                                  style: const TextStyle(
+                                      fontSize: 12, color: AppColors.primary),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
+                  );
+                }),
               ],
             ),
             const SizedBox(height: 12),
+            // Section 3 - Reporter Info
             _buildCollapsibleSection(
               isDark: isDark,
               index: 3,
@@ -182,35 +250,24 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
                   icon: PhosphorIcons.users(),
                   isDark: isDark,
                 ),
+                const SizedBox(height: 12),
+                _buildTextField(
+                  controller: controller.reporterEmailController,
+                  label: 'البريد الإلكتروني (اختياري)',
+                  icon: PhosphorIcons.envelope(),
+                  keyboardType: TextInputType.emailAddress,
+                  isDark: isDark,
+                ),
               ],
             ),
             const SizedBox(height: 12),
+            // Section 4 - Photos
             _buildCollapsibleSection(
               isDark: isDark,
               index: 4,
-              icon: PhosphorIcons.fileText(),
-              title: 'تفاصيل البلاغ',
+              icon: PhosphorIcons.camera(),
+              title: 'الصور *',
               children: [
-                GestureDetector(
-                  onTap: () => controller.pickDate(context),
-                  child: AbsorbPointer(
-                    child: _buildTextField(
-                      controller: controller.missingDateController,
-                      label: 'تاريخ الفقدان *',
-                      icon: PhosphorIcons.calendar(),
-                      isDark: isDark,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                _buildTextField(
-                  controller: controller.descriptionController,
-                  label: 'وصف إضافي',
-                  icon: PhosphorIcons.file(),
-                  maxLines: 3,
-                  isDark: isDark,
-                ),
-                const SizedBox(height: 12),
                 _buildPhotoPicker(isDark),
               ],
             ),
@@ -383,6 +440,323 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
         ),
       ),
     );
+  }
+
+  /// Bottom-sheet option picker (hair/eye color etc.)
+  Widget _buildOptionPickerField({
+    required String label,
+    required List<String> options,
+    required Rx<String?> selected,
+    required IconData icon,
+    required bool isDark,
+  }) {
+    return Obx(() {
+      final value = selected.value;
+      return GestureDetector(
+        onTap: () async {
+          final picked = await showModalBottomSheet<String>(
+            context: Get.context!,
+            backgroundColor:
+                isDark ? AppColors.cardDark : AppColors.card,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            builder: (_) => Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 12),
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.textLight,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(label,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: isDark
+                          ? AppColors.textOnDark
+                          : AppColors.textPrimary,
+                    )),
+                const SizedBox(height: 8),
+                ...options.map((opt) => ListTile(
+                      title: Text(opt,
+                          textAlign: TextAlign.right,
+                          style: TextStyle(
+                              color: isDark
+                                  ? AppColors.textOnDark
+                                  : AppColors.textPrimary)),
+                      trailing: selected.value == opt
+                          ? const Icon(Icons.check, color: AppColors.primary)
+                          : null,
+                      onTap: () => Navigator.pop(Get.context!, opt),
+                    )),
+                const SizedBox(height: 16),
+              ],
+            ),
+          );
+          if (picked != null) selected.value = picked;
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+          decoration: BoxDecoration(
+            color: isDark
+                ? AppColors.surfaceSunkenDark
+                : AppColors.surfaceSunken,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: isDark ? AppColors.borderDark : AppColors.border,
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(icon, size: 20, color: AppColors.primary),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  value ?? label,
+                  style: TextStyle(
+                    color: value != null
+                        ? (isDark
+                            ? AppColors.textOnDark
+                            : AppColors.textPrimary)
+                        : AppColors.textLight,
+                  ),
+                ),
+              ),
+              Icon(PhosphorIcons.caretDown(), size: 18, color: AppColors.textLight),
+            ],
+          ),
+        ),
+      );
+    });
+  }
+
+  /// Governorate dropdown-style picker
+  Widget _buildGovernoratePickerField(bool isDark) {
+    return Obx(() {
+      final isLoading = controller.isLoadingGovernorates.value;
+      final selected = controller.selectedResidenceGovernorate.value;
+      return GestureDetector(
+        onTap: isLoading
+            ? null
+            : () async {
+                if (controller.governorates.isEmpty) return;
+                final picked = await showModalBottomSheet<Governorate>(
+                  context: Get.context!,
+                  backgroundColor:
+                      isDark ? AppColors.cardDark : AppColors.card,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius:
+                        BorderRadius.vertical(top: Radius.circular(20)),
+                  ),
+                  builder: (_) => Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const SizedBox(height: 12),
+                      Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: AppColors.textLight,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text('اختر المحافظة',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: isDark
+                                ? AppColors.textOnDark
+                                : AppColors.textPrimary,
+                          )),
+                      const SizedBox(height: 8),
+                      Flexible(
+                        child: ListView(
+                          shrinkWrap: true,
+                          children: controller.governorates
+                              .map((gov) => ListTile(
+                                    title: Text(gov.name,
+                                        textAlign: TextAlign.right,
+                                        style: TextStyle(
+                                            color: isDark
+                                                ? AppColors.textOnDark
+                                                : AppColors.textPrimary)),
+                                    trailing: selected?.id == gov.id
+                                        ? const Icon(Icons.check,
+                                            color: AppColors.primary)
+                                        : null,
+                                    onTap: () =>
+                                        Navigator.pop(Get.context!, gov),
+                                  ))
+                              .toList(),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                  ),
+                );
+                if (picked != null) {
+                  controller.onResidenceGovernorateChanged(picked);
+                }
+              },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+          decoration: BoxDecoration(
+            color: isDark
+                ? AppColors.surfaceSunkenDark
+                : AppColors.surfaceSunken,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: isDark ? AppColors.borderDark : AppColors.border,
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(PhosphorIcons.house(), size: 20, color: AppColors.primary),
+              const SizedBox(width: 12),
+              Expanded(
+                child: isLoading
+                    ? const SizedBox(
+                        height: 18,
+                        width: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Text(
+                        selected?.name ?? 'المحافظة',
+                        style: TextStyle(
+                          color: selected != null
+                              ? (isDark
+                                  ? AppColors.textOnDark
+                                  : AppColors.textPrimary)
+                              : AppColors.textLight,
+                        ),
+                      ),
+              ),
+              Icon(PhosphorIcons.caretDown(),
+                  size: 18, color: AppColors.textLight),
+            ],
+          ),
+        ),
+      );
+    });
+  }
+
+  /// District picker (disabled until governorate selected)
+  Widget _buildDistrictPickerField(bool isDark) {
+    return Obx(() {
+      final gov = controller.selectedResidenceGovernorate.value;
+      final selected = controller.selectedResidenceDistrict.value;
+      final districts = controller.availableResidenceDistricts;
+      final enabled = gov != null && districts.isNotEmpty;
+      return GestureDetector(
+        onTap: enabled
+            ? () async {
+                final picked = await showModalBottomSheet<District>(
+                  context: Get.context!,
+                  backgroundColor:
+                      isDark ? AppColors.cardDark : AppColors.card,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius:
+                        BorderRadius.vertical(top: Radius.circular(20)),
+                  ),
+                  builder: (_) => Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const SizedBox(height: 12),
+                      Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: AppColors.textLight,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text('اختر القضاء',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: isDark
+                                ? AppColors.textOnDark
+                                : AppColors.textPrimary,
+                          )),
+                      const SizedBox(height: 8),
+                      Flexible(
+                        child: ListView(
+                          shrinkWrap: true,
+                          children: districts
+                              .map((dist) => ListTile(
+                                    title: Text(dist.name,
+                                        textAlign: TextAlign.right,
+                                        style: TextStyle(
+                                            color: isDark
+                                                ? AppColors.textOnDark
+                                                : AppColors.textPrimary)),
+                                    trailing: selected?.id == dist.id
+                                        ? const Icon(Icons.check,
+                                            color: AppColors.primary)
+                                        : null,
+                                    onTap: () =>
+                                        Navigator.pop(Get.context!, dist),
+                                  ))
+                              .toList(),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                  ),
+                );
+                if (picked != null) {
+                  controller.selectedResidenceDistrict.value = picked;
+                }
+              }
+            : null,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+          decoration: BoxDecoration(
+            color: enabled
+                ? (isDark
+                    ? AppColors.surfaceSunkenDark
+                    : AppColors.surfaceSunken)
+                : (isDark
+                    ? AppColors.surfaceSunkenDark.withValues(alpha: 0.5)
+                    : AppColors.surfaceSunken.withValues(alpha: 0.5)),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: isDark ? AppColors.borderDark : AppColors.border,
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(PhosphorIcons.mapPin(),
+                  size: 20,
+                  color: enabled ? AppColors.primary : AppColors.textLight),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  selected?.name ?? 'القضاء',
+                  style: TextStyle(
+                    color: selected != null
+                        ? (isDark
+                            ? AppColors.textOnDark
+                            : AppColors.textPrimary)
+                        : AppColors.textLight,
+                  ),
+                ),
+              ),
+              Icon(PhosphorIcons.caretDown(),
+                  size: 18, color: AppColors.textLight),
+            ],
+          ),
+        ),
+      );
+    });
   }
 
   Widget _buildPhotoPicker(bool isDark) {

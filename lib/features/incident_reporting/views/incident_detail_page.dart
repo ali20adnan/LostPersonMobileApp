@@ -9,6 +9,7 @@ import 'package:video_player/video_player.dart';
 
 import '../../../app/themes/app_colors.dart';
 import '../../../core/constants/incident_constants.dart';
+import '../../../core/utils/maps_launcher.dart';
 import '../../../data/models/incident_model.dart';
 import '../controllers/incident_detail_controller.dart';
 
@@ -377,12 +378,25 @@ class IncidentDetailPage extends GetView<IncidentDetailController> {
       children: [
         if (report.addressLine != null && report.addressLine!.isNotEmpty)
           _buildInfoRow(isDark, 'العنوان', report.addressLine!),
-        if (report.latitude != null && report.longitude != null)
+        if (report.latitude != null && report.longitude != null) ...[
           _buildInfoRow(
             isDark,
             'الإحداثيات',
             '${report.latitude!.toStringAsFixed(5)}, ${report.longitude!.toStringAsFixed(5)}',
           ),
+          const Gap(8),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () => openMapsDirections(
+                lat: report.latitude,
+                lng: report.longitude,
+              ),
+              icon: Icon(PhosphorIcons.navigationArrow(), size: 18),
+              label: const Text('فتح الاتجاهات في خرائط Google'),
+            ),
+          ),
+        ],
       ],
     );
   }

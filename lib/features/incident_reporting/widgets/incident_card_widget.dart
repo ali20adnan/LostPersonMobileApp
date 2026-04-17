@@ -4,6 +4,7 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:intl/intl.dart';
 
 import '../../../app/themes/app_colors.dart';
+import '../../../core/utils/maps_launcher.dart';
 import '../../../data/models/incident_model.dart';
 import '../../../core/constants/incident_constants.dart';
 
@@ -218,6 +219,21 @@ class IncidentCardWidget extends StatelessWidget {
                                     ),
                                   ),
                                 ),
+                                if (incident.latitude != null &&
+                                    incident.longitude != null) ...[
+                                  const Gap(6),
+                                  GestureDetector(
+                                    onTap: () => openMapsDirections(
+                                      lat: incident.latitude,
+                                      lng: incident.longitude,
+                                    ),
+                                    child: Icon(
+                                      PhosphorIcons.navigationArrow(),
+                                      size: 18,
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
+                                ],
                               ],
                             ),
 

@@ -8,6 +8,7 @@ import 'package:loading_animation_widget/loading_animation_widget.dart';
 import '../../../app/themes/app_colors.dart';
 import '../../../app/routes/app_routes.dart';
 import '../../../core/constants/api_constants.dart';
+import '../../../core/utils/maps_launcher.dart';
 import '../../../data/models/missing_person_report_model.dart';
 import '../controllers/missing_person_detail_controller.dart';
 
@@ -350,6 +351,18 @@ class MissingPersonDetailPage extends GetView<MissingPersonDetailController> {
             isDark,
             'الإحداثيات',
             '${report.coordinates!['latitude']?.toStringAsFixed(5)}, ${report.coordinates!['longitude']?.toStringAsFixed(5)}',
+          ),
+          const Gap(8),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () => openMapsDirections(
+                lat: report.coordinates!['latitude'],
+                lng: report.coordinates!['longitude'],
+              ),
+              icon: Icon(PhosphorIcons.navigationArrow(), size: 18),
+              label: const Text('فتح الاتجاهات في خرائط Google'),
+            ),
           ),
         ],
       ],

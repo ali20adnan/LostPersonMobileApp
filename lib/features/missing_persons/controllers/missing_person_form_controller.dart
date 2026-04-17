@@ -1,41 +1,62 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:geolocator/geolocator.dart';
+import 'package:latlong2/latlong.dart';
 
 import '../../../app/services/permission_service.dart';
+import '../../../data/models/governorate_model.dart';
+import '../../../data/repositories/governorate_repository.dart';
 import '../../../data/repositories/missing_persons_repository.dart';
+import '../views/map_picker_page.dart';
 
 class MissingPersonFormController extends GetxController {
   final MissingPersonsRepository _repository = MissingPersonsRepository();
+  final GovernorateRepository _governorateRepository = GovernorateRepository();
   late final PermissionService _permissionService;
   final _imagePicker = ImagePicker();
 
   // Person info
   final fullNameController = TextEditingController();
   final selectedGender = 'male'.obs;
-  final dateOfBirthController = TextEditingController();
+  final ageController = TextEditingController();
   final heightController = TextEditingController();
   final weightController = TextEditingController();
-  final hairColorController = TextEditingController();
-  final eyeColorController = TextEditingController();
   final distinguishingFeaturesController = TextEditingController();
   final medicalConditionsController = TextEditingController();
   final clothingDescriptionController = TextEditingController();
+  final descriptionController = TextEditingController();
 
-  // Last seen location
+  // Hair & eye color options (predefined like web)
+  static const hairColorOptions = [
+    'أسود', 'بني غامق', 'بني فاتح', 'أشقر', 'أحمر', 'رمادي', 'أبيض', 'أصلع', 'آخر',
+  ];
+  static const eyeColorOptions = [
+    'أسود', 'بني غامق', 'بني فاتح', 'عسلي', 'أخضر', 'أزرق', 'رمادي', 'آخر',
+  ];
+  final selectedHairColor = Rx<String?>(null);
+  final selectedEyeColor = Rx<String?>(null);
+
+  // Residence governorate / district (cascading)
+  final governorates = <Governorate>[].obs;
+  final isLoadingGovernorates = false.obs;
+  final selectedResidenceGovernorate = Rx<Governorate?>(null);
+  final selectedResidenceDistrict = Rx<District?>(null);
+
+  List<District> get availableResidenceDistricts =>
+      selectedResidenceGovernorate.value?.districts ?? [];
+
+  // Last seen location — map picker
   final addressLineController = TextEditingController();
-  final currentLocation = Rx<Position?>(null);
-  final isLoadingLocation = false.obs;
+  final selectedMapLocation = Rx<LatLng?>(null);
 
   // Reporter info
   final reporterNameController = TextEditingController();
   final reporterPhoneController = TextEditingController();
   final reporterRelationshipController = TextEditingController();
+  final reporterEmailController = TextEditingController();
 
   // Report details
   final missingDateController = TextEditingController();
-  final descriptionController = TextEditingController();
   final selectedDate = Rx<DateTime?>(null);
 
   // Photos
@@ -44,13 +65,31 @@ class MissingPersonFormController extends GetxController {
   // State
   final isSubmitting = false.obs;
 
-  // Collapsible sections
-  final expandedSections = <int>{0, 3, 4}.obs; // Person info, reporter, details expanded by default
+  // Collapsible sections (0=person,1=residence,2=last seen,3=reporter,4=photos)
+  final expandedSections = <int>{0, 1, 3, 4}.obs;
 
   @override
   void onInit() {
     super.onInit();
     _permissionService = PermissionService();
+    _loadGovernorates();
+  }
+
+  Future<void> _loadGovernorates() async {
+    try {
+      isLoadingGovernorates.value = true;
+      final list = await _governorateRepository.getGovernorates();
+      governorates.assignAll(list);
+    } catch (e) {
+      debugPrint('MissingPersonFormController: Failed to load governorates - $e');
+    } finally {
+      isLoadingGovernorates.value = false;
+    }
+  }
+
+  void onResidenceGovernorateChanged(Governorate? gov) {
+    selectedResidenceGovernorate.value = gov;
+    selectedResidenceDistrict.value = null;
   }
 
   void toggleSection(int index) {
@@ -76,40 +115,12 @@ class MissingPersonFormController extends GetxController {
     }
   }
 
-  Future<void> getCurrentLocation() async {
-    try {
-      isLoadingLocation.value = true;
-      final hasPermission =
-          await _permissionService.requestLocationPermission();
-      if (!hasPermission) {
-        Get.snackbar('إذن مطلوب', 'يتطلب الوصول إلى الموقع',
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: Colors.orange.withValues(alpha: 0.8),
-            colorText: Colors.white);
-        isLoadingLocation.value = false;
-        return;
-      }
-      final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
-      currentLocation.value = position;
-      if (addressLineController.text.trim().isEmpty) {
-        addressLineController.text =
-            '${position.latitude.toStringAsFixed(6)}, ${position.longitude.toStringAsFixed(6)}';
-      }
-      Get.snackbar('تم', 'تم تحديد الموقع بنجاح',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.green.withValues(alpha: 0.8),
-          colorText: Colors.white,
-          duration: const Duration(seconds: 2));
-      isLoadingLocation.value = false;
-    } catch (e) {
-      debugPrint('MissingPersonFormController: Error getting location - $e');
-      isLoadingLocation.value = false;
-      Get.snackbar('خطأ', 'فشل تحديد الموقع',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red.withValues(alpha: 0.8),
-          colorText: Colors.white);
+  Future<void> openMapPicker(BuildContext context) async {
+    final result = await Get.to<LatLng?>(
+      () => MapPickerPage(initialLocation: selectedMapLocation.value),
+    );
+    if (result != null) {
+      selectedMapLocation.value = result;
     }
   }
 
@@ -189,6 +200,13 @@ class MissingPersonFormController extends GetxController {
           colorText: Colors.white);
       return false;
     }
+    if (selectedPhotos.isEmpty) {
+      Get.snackbar('خطأ', 'يرجى إضافة صورة واحدة على الأقل',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red.withValues(alpha: 0.8),
+          colorText: Colors.white);
+      return false;
+    }
     return true;
   }
 
@@ -198,20 +216,17 @@ class MissingPersonFormController extends GetxController {
     try {
       isSubmitting.value = true;
 
+      final residenceGovId = selectedResidenceGovernorate.value?.id;
+      final residenceDistId = selectedResidenceDistrict.value?.id;
+
       final response = await _repository.createReport(
         fullName: fullNameController.text.trim(),
         gender: selectedGender.value,
-        dateOfBirth: dateOfBirthController.text.trim().isNotEmpty
-            ? dateOfBirthController.text.trim()
-            : null,
+        age: int.tryParse(ageController.text.trim()),
         heightCm: int.tryParse(heightController.text.trim()),
         weightKg: int.tryParse(weightController.text.trim()),
-        hairColor: hairColorController.text.trim().isNotEmpty
-            ? hairColorController.text.trim()
-            : null,
-        eyeColor: eyeColorController.text.trim().isNotEmpty
-            ? eyeColorController.text.trim()
-            : null,
+        hairColor: selectedHairColor.value,
+        eyeColor: selectedEyeColor.value,
         distinguishingFeatures:
             distinguishingFeaturesController.text.trim().isNotEmpty
                 ? distinguishingFeaturesController.text.trim()
@@ -223,17 +238,23 @@ class MissingPersonFormController extends GetxController {
             clothingDescriptionController.text.trim().isNotEmpty
                 ? clothingDescriptionController.text.trim()
                 : null,
+        governorateId: residenceGovId,
+        residenceGovernorateId: residenceGovId,
+        residenceDistrictId: residenceDistId,
         addressLine: addressLineController.text.trim().isNotEmpty
             ? addressLineController.text.trim()
             : null,
-        latitude: currentLocation.value?.latitude,
-        longitude: currentLocation.value?.longitude,
+        latitude: selectedMapLocation.value?.latitude,
+        longitude: selectedMapLocation.value?.longitude,
         reporterName: reporterNameController.text.trim(),
         reporterPhone: reporterPhoneController.text.trim(),
         reporterRelationship:
             reporterRelationshipController.text.trim().isNotEmpty
                 ? reporterRelationshipController.text.trim()
                 : null,
+        reporterEmail: reporterEmailController.text.trim().isNotEmpty
+            ? reporterEmailController.text.trim()
+            : null,
         status: 'missing',
         missingDate: missingDateController.text.trim(),
         description: descriptionController.text.trim().isNotEmpty
@@ -269,20 +290,19 @@ class MissingPersonFormController extends GetxController {
   @override
   void onClose() {
     fullNameController.dispose();
-    dateOfBirthController.dispose();
+    ageController.dispose();
     heightController.dispose();
     weightController.dispose();
-    hairColorController.dispose();
-    eyeColorController.dispose();
     distinguishingFeaturesController.dispose();
     medicalConditionsController.dispose();
     clothingDescriptionController.dispose();
+    descriptionController.dispose();
     addressLineController.dispose();
     reporterNameController.dispose();
     reporterPhoneController.dispose();
     reporterRelationshipController.dispose();
+    reporterEmailController.dispose();
     missingDateController.dispose();
-    descriptionController.dispose();
     super.onClose();
   }
 }

@@ -101,7 +101,7 @@ class MissingPersonsRepository {
   Future<ApiResponse> createReport({
     required String fullName,
     required String gender,
-    String? dateOfBirth,
+    int? age,
     int? heightCm,
     int? weightKg,
     String? hairColor,
@@ -117,6 +117,7 @@ class MissingPersonsRepository {
     required String reporterName,
     required String reporterPhone,
     String? reporterRelationship,
+    String? reporterEmail,
     String? residenceGovernorateId,
     String? residenceDistrictId,
     required String status,
@@ -128,7 +129,7 @@ class MissingPersonsRepository {
     final fields = <String, String>{
       'person[fullName]': fullName,
       'person[gender]': gender,
-      if (dateOfBirth != null) 'person[dateOfBirth]': dateOfBirth,
+      if (age != null) 'person[age]': age.toString(),
       if (heightCm != null) 'person[heightCm]': heightCm.toString(),
       if (weightKg != null) 'person[weightKg]': weightKg.toString(),
       if (hairColor != null) 'person[hairColor]': hairColor,
@@ -151,6 +152,7 @@ class MissingPersonsRepository {
       'reporterPhone': reporterPhone,
       if (reporterRelationship != null)
         'reporterRelationship': reporterRelationship,
+      if (reporterEmail != null) 'reporterEmail': reporterEmail,
       if (residenceGovernorateId != null)
         'residenceGovernorateId': residenceGovernorateId,
       if (residenceDistrictId != null)

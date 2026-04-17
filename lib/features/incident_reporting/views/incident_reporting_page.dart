@@ -194,80 +194,97 @@ class IncidentReportingPage extends GetView<IncidentReportingController> {
                   }).toList(),
                 )).animate().fadeIn(duration: 500.ms, delay: 100.ms),
 
+            // Title + Description: hidden for emergency
+            Obx(() {
+              if (controller.selectedType.value == ReportType.emergency) {
+                return const SizedBox.shrink();
+              }
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Gap(24),
+                  _buildSectionHeader(PhosphorIcons.fileText(), 'تفاصيل الحادثة', isDark)
+                      .animate().fadeIn(duration: 400.ms, delay: 200.ms).slideX(begin: -0.1),
+                  const Gap(12),
+                  TextField(
+                    controller: controller.titleController,
+                    decoration: _inputDecoration(
+                      label: 'عنوان الحادثة *',
+                      hint: 'مثال: شخص مفقود في المنطقة الشرقية',
+                      icon: PhosphorIcons.textT(),
+                      isDark: isDark,
+                    ),
+                    textDirection: TextDirection.rtl,
+                    style: TextStyle(
+                      color: isDark ? AppColors.textOnDark : AppColors.textPrimary,
+                    ),
+                  ).animate().fadeIn(duration: 400.ms, delay: 250.ms),
+                  const Gap(14),
+                  TextField(
+                    controller: controller.descriptionController,
+                    decoration: _inputDecoration(
+                      label: 'وصف الحادثة *',
+                      hint: 'أدخل تفاصيل الحادثة بشكل دقيق',
+                      icon: PhosphorIcons.notepad(),
+                      isDark: isDark,
+                    ),
+                    maxLines: 4,
+                    textDirection: TextDirection.rtl,
+                    style: TextStyle(
+                      color: isDark ? AppColors.textOnDark : AppColors.textPrimary,
+                    ),
+                  ).animate().fadeIn(duration: 400.ms, delay: 300.ms),
+                ],
+              );
+            }),
+
             const Gap(24),
 
-            // Title field
-            _buildSectionHeader(PhosphorIcons.fileText(), 'تفاصيل الحادثة', isDark)
-                .animate().fadeIn(duration: 400.ms, delay: 200.ms).slideX(begin: -0.1),
-            const Gap(12),
-            TextField(
-              controller: controller.titleController,
-              decoration: _inputDecoration(
-                label: 'عنوان الحادثة *',
-                hint: 'مثال: شخص مفقود في المنطقة الشرقية',
-                icon: PhosphorIcons.textT(),
-                isDark: isDark,
-              ),
-              textDirection: TextDirection.rtl,
-              style: TextStyle(
-                color: isDark ? AppColors.textOnDark : AppColors.textPrimary,
-              ),
-            ).animate().fadeIn(duration: 400.ms, delay: 250.ms),
-
-            const Gap(14),
-
-            // Description field
-            TextField(
-              controller: controller.descriptionController,
-              decoration: _inputDecoration(
-                label: 'وصف الحادثة *',
-                hint: 'أدخل تفاصيل الحادثة بشكل دقيق',
-                icon: PhosphorIcons.notepad(),
-                isDark: isDark,
-              ),
-              maxLines: 4,
-              textDirection: TextDirection.rtl,
-              style: TextStyle(
-                color: isDark ? AppColors.textOnDark : AppColors.textPrimary,
-              ),
-            ).animate().fadeIn(duration: 400.ms, delay: 300.ms),
-
-            const Gap(24),
-
-            // Location field
-            _buildSectionHeader(PhosphorIcons.mapPin(), 'الموقع', isDark)
-                .animate().fadeIn(duration: 400.ms, delay: 350.ms).slideX(begin: -0.1),
-            const Gap(12),
-            TextField(
-              controller: controller.locationController,
-              decoration: _inputDecoration(
-                label: 'الموقع *',
-                hint: 'مثال: بوابة رقم 3',
-                icon: PhosphorIcons.mapPin(),
-                isDark: isDark,
-                suffixIcon: Obx(() => controller.isLoadingLocation.value
-                    ? Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: LoadingAnimationWidget.threeArchedCircle(
-                            color: AppColors.primary,
-                            size: 20,
-                          ),
-                        ),
-                      )
-                    : IconButton(
-                        icon: Icon(PhosphorIcons.crosshair(), color: AppColors.primary),
-                        onPressed: controller.getCurrentLocation,
-                        tooltip: 'تحديد الموقع الحالي',
-                      )),
-              ),
-              textDirection: TextDirection.rtl,
-              style: TextStyle(
-                color: isDark ? AppColors.textOnDark : AppColors.textPrimary,
-              ),
-            ).animate().fadeIn(duration: 400.ms, delay: 400.ms),
+            // Auto-location status indicator
+            Obx(() {
+              final isLoading = controller.isLoadingLocation.value;
+              final hasLocation = controller.currentLocation.value != null;
+              return Row(
+                children: [
+                  if (isLoading) ...[
+                    SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    const Gap(8),
+                    Text(
+                      'جاري تحديد الموقع...',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: isDark
+                            ? AppColors.textOnDarkSecondary
+                            : AppColors.textSecondary,
+                      ),
+                    ),
+                  ] else if (hasLocation) ...[
+                    Icon(PhosphorIcons.checkCircle(),
+                        color: Colors.green, size: 16),
+                    const Gap(8),
+                    const Text(
+                      'تم تحديد الموقع',
+                      style: TextStyle(fontSize: 13, color: Colors.green),
+                    ),
+                  ] else ...[
+                    Icon(PhosphorIcons.warningCircle(),
+                        color: Colors.orange, size: 16),
+                    const Gap(8),
+                    const Text(
+                      'تعذّر تحديد الموقع',
+                      style: TextStyle(fontSize: 13, color: Colors.orange),
+                    ),
+                  ],
+                ],
+              );
+            }).animate().fadeIn(duration: 400.ms, delay: 350.ms),
 
             const Gap(24),
 
@@ -283,22 +300,31 @@ class IncidentReportingPage extends GetView<IncidentReportingController> {
               );
             }).animate().fadeIn(duration: 400.ms, delay: 500.ms),
 
-            const Gap(24),
-
-            // Media picker
-            _buildSectionHeader(PhosphorIcons.camera(), 'الصور والفيديو', isDark)
-                .animate().fadeIn(duration: 400.ms, delay: 550.ms).slideX(begin: -0.1),
-            const Gap(12),
+            // Media picker: hidden for emergency
             Obx(() {
-              final files = controller.selectedMediaFiles.toList();
-              return MediaPickerWidget(
-                mediaFiles: files,
-                onPickImage: controller.pickImage,
-                onTakePhoto: controller.takePhoto,
-                onPickVideo: controller.pickVideo,
-                onRemoveFile: controller.removeMediaFile,
+              if (controller.selectedType.value == ReportType.emergency) {
+                return const SizedBox.shrink();
+              }
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Gap(24),
+                  _buildSectionHeader(PhosphorIcons.camera(), 'الصور والفيديو', isDark)
+                      .animate().fadeIn(duration: 400.ms, delay: 550.ms).slideX(begin: -0.1),
+                  const Gap(12),
+                  Obx(() {
+                    final files = controller.selectedMediaFiles.toList();
+                    return MediaPickerWidget(
+                      mediaFiles: files,
+                      onPickImage: controller.pickImage,
+                      onTakePhoto: controller.takePhoto,
+                      onPickVideo: controller.pickVideo,
+                      onRemoveFile: controller.removeMediaFile,
+                    );
+                  }).animate().fadeIn(duration: 400.ms, delay: 600.ms),
+                ],
               );
-            }).animate().fadeIn(duration: 400.ms, delay: 600.ms),
+            }),
 
             const Gap(28),
 
@@ -356,14 +382,19 @@ class IncidentReportingPage extends GetView<IncidentReportingController> {
 
             const Gap(16),
 
-            // Required fields note
-            Text(
-              '* حقول إلزامية',
-              style: TextStyle(
-                fontSize: 12,
-                color: isDark ? AppColors.textOnDarkSecondary : AppColors.textLight,
-              ),
-            ),
+            // Required fields note: hidden for emergency
+            Obx(() {
+              if (controller.selectedType.value == ReportType.emergency) {
+                return const SizedBox.shrink();
+              }
+              return Text(
+                '* حقول إلزامية',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isDark ? AppColors.textOnDarkSecondary : AppColors.textLight,
+                ),
+              );
+            }),
 
             const Gap(32),
           ],
