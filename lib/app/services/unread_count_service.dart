@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import '../../data/repositories/alert_repository.dart';
 import '../../data/repositories/conversation_repository.dart';
 import '../../data/repositories/incident_repository.dart';
+import '../../features/notifications/services/app_notifications_service.dart';
 import '../services/socket_service.dart';
 
 /// Centralized service tracking unread counts across alerts, messages, and reports.
@@ -15,8 +16,13 @@ class UnreadCountService extends GetxService {
   final messagesUnread = 0.obs;
   final reportsUnread = 0.obs;
 
-  int get totalUnread =>
-      alertsUnread.value + messagesUnread.value + reportsUnread.value;
+  int get totalUnread {
+    var total = alertsUnread.value + messagesUnread.value + reportsUnread.value;
+    if (Get.isRegistered<AppNotificationsService>()) {
+      total += Get.find<AppNotificationsService>().unreadCount.value;
+    }
+    return total;
+  }
 
   Timer? _pollingTimer;
 

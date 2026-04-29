@@ -198,92 +198,47 @@ class MissingPersonCard extends StatelessWidget {
 
                     if (!isFound) ...[
                       const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          // Report Sighting button
-                          Expanded(
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: AppColors.info.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: AppColors.info.withValues(alpha: 0.3)),
+                      // Mark as Found button
+                      SizedBox(
+                        width: double.infinity,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: AppColors.successGradient,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.teal.withValues(alpha: 0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 3),
                               ),
-                              child: Material(
-                                color: Colors.transparent,
-                                child: InkWell(
-                                  onTap: () => Get.toNamed(
-                                    AppRoutes.createAlert,
-                                    arguments: {
-                                      'missingPersonReportId': person.id,
-                                      'personName': person.fullName ?? 'غير معروف',
-                                    },
-                                  ),
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: Padding(
-                                    padding: EdgeInsets.symmetric(vertical: 10),
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Icon(PhosphorIcons.eye(), size: 16, color: AppColors.info),
-                                        SizedBox(width: 6),
-                                        Text(
-                                          'إبلاغ عن مشاهدة',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.w600,
-                                            color: AppColors.info,
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                      ],
+                            ],
+                          ),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: onMarkFound,
+                              borderRadius: BorderRadius.circular(12),
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(vertical: 10),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(PhosphorIcons.checkCircle(), size: 16, color: Colors.white),
+                                    SizedBox(width: 6),
+                                    Text(
+                                      'تم العثور',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                      ),
                                     ),
-                                  ),
+                                  ],
                                 ),
                               ),
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          // Mark as Found button
-                          Expanded(
-                            child: Container(
-                              decoration: BoxDecoration(
-                                gradient: AppColors.successGradient,
-                                borderRadius: BorderRadius.circular(12),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: AppColors.teal.withValues(alpha: 0.3),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 3),
-                                  ),
-                                ],
-                              ),
-                              child: Material(
-                                color: Colors.transparent,
-                                child: InkWell(
-                                  onTap: onMarkFound,
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: Padding(
-                                    padding: EdgeInsets.symmetric(vertical: 10),
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Icon(PhosphorIcons.checkCircle(), size: 16, color: Colors.white),
-                                        SizedBox(width: 6),
-                                        Text(
-                                          'تم العثور',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.white,
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                     ],
                   ],

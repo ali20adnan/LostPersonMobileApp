@@ -60,7 +60,7 @@ class IncidentDetailPage extends GetView<IncidentDetailController> {
                       _buildLocationSection(report, isDark),
                       const Gap(12),
                       _buildPeopleSection(report, isDark),
-                      const Gap(32),
+                      const Gap(120),
                     ],
                   ),
                 ),
@@ -69,6 +69,91 @@ class IncidentDetailPage extends GetView<IncidentDetailController> {
           ),
         );
       }),
+      bottomNavigationBar: Obx(() {
+        final report = controller.report.value;
+        if (report == null || !controller.canManage) {
+          return const SizedBox.shrink();
+        }
+        return _buildActionBar(report, isDark);
+      }),
+    );
+  }
+
+  Widget _buildActionBar(Report report, bool isDark) {
+    final status = ReportStatus.fromApiString(report.status);
+    Widget? content;
+    if (status == ReportStatus.pending) {
+      content = Row(
+        children: [
+          Expanded(
+            child: ElevatedButton.icon(
+              onPressed: controller.isActing.value ? null : controller.accept,
+              icon: const Icon(Icons.check_circle_outline),
+              label: const Text('قبول'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
+            ),
+          ),
+          const Gap(12),
+          Expanded(
+            child: ElevatedButton.icon(
+              onPressed: controller.isActing.value
+                  ? null
+                  : controller.rejectWithConfirmation,
+              icon: const Icon(Icons.cancel_outlined),
+              label: const Text('رفض'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
+            ),
+          ),
+        ],
+      );
+    } else if (status == ReportStatus.inProgress) {
+      content = SizedBox(
+        width: double.infinity,
+        child: ElevatedButton.icon(
+          onPressed: controller.isActing.value ? null : controller.complete,
+          icon: const Icon(Icons.task_alt),
+          label: const Text('تمت المهمة'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.green,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 14),
+          ),
+        ),
+      );
+    } else {
+      content = Center(
+        child: Text(
+          'لا توجد إجراءات متاحة لهذه الحالة (${status.displayNameAr})',
+          style: TextStyle(
+            color: isDark
+                ? AppColors.textOnDarkSecondary
+                : AppColors.textSecondary,
+            fontSize: 13,
+          ),
+        ),
+      );
+    }
+    return SafeArea(
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.cardDark : Colors.white,
+          border: Border(
+            top: BorderSide(
+              color: isDark ? AppColors.cardBorderDark : AppColors.cardBorder,
+            ),
+          ),
+        ),
+        child: content,
+      ),
     );
   }
 

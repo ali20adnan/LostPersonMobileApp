@@ -8,6 +8,7 @@ import '../../../data/models/governorate_model.dart';
 import '../../../data/repositories/governorate_repository.dart';
 import '../../../data/repositories/missing_persons_repository.dart';
 import '../views/map_picker_page.dart';
+import 'missing_persons_controller.dart';
 
 class MissingPersonFormController extends GetxController {
   final MissingPersonsRepository _repository = MissingPersonsRepository();
@@ -53,7 +54,6 @@ class MissingPersonFormController extends GetxController {
   final reporterNameController = TextEditingController();
   final reporterPhoneController = TextEditingController();
   final reporterRelationshipController = TextEditingController();
-  final reporterEmailController = TextEditingController();
 
   // Report details
   final missingDateController = TextEditingController();
@@ -252,9 +252,6 @@ class MissingPersonFormController extends GetxController {
             reporterRelationshipController.text.trim().isNotEmpty
                 ? reporterRelationshipController.text.trim()
                 : null,
-        reporterEmail: reporterEmailController.text.trim().isNotEmpty
-            ? reporterEmailController.text.trim()
-            : null,
         status: 'missing',
         missingDate: missingDateController.text.trim(),
         description: descriptionController.text.trim().isNotEmpty
@@ -266,6 +263,11 @@ class MissingPersonFormController extends GetxController {
       isSubmitting.value = false;
 
       if (response.isSuccess) {
+        // Refresh the missing-persons list so the new report appears immediately
+        // (in case the WebSocket event doesn't arrive or controller missed it).
+        if (Get.isRegistered<MissingPersonsController>()) {
+          await Get.find<MissingPersonsController>().refreshReports();
+        }
         Get.snackbar('تم', 'تم إرسال البلاغ بنجاح',
             snackPosition: SnackPosition.BOTTOM,
             backgroundColor: Colors.green.withValues(alpha: 0.8),
@@ -301,7 +303,6 @@ class MissingPersonFormController extends GetxController {
     reporterNameController.dispose();
     reporterPhoneController.dispose();
     reporterRelationshipController.dispose();
-    reporterEmailController.dispose();
     missingDateController.dispose();
     super.onClose();
   }

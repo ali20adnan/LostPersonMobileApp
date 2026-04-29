@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../app/services/auth_service.dart';
+import '../../../app/services/socket_service.dart';
+import '../../../app/services/unread_count_service.dart';
+import '../../notifications/bindings/app_notifications_bootstrap.dart';
+import '../../notifications/services/app_notifications_service.dart';
 
 class AuthController extends GetxController {
   final AuthService _authService = Get.find<AuthService>();
@@ -33,6 +37,23 @@ class AuthController extends GetxController {
     isLoading.value = false;
 
     if (response.isSuccess) {
+      // Bring up real-time services now that we have a fresh token.
+      try {
+        if (!Get.isRegistered<SocketService>()) {
+          await Get.putAsync<SocketService>(() => SocketService().init());
+        }
+        if (!Get.isRegistered<UnreadCountService>()) {
+          await Get.putAsync<UnreadCountService>(
+              () => UnreadCountService().init());
+        }
+        if (!Get.isRegistered<AppNotificationsService>()) {
+          await Get.putAsync<AppNotificationsService>(
+              () => AppNotificationsService().init());
+        }
+        await AppNotificationsBootstrap.setup();
+      } catch (e) {
+        debugPrint('AuthController: post-login init failed - $e');
+      }
       Get.offAllNamed('/home');
     } else {
       errorMessage.value =

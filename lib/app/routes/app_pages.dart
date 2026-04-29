@@ -24,7 +24,6 @@ import '../../features/incident_reporting/views/incidents_list_page.dart';
 import '../../features/missing_persons/views/missing_person_form_page.dart';
 import '../../features/messaging/views/chat_page.dart';
 import '../../features/alerts/views/alerts_page.dart';
-import '../../features/alerts/views/create_alert_page.dart';
 import '../../features/notifications/views/notifications_page.dart';
 import '../../features/missing_persons/views/missing_person_detail_page.dart';
 import '../../features/incident_reporting/views/incident_detail_page.dart';
@@ -85,11 +84,6 @@ class AppPages {
     GetPage(
       name: AppRoutes.alerts,
       page: () => const AlertsPage(),
-      binding: AlertsBinding(),
-    ),
-    GetPage(
-      name: AppRoutes.createAlert,
-      page: () => const CreateAlertPage(),
       binding: AlertsBinding(),
     ),
     GetPage(

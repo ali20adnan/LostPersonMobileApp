@@ -15,6 +15,8 @@ import 'app/services/auth_service.dart';
 import 'app/services/socket_service.dart';
 import 'app/services/unread_count_service.dart';
 import 'core/widgets/app_error_widget.dart';
+import 'features/notifications/bindings/app_notifications_bootstrap.dart';
+import 'features/notifications/services/app_notifications_service.dart';
 import 'features/settings/controllers/settings_controller.dart';
 
 void main() async {
@@ -57,6 +59,9 @@ void main() async {
   if (authService.isLoggedIn) {
     await Get.putAsync<SocketService>(() => SocketService().init());
     await Get.putAsync<UnreadCountService>(() => UnreadCountService().init());
+    await Get.putAsync<AppNotificationsService>(
+        () => AppNotificationsService().init());
+    await AppNotificationsBootstrap.setup();
   }
 
   // Wrap runApp in runZonedGuarded to catch uncaught async errors

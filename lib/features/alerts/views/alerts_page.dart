@@ -114,8 +114,6 @@ class AlertsPage extends GetView<AlertsController> {
   Widget _buildFilterChips(ThemeData theme, bool isDark) {
     final types = [
       {'key': null, 'label': 'الكل'},
-      {'key': 'sighting', 'label': 'مشاهدات'},
-      {'key': 'tip', 'label': 'معلومات'},
       {'key': 'found', 'label': 'تم العثور'},
     ];
 

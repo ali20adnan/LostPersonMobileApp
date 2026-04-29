@@ -2,7 +2,10 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ApiConstants {
   // ── Backend API ────────────────────────────────────────────────
-  static const String apiBaseUrl = 'https://api.almuntazer.net/losts/api';
+  /// Backend REST API base URL.
+  /// Override via .env `API_BASE_URL` (e.g. http://10.0.2.2:3003/api for Android emulator).
+  static String get apiBaseUrl =>
+      dotenv.env['API_BASE_URL'] ?? 'https://api.almuntazer.net/losts/api';
 
   /// Server root for static files (images, avatars, etc.)
   static String get filesBaseUrl =>
@@ -15,8 +18,10 @@ class ApiConstants {
         : normalized;
   }
 
-  /// Server root (without /api) – used for some relative paths
-  static const String serverBaseUrl = 'https://api.almuntazer.net/losts';
+  /// Server root (without /api) – used for sockets and some relative paths.
+  /// Override via .env `SERVER_BASE_URL` (e.g. http://10.0.2.2:3003 for Android emulator).
+  static String get serverBaseUrl =>
+      dotenv.env['SERVER_BASE_URL'] ?? 'https://api.almuntazer.net/losts';
 
   // Auth
   static const String login = '/auth/login';

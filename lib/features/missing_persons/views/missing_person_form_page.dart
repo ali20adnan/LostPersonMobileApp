@@ -250,14 +250,6 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
                   icon: PhosphorIcons.users(),
                   isDark: isDark,
                 ),
-                const SizedBox(height: 12),
-                _buildTextField(
-                  controller: controller.reporterEmailController,
-                  label: 'البريد الإلكتروني (اختياري)',
-                  icon: PhosphorIcons.envelope(),
-                  keyboardType: TextInputType.emailAddress,
-                  isDark: isDark,
-                ),
               ],
             ),
             const SizedBox(height: 12),
@@ -465,15 +457,6 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 const SizedBox(height: 12),
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppColors.textLight,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                const SizedBox(height: 12),
                 Text(label,
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
@@ -483,18 +466,26 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
                           : AppColors.textPrimary,
                     )),
                 const SizedBox(height: 8),
-                ...options.map((opt) => ListTile(
-                      title: Text(opt,
-                          textAlign: TextAlign.right,
-                          style: TextStyle(
-                              color: isDark
-                                  ? AppColors.textOnDark
-                                  : AppColors.textPrimary)),
-                      trailing: selected.value == opt
-                          ? const Icon(Icons.check, color: AppColors.primary)
-                          : null,
-                      onTap: () => Navigator.pop(Get.context!, opt),
-                    )),
+                Flexible(
+                  child: ListView(
+                    shrinkWrap: true,
+                    children: options
+                        .map((opt) => ListTile(
+                              title: Text(opt,
+                                  textAlign: TextAlign.right,
+                                  style: TextStyle(
+                                      color: isDark
+                                          ? AppColors.textOnDark
+                                          : AppColors.textPrimary)),
+                              trailing: selected.value == opt
+                                  ? const Icon(Icons.check,
+                                      color: AppColors.primary)
+                                  : null,
+                              onTap: () => Navigator.pop(Get.context!, opt),
+                            ))
+                        .toList(),
+                  ),
+                ),
                 const SizedBox(height: 16),
               ],
             ),
@@ -557,15 +548,6 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
                   builder: (_) => Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const SizedBox(height: 12),
-                      Container(
-                        width: 40,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: AppColors.textLight,
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
                       const SizedBox(height: 12),
                       Text('اختر المحافظة',
                           style: TextStyle(
@@ -668,15 +650,6 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
                   builder: (_) => Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const SizedBox(height: 12),
-                      Container(
-                        width: 40,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: AppColors.textLight,
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
                       const SizedBox(height: 12),
                       Text('اختر القضاء',
                           style: TextStyle(

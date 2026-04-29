@@ -77,7 +77,8 @@ enum ReportSeverity {
 enum ReportStatus {
   pending,
   inProgress,
-  resolved;
+  resolved,
+  rejected;
 
   String get apiValue {
     switch (this) {
@@ -87,6 +88,8 @@ enum ReportStatus {
         return 'in_progress';
       case ReportStatus.resolved:
         return 'resolved';
+      case ReportStatus.rejected:
+        return 'rejected';
     }
   }
 
@@ -98,6 +101,8 @@ enum ReportStatus {
         return 'قيد المعالجة';
       case ReportStatus.resolved:
         return 'تم الحل';
+      case ReportStatus.rejected:
+        return 'مرفوض';
     }
   }
 
@@ -109,6 +114,8 @@ enum ReportStatus {
         return Colors.blue;
       case ReportStatus.resolved:
         return Colors.green;
+      case ReportStatus.rejected:
+        return Colors.red;
     }
   }
 
@@ -120,6 +127,8 @@ enum ReportStatus {
         return ReportStatus.inProgress;
       case 'resolved':
         return ReportStatus.resolved;
+      case 'rejected':
+        return ReportStatus.rejected;
       default:
         return ReportStatus.pending;
     }
@@ -128,54 +137,33 @@ enum ReportStatus {
 
 /// Alert types matching the API
 enum AlertType {
-  sighting,
-  tip,
-  found,
-  information;
+  found;
 
   String get displayNameAr {
     switch (this) {
-      case AlertType.sighting:
-        return 'مشاهدة';
-      case AlertType.tip:
-        return 'معلومة';
       case AlertType.found:
         return 'تم العثور';
-      case AlertType.information:
-        return 'معلومات';
     }
   }
 
   IconData get icon {
     switch (this) {
-      case AlertType.sighting:
-        return PhosphorIcons.eye();
-      case AlertType.tip:
-        return PhosphorIcons.lightbulb();
       case AlertType.found:
         return PhosphorIcons.checkCircle();
-      case AlertType.information:
-        return PhosphorIcons.info();
     }
   }
 
   Color get color {
     switch (this) {
-      case AlertType.sighting:
-        return Colors.orange;
-      case AlertType.tip:
-        return Colors.blue;
       case AlertType.found:
         return Colors.green;
-      case AlertType.information:
-        return Colors.grey;
     }
   }
 
   static AlertType fromString(String value) {
     return AlertType.values.firstWhere(
       (e) => e.name == value,
-      orElse: () => AlertType.information,
+      orElse: () => AlertType.found,
     );
   }
 }

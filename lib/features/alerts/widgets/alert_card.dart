@@ -198,14 +198,8 @@ class AlertCard extends StatelessWidget {
 
   IconData _typeIcon(String type) {
     switch (type) {
-      case 'sighting':
-        return PhosphorIcons.eye();
-      case 'tip':
-        return PhosphorIcons.lightbulb();
       case 'found':
         return PhosphorIcons.checkCircle();
-      case 'information':
-        return PhosphorIcons.info();
       default:
         return PhosphorIcons.bell();
     }
@@ -213,14 +207,8 @@ class AlertCard extends StatelessWidget {
 
   Color _typeColor(String type) {
     switch (type) {
-      case 'sighting':
-        return AppColors.info;
-      case 'tip':
-        return AppColors.warning;
       case 'found':
         return AppColors.success;
-      case 'information':
-        return AppColors.primary;
       default:
         return AppColors.secondary;
     }

@@ -6,7 +6,6 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 import '../../../app/themes/app_colors.dart';
-import '../../../app/routes/app_routes.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/utils/maps_launcher.dart';
 import '../../../data/models/missing_person_report_model.dart';
@@ -387,49 +386,6 @@ class MissingPersonDetailPage extends GetView<MissingPersonDetailController> {
   Widget _buildActionButtons(MissingPersonReport report, bool isDark) {
     return Column(
       children: [
-        // Report sighting button
-        SizedBox(
-          width: double.infinity,
-          child: Container(
-            decoration: BoxDecoration(
-              color: AppColors.info.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: AppColors.info.withValues(alpha: 0.3)),
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () => Get.toNamed(
-                  AppRoutes.createAlert,
-                  arguments: {
-                    'missingPersonReportId': report.id,
-                    'personName': report.fullName ?? 'غير معروف',
-                  },
-                ),
-                borderRadius: BorderRadius.circular(14),
-                child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: 14),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(PhosphorIcons.eye(), size: 20, color: AppColors.info),
-                      Gap(8),
-                      Text(
-                        'إبلاغ عن مشاهدة',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.info,
-                          fontSize: 15,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-        const Gap(12),
         // Mark as found button
         SizedBox(
           width: double.infinity,

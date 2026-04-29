@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../app/services/auth_service.dart';
 import '../../../app/services/socket_service.dart';
 import '../../../data/models/missing_person_report_model.dart';
 import '../../../data/repositories/missing_persons_repository.dart';
@@ -8,6 +9,7 @@ import '../widgets/found_info_dialog.dart';
 
 class MissingPersonsController extends GetxController {
   late final MissingPersonsRepository _repository;
+  final AuthService _auth = Get.find<AuthService>();
 
   // Observable state
   final selectedTab = 0.obs;
@@ -117,11 +119,19 @@ class MissingPersonsController extends GetxController {
     final data = await FoundInfoDialog.show(context);
     if (data == null) return;
 
-    final response = await _repository.requestFound(person.id, data: data);
+    final role = _auth.currentUser.value?.role;
+    final canDirectlyUpdate = role == 'ADMIN' || role == 'CENTER';
+
+    final response = canDirectlyUpdate
+        ? await _repository.updateStatus(person.id, status: 'found', extra: data)
+        : await _repository.requestFound(person.id, data: data);
+
     if (response.isSuccess) {
       Get.snackbar(
         'تم',
-        'تم إرسال طلب تأكيد العثور',
+        canDirectlyUpdate
+            ? 'تم تحديث حالة الشخص إلى تم العثور عليه'
+            : 'تم إرسال طلب تأكيد العثور',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.green.withValues(alpha: 0.8),
         colorText: Colors.white,
@@ -130,7 +140,7 @@ class MissingPersonsController extends GetxController {
     } else {
       Get.snackbar(
         'خطأ',
-        response.errorMessage ?? 'فشل إرسال الطلب',
+        response.errorMessage ?? 'فشل تحديث الحالة',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red.withValues(alpha: 0.8),
         colorText: Colors.white,

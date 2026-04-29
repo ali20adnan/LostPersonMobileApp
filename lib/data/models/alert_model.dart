@@ -1,8 +1,8 @@
-/// Alert model matching the /alerts API (sighting / tip / found / information)
+/// Alert model matching the /alerts API (found only)
 class Alert {
   final int id;
   final int missingPersonReportId;
-  final String type; // sighting | tip | found | information
+  final String type; // found
   final String status; // pending | reviewed | verified | rejected
   final String reporterName;
   final String reporterPhone;
@@ -34,14 +34,8 @@ class Alert {
 
   String get typeDisplayAr {
     switch (type) {
-      case 'sighting':
-        return 'مشاهدة';
-      case 'tip':
-        return 'معلومة';
       case 'found':
         return 'تم العثور';
-      case 'information':
-        return 'معلومات';
       default:
         return type;
     }
@@ -66,7 +60,7 @@ class Alert {
     return Alert(
       id: json['id'] as int,
       missingPersonReportId: json['missingPersonReportId'] as int,
-      type: json['type'] as String? ?? 'information',
+      type: json['type'] as String? ?? 'found',
       status: json['status'] as String? ?? 'pending',
       reporterName: json['reporterName'] as String? ?? '',
       reporterPhone: json['reporterPhone'] as String? ?? '',

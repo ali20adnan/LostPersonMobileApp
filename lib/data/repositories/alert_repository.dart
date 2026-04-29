@@ -75,25 +75,6 @@ class AlertRepository {
     return null;
   }
 
-  /// Create a new alert
-  Future<ApiResponse> createAlert({
-    required int missingPersonReportId,
-    required String type,
-    required String reporterName,
-    required String reporterPhone,
-    int? locationId,
-    required String description,
-  }) async {
-    return await _api.post(ApiConstants.alerts, body: {
-      'missingPersonReportId': missingPersonReportId,
-      'type': type,
-      'reporterName': reporterName,
-      'reporterPhone': reporterPhone,
-      if (locationId != null) 'locationId': locationId,
-      'description': description,
-    });
-  }
-
   /// Mark alert as read
   Future<bool> markAsRead(int alertId) async {
     final response = await _api.post('${ApiConstants.alerts}/$alertId/read');

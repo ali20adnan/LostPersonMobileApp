@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 
+import '../../core/constants/api_constants.dart';
 import 'api_service.dart';
 
 /// Connection states for the socket
@@ -50,8 +51,8 @@ class SocketService extends GetxService {
 
     connectionState.value = SocketConnectionState.connecting;
 
-    // Use same base URL as the API
-    const baseUrl = 'https://api.almuntazer.net/losts';
+    // Use same base URL as the API (configurable via .env SERVER_BASE_URL)
+    final baseUrl = ApiConstants.serverBaseUrl;
 
     _socket = io.io(
       '$baseUrl/messages',

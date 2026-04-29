@@ -117,7 +117,6 @@ class MissingPersonsRepository {
     required String reporterName,
     required String reporterPhone,
     String? reporterRelationship,
-    String? reporterEmail,
     String? residenceGovernorateId,
     String? residenceDistrictId,
     required String status,
@@ -125,34 +124,33 @@ class MissingPersonsRepository {
     String? description,
     List<XFile>? photos,
   }) async {
-    // Build the form fields
+    // Build the form fields (dot-notation — backend's TransformFormDataInterceptor expects this)
     final fields = <String, String>{
-      'person[fullName]': fullName,
-      'person[gender]': gender,
-      if (age != null) 'person[age]': age.toString(),
-      if (heightCm != null) 'person[heightCm]': heightCm.toString(),
-      if (weightKg != null) 'person[weightKg]': weightKg.toString(),
-      if (hairColor != null) 'person[hairColor]': hairColor,
-      if (eyeColor != null) 'person[eyeColor]': eyeColor,
+      'person.fullName': fullName,
+      'person.gender': gender,
+      if (age != null) 'person.age': age.toString(),
+      if (heightCm != null) 'person.heightCm': heightCm.toString(),
+      if (weightKg != null) 'person.weightKg': weightKg.toString(),
+      if (hairColor != null) 'person.hairColor': hairColor,
+      if (eyeColor != null) 'person.eyeColor': eyeColor,
       if (distinguishingFeatures != null)
-        'person[distinguishingFeatures]': distinguishingFeatures,
+        'person.distinguishingFeatures': distinguishingFeatures,
       if (medicalConditions != null)
-        'person[medicalConditions]': medicalConditions,
+        'person.medicalConditions': medicalConditions,
       if (clothingDescription != null)
-        'person[clothingDescription]': clothingDescription,
+        'person.clothingDescription': clothingDescription,
       if (governorateId != null)
-        'lastSeenLocation[governorateId]': governorateId,
-      if (districtId != null) 'lastSeenLocation[districtId]': districtId,
-      if (addressLine != null) 'lastSeenLocation[addressLine]': addressLine,
+        'lastSeenLocation.governorateId': governorateId,
+      if (districtId != null) 'lastSeenLocation.districtId': districtId,
+      if (addressLine != null) 'lastSeenLocation.addressLine': addressLine,
       if (latitude != null)
-        'lastSeenLocation[latitude]': latitude.toString(),
+        'lastSeenLocation.latitude': latitude.toString(),
       if (longitude != null)
-        'lastSeenLocation[longitude]': longitude.toString(),
+        'lastSeenLocation.longitude': longitude.toString(),
       'reporterName': reporterName,
       'reporterPhone': reporterPhone,
       if (reporterRelationship != null)
         'reporterRelationship': reporterRelationship,
-      if (reporterEmail != null) 'reporterEmail': reporterEmail,
       if (residenceGovernorateId != null)
         'residenceGovernorateId': residenceGovernorateId,
       if (residenceDistrictId != null)
@@ -181,12 +179,21 @@ class MissingPersonsRepository {
     );
   }
 
-  /// Request marking a person as found
+  /// Request marking a person as found (for PATROL/VOLUNTEER — needs approval)
   Future<ApiResponse> requestFound(int reportId,
       {Map<String, dynamic>? data}) async {
     return await _api.post(
         '${ApiConstants.missingPersonReports}/$reportId/request-found',
         body: data);
+  }
+
+  /// Directly update status (for ADMIN/CENTER — no approval needed)
+  Future<ApiResponse> updateStatus(int reportId,
+      {required String status, Map<String, dynamic>? extra}) async {
+    final body = <String, dynamic>{'status': status, ...?extra};
+    return await _api.put(
+        '${ApiConstants.missingPersonReports}/$reportId/status',
+        body: body);
   }
 }
 

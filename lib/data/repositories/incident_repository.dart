@@ -172,6 +172,24 @@ class ReportRepository {
     final response = await _api.post('${ApiConstants.reports}/read-all');
     return response.isSuccess;
   }
+
+  /// Accept a report (CENTER/ADMIN only) — moves status to in_progress.
+  Future<bool> acceptReport(int reportId) async {
+    final response = await _api.post('${ApiConstants.reports}/$reportId/accept');
+    return response.isSuccess;
+  }
+
+  /// Reject a report (CENTER/ADMIN only) — moves status to rejected.
+  Future<bool> rejectReport(int reportId) async {
+    final response = await _api.post('${ApiConstants.reports}/$reportId/reject');
+    return response.isSuccess;
+  }
+
+  /// Mark report as completed (CENTER/ADMIN only) — moves status to resolved.
+  Future<bool> completeReport(int reportId) async {
+    final response = await _api.post('${ApiConstants.reports}/$reportId/complete');
+    return response.isSuccess;
+  }
 }
 
 /// Paginated results wrapper

@@ -34,15 +34,37 @@ class NotificationItem extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
+            if ((entry.type == 'missingPerson' || entry.type == 'centerReport') &&
+                entry.thumbnailUrl != null &&
+                entry.thumbnailUrl!.isNotEmpty)
+              ClipRRect(
                 borderRadius: BorderRadius.circular(12),
+                child: Image.network(
+                  entry.thumbnailUrl!,
+                  width: 48,
+                  height: 48,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, _, _) => Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(_entryIcon(entry), size: 20, color: color),
+                  ),
+                ),
+              )
+            else
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(_entryIcon(entry), size: 20, color: color),
               ),
-              child: Icon(_entryIcon(entry), size: 20, color: color),
-            ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -94,14 +116,8 @@ class NotificationItem extends StatelessWidget {
     switch (entry.type) {
       case 'alert':
         switch (entry.alertType) {
-          case 'sighting':
-            return PhosphorIcons.eye();
-          case 'tip':
-            return PhosphorIcons.lightbulb();
           case 'found':
             return PhosphorIcons.checkCircle();
-          case 'information':
-            return PhosphorIcons.info();
           default:
             return PhosphorIcons.bell();
         }
@@ -109,6 +125,10 @@ class NotificationItem extends StatelessWidget {
         return PhosphorIcons.chatCircle();
       case 'report':
         return PhosphorIcons.fileText();
+      case 'missingPerson':
+        return PhosphorIcons.userCircle();
+      case 'centerReport':
+        return PhosphorIcons.warningOctagon();
       default:
         return PhosphorIcons.bell();
     }
@@ -118,10 +138,6 @@ class NotificationItem extends StatelessWidget {
     switch (entry.type) {
       case 'alert':
         switch (entry.alertType) {
-          case 'sighting':
-            return AppColors.info;
-          case 'tip':
-            return AppColors.warning;
           case 'found':
             return AppColors.success;
           default:
@@ -131,6 +147,12 @@ class NotificationItem extends StatelessWidget {
         return AppColors.secondary;
       case 'report':
         return AppColors.accent;
+      case 'missingPerson':
+        return AppColors.error;
+      case 'centerReport':
+        return entry.centerReportType == 'emergency'
+            ? AppColors.error
+            : AppColors.accent;
       default:
         return AppColors.primary;
     }

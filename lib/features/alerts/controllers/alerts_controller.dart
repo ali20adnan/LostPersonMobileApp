@@ -5,7 +5,7 @@ import '../../../app/services/socket_service.dart';
 import '../../../data/models/alert_model.dart';
 import '../../../data/repositories/alert_repository.dart';
 
-/// Controller for the alerts (sightings) feature
+/// Controller for the alerts (found-only) feature
 class AlertsController extends GetxController {
   final AlertRepository _repo = AlertRepository();
 
@@ -14,16 +14,13 @@ class AlertsController extends GetxController {
   final unreadCount = 0.obs;
 
   // Filters
-  final selectedType = Rxn<String>(); // sighting | tip | found | information
+  final selectedType = Rxn<String>(); // found
   final selectedStatus = Rxn<String>(); // pending | reviewed | verified | rejected
 
   // Pagination
   int _currentPage = 1;
   bool _hasMore = true;
   int _totalItems = 0;
-
-  // Form state for creating alerts
-  final isSubmitting = false.obs;
 
   @override
   void onInit() {
@@ -115,37 +112,6 @@ class AlertsController extends GetxController {
     final success = await _repo.markAllAsRead();
     if (success) {
       unreadCount.value = 0;
-    }
-  }
-
-  /// Create a new alert
-  Future<bool> createAlert({
-    required int missingPersonReportId,
-    required String type,
-    required String reporterName,
-    required String reporterPhone,
-    required String description,
-  }) async {
-    isSubmitting.value = true;
-    try {
-      final response = await _repo.createAlert(
-        missingPersonReportId: missingPersonReportId,
-        type: type,
-        reporterName: reporterName,
-        reporterPhone: reporterPhone,
-        description: description,
-      );
-      if (response.isSuccess) {
-        // Refresh list
-        loadAlerts();
-        return true;
-      }
-      return false;
-    } catch (e) {
-      debugPrint('AlertsController: Error creating alert - $e');
-      return false;
-    } finally {
-      isSubmitting.value = false;
     }
   }
 

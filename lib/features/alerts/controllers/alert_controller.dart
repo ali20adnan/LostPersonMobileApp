@@ -5,7 +5,7 @@ import '../../../data/repositories/alert_repository.dart';
 import '../../../data/models/alert_model.dart';
 import '../../../core/constants/incident_constants.dart';
 
-/// Controller for alerts (sighting / tip / found / information)
+/// Controller for alerts (found only)
 class AlertController extends GetxController {
   final AlertRepository _alertRepository = AlertRepository();
 

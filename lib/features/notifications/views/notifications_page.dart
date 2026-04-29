@@ -111,6 +111,8 @@ class NotificationsPage extends GetView<NotificationsPageController> {
   Widget _buildFilterChips(ThemeData theme, bool isDark) {
     final filters = [
       {'key': 'all', 'label': 'الكل', 'icon': PhosphorIcons.squaresFour()},
+      {'key': 'missingPersons', 'label': 'مفقودون جدد', 'icon': PhosphorIcons.userCircle()},
+      {'key': 'centerReports', 'label': 'بلاغات المركز', 'icon': PhosphorIcons.warningOctagon()},
       {'key': 'alerts', 'label': 'التنبيهات', 'icon': PhosphorIcons.eye()},
       {'key': 'messages', 'label': 'الرسائل', 'icon': PhosphorIcons.chatCircle()},
       {'key': 'reports', 'label': 'البلاغات', 'icon': PhosphorIcons.fileText()},
@@ -214,6 +216,10 @@ class NotificationsPage extends GetView<NotificationsPageController> {
                   onTap: () {
                     if (entry.type == 'alert' && entry.id != null) {
                       controller.markAlertAsRead(entry.id!);
+                    } else if (entry.type == 'missingPerson') {
+                      controller.handleMissingPersonTap(entry);
+                    } else if (entry.type == 'centerReport') {
+                      controller.handleCenterReportTap(entry);
                     }
                   },
                 ),
