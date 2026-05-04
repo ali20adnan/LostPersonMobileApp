@@ -298,26 +298,6 @@ class ProfilePage extends GetView<ProfileController> {
             label: 'اسم المستخدم',
             value: user.userName,
           ),
-          Divider(
-            height: 24,
-            color: isDark ? AppColors.dividerDark : AppColors.divider,
-          ),
-          _buildInfoRow(
-            isDark,
-            icon: PhosphorIcons.identificationCard(),
-            label: 'الاسم الكامل',
-            value: user.fullName,
-          ),
-          Divider(
-            height: 24,
-            color: isDark ? AppColors.dividerDark : AppColors.divider,
-          ),
-          _buildInfoRow(
-            isDark,
-            icon: PhosphorIcons.shieldCheck(),
-            label: 'الصلاحية',
-            value: user.roleDisplayAr,
-          ),
           if (user.accountExpiresAt != null) ...[
             Divider(
               height: 24,

@@ -10,6 +10,7 @@ import '../../../app/themes/app_colors.dart';
 import '../controllers/conversations_controller.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../data/models/chat_models.dart';
+import '../../../data/models/user_model.dart';
 import '../../notifications/controllers/notifications_controller.dart';
 
 /// Floating messaging button at top-right + Instagram-style slide-in panel
@@ -386,7 +387,7 @@ class _PanelHeader extends StatelessWidget {
                       ),
                       title: Text(user.fullName),
                       subtitle: user.role != null
-                          ? Text(user.role!,
+                          ? Text(roleDisplayArOf(user.role),
                               style: theme.textTheme.bodySmall)
                           : null,
                       onTap: () async {

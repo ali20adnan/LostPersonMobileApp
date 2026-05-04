@@ -61,6 +61,10 @@ class TtsService {
       await _tts.setSpeechRate(_rate);
       await _tts.setPitch(_pitch);
 
+      // Make speak() await actual completion (not just start) so callers can
+      // coordinate mic pause/resume around the playback.
+      await _tts.awaitSpeakCompletion(true);
+
       // Platform-specific settings
       if (Platform.isAndroid) {
         await _tts.setSharedInstance(true);

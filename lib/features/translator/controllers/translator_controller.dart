@@ -29,6 +29,7 @@ class TranslatorController extends GetxController {
   final toolMode = 0.obs; // 0 = voice translator, 1 = OCR reader
   final isRecording = false.obs;
   final isInitializing = false.obs;
+  final isSpeaking = false.obs;
   final currentTranscription = ''.obs;
   final currentTranslation = ''.obs;
   final connectionStatus = ConnectionStatus.disconnected.obs;
@@ -44,6 +45,7 @@ class TranslatorController extends GetxController {
   // Stream subscriptions
   StreamSubscription? _transcriptionSubscription;
   StreamSubscription? _translationSubscription;
+  StreamSubscription? _finalizedTranslationSubscription;
   StreamSubscription? _connectionSubscription;
   StreamSubscription? _amplitudeSubscription;
 
@@ -143,12 +145,12 @@ class TranslatorController extends GetxController {
       }
       debugPrint('TranslatorController: ✓ Microphone permission granted');
 
-      // Clear previous transcription/translation and messages
+      // Clear previous transcription/translation buffers but preserve message
+      // history so the conversation persists across recording sessions.
       currentTranscription.value = '';
       currentTranslation.value = '';
-      messages.clear();
       _currentMessage = null;
-      debugPrint('TranslatorController: ✓ Cleared previous transcription/translation/messages');
+      debugPrint('TranslatorController: ✓ Cleared transcription/translation buffers (preserving message history)');
 
       // Start translation session
       debugPrint('TranslatorController: Starting translation session...');
@@ -225,6 +227,23 @@ class TranslatorController extends GetxController {
       );
       debugPrint('TranslatorController: ✓ Subscribed to translation stream');
 
+      _finalizedTranslationSubscription = _translationRepository
+          .finalizedTranslationStream
+          .listen((translation) {
+        debugPrint('TranslatorController: ✅ Sentence finalized — locking bubble and starting a new one');
+        if (_currentMessage != null && messages.isNotEmpty) {
+          messages[messages.length - 1] = _currentMessage!.copyWith(
+            originalText: translation.originalText,
+            translatedText: translation.translatedText,
+            isFinal: true,
+          );
+        }
+        _currentMessage = null;
+        currentTranscription.value = '';
+        currentTranslation.value = '';
+      });
+      debugPrint('TranslatorController: ✓ Subscribed to finalized translation stream');
+
       _connectionSubscription = _translationRepository.connectionStatusStream?.listen(
         (status) {
           debugPrint('TranslatorController: 🔌 Connection status changed: $status');
@@ -296,6 +315,7 @@ class TranslatorController extends GetxController {
       // Cancel subscriptions
       await _transcriptionSubscription?.cancel();
       await _translationSubscription?.cancel();
+      await _finalizedTranslationSubscription?.cancel();
       await _connectionSubscription?.cancel();
       await _amplitudeSubscription?.cancel();
 
@@ -364,6 +384,9 @@ class TranslatorController extends GetxController {
   }
 
   /// Speak current translation
+  ///
+  /// Pauses mic forwarding while TTS plays so the speaker output isn't
+  /// re-captured as a new utterance and re-translated in a feedback loop.
   Future<void> speakTranslation() async {
     if (currentTranslation.value.isEmpty) {
       Get.snackbar(
@@ -374,10 +397,27 @@ class TranslatorController extends GetxController {
       return;
     }
 
-    await _translationRepository.speakTranslation(
-      currentTranslation.value,
-      targetLanguage.value.code,
-    );
+    if (isSpeaking.value) return;
+
+    final wasRecording = isRecording.value;
+    isSpeaking.value = true;
+
+    try {
+      if (wasRecording) {
+        await _translationRepository.pauseSession();
+      }
+
+      await _translationRepository.speakTranslation(
+        currentTranslation.value,
+        targetLanguage.value.code,
+      );
+    } finally {
+      isSpeaking.value = false;
+
+      if (wasRecording && isRecording.value) {
+        await _translationRepository.resumeSession();
+      }
+    }
   }
 
   /// Update messages list with current message
@@ -399,22 +439,6 @@ class TranslatorController extends GetxController {
     if (!originalEmpty && !translationEmpty) {
       // Both have content, this is a valid message
       // We'll create a new message on the next token if there's a pause
-    }
-  }
-
-  /// Finalize current message and prepare for next
-  void _finalizeCurrentMessage() {
-    if (_currentMessage != null &&
-        _currentMessage!.originalText.trim().isNotEmpty &&
-        _currentMessage!.translatedText.trim().isNotEmpty) {
-      final finalMessage = _currentMessage!.copyWith(isFinal: true);
-
-      if (messages.isNotEmpty) {
-        messages[messages.length - 1] = finalMessage;
-      }
-
-      _currentMessage = null;
-      debugPrint('TranslatorController: ✓ Finalized message');
     }
   }
 
@@ -479,6 +503,7 @@ class TranslatorController extends GetxController {
     // Cancel subscriptions
     _transcriptionSubscription?.cancel();
     _translationSubscription?.cancel();
+    _finalizedTranslationSubscription?.cancel();
     _connectionSubscription?.cancel();
     _amplitudeSubscription?.cancel();
     _sessionTimer?.cancel();

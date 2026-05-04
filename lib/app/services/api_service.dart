@@ -215,6 +215,18 @@ class ApiService extends GetxService {
         'ApiService: ${response.request?.method} ${response.request?.url} → ${response.statusCode}');
 
     if (response.statusCode == 401) {
+      // A 401 from the login endpoint itself means wrong credentials; surface
+      // a clear message and let the LoginPage stay mounted (redirecting to
+      // /login while already on it would dispose the AuthController and its
+      // TextEditingControllers, replacing the inputs with the global
+      // ErrorWidget.builder fallback).
+      final isLoginRequest =
+          response.request?.url.path.endsWith('/auth/login') ?? false;
+      if (isLoginRequest) {
+        return ApiResponse.error(
+            'اسم المستخدم أو كلمة المرور غير صحيحة',
+            statusCode: 401);
+      }
       // Token expired or invalid → redirect to login
       deleteToken();
       Get.offAllNamed('/login');

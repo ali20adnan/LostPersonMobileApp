@@ -13,7 +13,7 @@ class IncidentDetailController extends GetxController {
   final isLoading = true.obs;
   final isActing = false.obs;
 
-  int get reportId => Get.arguments['reportId'] as int;
+  late final int reportId;
 
   bool get canManage {
     if (!Get.isRegistered<AuthService>()) return false;
@@ -24,6 +24,10 @@ class IncidentDetailController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    reportId = (Get.arguments as Map<String, dynamic>)['reportId'] as int;
+    debugPrint('IncidentDetailController: onInit for report #$reportId');
+    report.value = null;
+    isLoading.value = true;
     loadReport();
     _setupSocketListeners();
   }
@@ -32,6 +36,8 @@ class IncidentDetailController extends GetxController {
     try {
       isLoading.value = true;
       final result = await _repository.getReport(reportId);
+      debugPrint(
+          'IncidentDetailController: Fetched report #$reportId → received id=${result?.id}, title="${result?.title}"');
       report.value = result;
     } catch (e) {
       debugPrint('IncidentDetailController: Error - $e');

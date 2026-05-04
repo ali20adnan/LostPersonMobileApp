@@ -44,6 +44,8 @@ class TranslationRepository {
   // Stream controllers for UI updates
   final _transcriptionController = StreamController<String>.broadcast();
   final _translationController = StreamController<String>.broadcast();
+  final _finalizedTranslationController =
+      StreamController<Translation>.broadcast();
 
   TranslationRepository({
     required SonioxService sonioxService,
@@ -60,6 +62,8 @@ class TranslationRepository {
   // Getters
   Stream<String> get transcriptionStream => _transcriptionController.stream;
   Stream<String> get translationStream => _translationController.stream;
+  Stream<Translation> get finalizedTranslationStream =>
+      _finalizedTranslationController.stream;
   List<Translation> get currentTranslations => _currentTranslations;
   String? get currentConversationId => _currentConversationId;
 
@@ -267,6 +271,7 @@ class TranslationRepository {
           );
 
           _currentTranslations.add(translation);
+          _finalizedTranslationController.add(translation);
           debugPrint('  ✓ Translation saved (${_currentTranslations.length} total)');
 
           // Clear token lists for next sentence
@@ -391,6 +396,7 @@ class TranslationRepository {
     _sonioxSubscription?.cancel();
     _transcriptionController.close();
     _translationController.close();
+    _finalizedTranslationController.close();
 
     // Cancel debounce timers
     _transcriptionDebounceTimer?.cancel();

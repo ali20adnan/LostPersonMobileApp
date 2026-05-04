@@ -11,6 +11,7 @@ import '../../../app/themes/app_colors.dart';
 import '../controllers/conversations_controller.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../data/models/chat_models.dart';
+import '../../../data/models/user_model.dart';
 
 class ConversationsPage extends GetView<ConversationsController> {
   const ConversationsPage({super.key});
@@ -340,7 +341,7 @@ class ConversationsPage extends GetView<ConversationsController> {
                             fontWeight: FontWeight.w600,
                           )),
                       subtitle: user.role != null
-                          ? Text(user.role!,
+                          ? Text(roleDisplayArOf(user.role),
                               style: TextStyle(
                                 fontSize: 12,
                                 color: AppColors.textSecondary,

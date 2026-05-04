@@ -5,6 +5,9 @@ import '../features/incident_reporting/controllers/incident_detail_controller.da
 class IncidentDetailBinding extends Bindings {
   @override
   void dependencies() {
-    Get.lazyPut(() => IncidentDetailController());
+    if (Get.isRegistered<IncidentDetailController>()) {
+      Get.delete<IncidentDetailController>(force: true);
+    }
+    Get.put(IncidentDetailController());
   }
 }

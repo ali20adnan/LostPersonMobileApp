@@ -46,20 +46,26 @@ class User {
         'avatarUrl': avatarUrl,
       };
 
-  String get roleDisplayAr {
-    switch (role) {
-      case 'ADMIN':
-        return 'مدير النظام';
-      case 'CENTER':
-        return 'موظف مركز';
-      case 'OPS_CENTER':
-        return 'مركز العمليات';
-      case 'PATROL':
-        return 'دورية';
-      case 'VOLUNTEER':
-        return 'متطوع';
-      default:
-        return role;
-    }
+  String get roleDisplayAr => roleDisplayArOf(role);
+}
+
+/// Maps a backend role string to its Arabic display label.
+/// Case-insensitive and null-safe; returns the original input as a fallback.
+/// Source of truth: WEB/LostPersonsWeb/src/types/user.ts → ROLE_LABELS.
+String roleDisplayArOf(String? role) {
+  if (role == null || role.isEmpty) return '';
+  switch (role.trim().toUpperCase()) {
+    case 'ADMIN':
+      return 'مدير النظام';
+    case 'CENTER':
+      return 'مركز المفقودين';
+    case 'OPS_CENTER':
+      return 'المركز';
+    case 'PATROL':
+      return 'فرق الجوالة';
+    case 'VOLUNTEER':
+      return 'متطوع';
+    default:
+      return role;
   }
 }

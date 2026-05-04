@@ -11,6 +11,7 @@ import '../../../app/themes/app_colors.dart';
 import '../../../core/constants/incident_constants.dart';
 import '../../../core/utils/maps_launcher.dart';
 import '../../../data/models/incident_model.dart';
+import '../../../data/models/user_model.dart';
 import '../controllers/incident_detail_controller.dart';
 
 class IncidentDetailPage extends GetView<IncidentDetailController> {
@@ -74,14 +75,18 @@ class IncidentDetailPage extends GetView<IncidentDetailController> {
         if (report == null || !controller.canManage) {
           return const SizedBox.shrink();
         }
-        return _buildActionBar(report, isDark);
+        final status = ReportStatus.fromApiString(report.status);
+        if (status != ReportStatus.pending &&
+            status != ReportStatus.inProgress) {
+          return const SizedBox.shrink();
+        }
+        return _buildActionBar(report, status, isDark);
       }),
     );
   }
 
-  Widget _buildActionBar(Report report, bool isDark) {
-    final status = ReportStatus.fromApiString(report.status);
-    Widget? content;
+  Widget _buildActionBar(Report report, ReportStatus status, bool isDark) {
+    final Widget content;
     if (status == ReportStatus.pending) {
       content = Row(
         children: [
@@ -114,7 +119,7 @@ class IncidentDetailPage extends GetView<IncidentDetailController> {
           ),
         ],
       );
-    } else if (status == ReportStatus.inProgress) {
+    } else {
       content = SizedBox(
         width: double.infinity,
         child: ElevatedButton.icon(
@@ -125,18 +130,6 @@ class IncidentDetailPage extends GetView<IncidentDetailController> {
             backgroundColor: Colors.green,
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 14),
-          ),
-        ),
-      );
-    } else {
-      content = Center(
-        child: Text(
-          'لا توجد إجراءات متاحة لهذه الحالة (${status.displayNameAr})',
-          style: TextStyle(
-            color: isDark
-                ? AppColors.textOnDarkSecondary
-                : AppColors.textSecondary,
-            fontSize: 13,
           ),
         ),
       );
@@ -657,7 +650,7 @@ class IncidentDetailPage extends GetView<IncidentDetailController> {
               borderRadius: BorderRadius.circular(6),
             ),
             child: Text(
-              userRole,
+              roleDisplayArOf(userRole),
               style: const TextStyle(
                 color: AppColors.primary,
                 fontSize: 11,
