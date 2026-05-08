@@ -54,14 +54,25 @@ class ChatController extends GetxController {
     try {
       conversation = await _repo.getConversation(conversationId);
 
-      // Capture unreadCount BEFORE assigning messages so the divider check in
-      // chat_page.dart sees the correct value on the FIRST Obx rebuild
-      // (assigning `messages` triggers Obx synchronously; setting a plain int
-      // afterwards does NOT retrigger it).
-      initialUnreadCount = conversation?.unreadCount ?? 0;
-
       // Load message history
       final history = await _repo.getMessages(conversationId);
+
+      // Compute the count of unread messages from the participant's
+      // `myLastReadAt` timestamp — same approach the web client uses
+      // (ChatWindow.tsx). Own messages are excluded so the divider only
+      // separates messages the OTHER side sent. Must be set BEFORE
+      // `messages.assignAll` because plain `int` writes after the Obx
+      // rebuild won't retrigger it.
+      final lastReadAt = conversation?.myLastReadAt;
+      if (lastReadAt != null) {
+        initialUnreadCount = history
+            .where((m) =>
+                m.senderId != currentUserId && m.sentAt.isAfter(lastReadAt))
+            .length;
+      } else {
+        initialUnreadCount = 0;
+      }
+
       messages.assignAll(history);
       _scrollToInitialPosition();
 

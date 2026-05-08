@@ -10,6 +10,11 @@ class ChatConversation {
   final ChatMessage? lastMessage;
   final int unreadCount;
 
+  /// Timestamp of when the current user last read this conversation. Used to
+  /// compute the read/unread boundary so the chat page can render the
+  /// "new messages" divider before the first message that arrived afterwards.
+  final DateTime? myLastReadAt;
+
   const ChatConversation({
     required this.id,
     this.name,
@@ -20,6 +25,7 @@ class ChatConversation {
     this.participants = const [],
     this.lastMessage,
     this.unreadCount = 0,
+    this.myLastReadAt,
   });
 
   factory ChatConversation.fromJson(Map<String, dynamic> json) {
@@ -40,6 +46,9 @@ class ChatConversation {
               json['lastMessage'] as Map<String, dynamic>)
           : null,
       unreadCount: json['unreadCount'] as int? ?? 0,
+      myLastReadAt: json['myLastReadAt'] is String
+          ? DateTime.tryParse(json['myLastReadAt'] as String)
+          : null,
     );
   }
 
@@ -53,6 +62,7 @@ class ChatConversation {
     List<ChatParticipant>? participants,
     ChatMessage? lastMessage,
     int? unreadCount,
+    DateTime? myLastReadAt,
   }) {
     return ChatConversation(
       id: id ?? this.id,
@@ -64,6 +74,7 @@ class ChatConversation {
       participants: participants ?? this.participants,
       lastMessage: lastMessage ?? this.lastMessage,
       unreadCount: unreadCount ?? this.unreadCount,
+      myLastReadAt: myLastReadAt ?? this.myLastReadAt,
     );
   }
 
