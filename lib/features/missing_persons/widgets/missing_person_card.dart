@@ -223,7 +223,10 @@ class MissingPersonCard extends StatelessWidget {
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(PhosphorIcons.checkCircle(), size: 16, color: Colors.white),
+                                    const Directionality(
+                                      textDirection: TextDirection.ltr,
+                                      child: Icon(Icons.check_circle, size: 16, color: Colors.white),
+                                    ),
                                     SizedBox(width: 6),
                                     Text(
                                       'تم العثور',

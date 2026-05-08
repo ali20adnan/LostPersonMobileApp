@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:gap/gap.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../../../app/themes/app_colors.dart';
 import '../controllers/notifications_page_controller.dart';
 
-/// Single notification item in the unified timeline
+/// Single notification tile — styled to match the conversations screen.
 class NotificationItem extends StatelessWidget {
   final NotificationEntry entry;
   final VoidCallback? onTap;
@@ -16,97 +17,150 @@ class NotificationItem extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final color = _entryColor(entry);
+    final hasUnread = !entry.isRead;
+    final hasThumb =
+        entry.thumbnailUrl != null && entry.thumbnailUrl!.isNotEmpty;
 
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.cardDark : AppColors.card,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: isDark ? AppColors.cardBorderDark : AppColors.cardBorder,
-          ),
-          boxShadow: isDark ? null : AppColors.cardShadow,
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.cardDark : AppColors.card,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: hasUnread
+              ? AppColors.primary.withValues(alpha: 0.3)
+              : (isDark ? AppColors.cardBorderDark : AppColors.cardBorder),
         ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if ((entry.type == 'missingPerson' || entry.type == 'centerReport') &&
-                entry.thumbnailUrl != null &&
-                entry.thumbnailUrl!.isNotEmpty)
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Image.network(
-                  entry.thumbnailUrl!,
-                  width: 48,
-                  height: 48,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, _, _) => Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(_entryIcon(entry), size: 20, color: color),
-                  ),
+        boxShadow: hasUnread
+            ? [
+                BoxShadow(
+                  color: AppColors.primary.withValues(alpha: 0.08),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
                 ),
-              )
-            else
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(_entryIcon(entry), size: 20, color: color),
-              ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: color.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          entry.title,
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: color,
+              ]
+            : AppColors.cardShadow,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              children: [
+                // Avatar / thumbnail (radius 26 — matches conversations)
+                Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: hasThumb
+                        ? null
+                        : LinearGradient(
+                            colors: [color, color.withValues(alpha: 0.7)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
                           ),
-                        ),
-                      ),
-                      const Spacer(),
-                      Text(
-                        _formatTime(entry.createdAt),
-                        style: TextStyle(fontSize: 11, color: isDark ? AppColors.textSecondaryDark : AppColors.textLight),
+                    boxShadow: [
+                      BoxShadow(
+                        color: color.withValues(alpha: 0.2),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    entry.subtitle,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: isDark ? AppColors.textOnDarkSecondary : AppColors.textSecondary,
-                    ),
+                  child: CircleAvatar(
+                    radius: 26,
+                    backgroundColor: Colors.transparent,
+                    backgroundImage:
+                        hasThumb ? NetworkImage(entry.thumbnailUrl!) : null,
+                    onBackgroundImageError: hasThumb ? (_, _) {} : null,
+                    child: hasThumb
+                        ? null
+                        : Icon(_entryIcon(entry),
+                            color: Colors.white, size: 22),
                   ),
-                ],
-              ),
+                ),
+                const Gap(14),
+
+                // Content
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        entry.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight:
+                              hasUnread ? FontWeight.bold : FontWeight.w600,
+                          color: isDark
+                              ? AppColors.textOnDark
+                              : AppColors.textPrimary,
+                        ),
+                      ),
+                      const Gap(4),
+                      Text(
+                        entry.subtitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: hasUnread
+                              ? FontWeight.w600
+                              : FontWeight.normal,
+                          color: hasUnread
+                              ? (isDark
+                                  ? AppColors.textOnDark
+                                  : AppColors.textPrimary)
+                              : AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Time + unread indicator
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      _formatTime(entry.createdAt),
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: hasUnread
+                            ? AppColors.primary
+                            : AppColors.textLight,
+                        fontWeight:
+                            hasUnread ? FontWeight.w600 : FontWeight.normal,
+                      ),
+                    ),
+                    if (hasUnread) ...[
+                      const Gap(6),
+                      Container(
+                        width: 12,
+                        height: 12,
+                        decoration: BoxDecoration(
+                          gradient: AppColors.heroGradient,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primary.withValues(alpha: 0.3),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -161,9 +215,9 @@ class NotificationItem extends StatelessWidget {
   String _formatTime(DateTime dt) {
     final diff = DateTime.now().difference(dt);
     if (diff.inMinutes < 1) return 'الآن';
-    if (diff.inHours < 1) return 'منذ ${diff.inMinutes} د';
-    if (diff.inDays < 1) return 'منذ ${diff.inHours} س';
-    if (diff.inDays < 7) return 'منذ ${diff.inDays} ي';
+    if (diff.inHours < 1) return '${diff.inMinutes} د';
+    if (diff.inDays < 1) return '${diff.inHours} س';
+    if (diff.inDays < 7) return '${diff.inDays} ي';
     return '${dt.day}/${dt.month}';
   }
 }

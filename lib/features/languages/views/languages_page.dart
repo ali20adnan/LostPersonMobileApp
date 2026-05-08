@@ -1,20 +1,75 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:gap/gap.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
+import '../../../app/services/storage_service.dart';
 import '../../../app/themes/app_colors.dart';
-import '../controllers/languages_controller.dart';
-import '../widgets/language_card.dart';
+import '../../../core/constants/language_constants.dart';
+import '../../../data/models/language_model.dart';
 
-class LanguagesPage extends GetView<LanguagesController> {
-  const LanguagesPage({super.key});
+/// Google-Translate-style language picker.
+/// - Tapping a language saves it as source/target (per [isSource]),
+///   adds it to recents, and pops back to the caller.
+/// - No auto-detect (the app supports only 5 languages).
+class LanguagesPage extends StatefulWidget {
+  final bool isSource;
+
+  const LanguagesPage({super.key, required this.isSource});
+
+  @override
+  State<LanguagesPage> createState() => _LanguagesPageState();
+}
+
+class _LanguagesPageState extends State<LanguagesPage> {
+  final StorageService _storage = Get.find<StorageService>();
+
+  List<Language> _recent = [];
+  String _currentSourceCode = 'ar';
+  String _currentTargetCode = 'en';
+  bool _ready = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final recentCodes = await _storage.getRecentLanguages();
+    final source = await _storage.getSourceLanguage();
+    final target = await _storage.getTargetLanguage();
+
+    final recentLanguages = recentCodes
+        .map(LanguageConstants.getLanguageByCode)
+        .whereType<Language>()
+        .toList();
+
+    setState(() {
+      _recent = recentLanguages;
+      _currentSourceCode = source;
+      _currentTargetCode = target;
+      _ready = true;
+    });
+  }
+
+  Future<void> _select(Language language) async {
+    if (widget.isSource) {
+      await _storage.saveSourceLanguage(language.code);
+    } else {
+      await _storage.saveTargetLanguage(language.code);
+    }
+    await _storage.addRecentLanguage(language.code);
+    if (mounted) Get.back();
+  }
+
+  String get _currentSelectedCode =>
+      widget.isSource ? _currentSourceCode : _currentTargetCode;
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final title = widget.isSource ? 'ترجمة من' : 'ترجمة إلى';
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -22,218 +77,114 @@ class LanguagesPage extends GetView<LanguagesController> {
         backgroundColor:
             isDark ? AppColors.backgroundDark : AppColors.background,
         appBar: AppBar(
-          title: const Text(
-            'اختيار اللغة',
-            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-          ),
-          centerTitle: true,
+          backgroundColor: Colors.transparent,
           elevation: 0,
-          flexibleSpace: Container(
-            decoration: const BoxDecoration(color: AppColors.primary),
+          iconTheme: IconThemeData(
+            color: isDark ? AppColors.textOnDark : AppColors.textPrimary,
           ),
-          iconTheme: const IconThemeData(color: Colors.white),
           leading: IconButton(
             icon: Icon(PhosphorIcons.arrowRight()),
             onPressed: () => Get.back(),
           ),
         ),
-        body: Column(
+        body: SafeArea(
+          child: !_ready
+              ? const Center(child: CircularProgressIndicator())
+              : ListView(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w600,
+                        color: isDark
+                            ? AppColors.textOnDark
+                            : AppColors.textPrimary,
+                      ),
+                    ),
+                    const Gap(28),
+                    if (_recent.isNotEmpty) ...[
+                      _buildSectionHeader('اللغات المستخدمة مؤخرًا', isDark),
+                      const Gap(8),
+                      ..._recent.map(
+                        (lang) => _buildLanguageTile(
+                          lang,
+                          isDark: isDark,
+                          isSelected: lang.code == _currentSelectedCode,
+                        ),
+                      ),
+                      const Gap(24),
+                    ],
+                    _buildSectionHeader('جميع اللغات', isDark),
+                    const Gap(8),
+                    ...LanguageConstants.supportedLanguages.map(
+                      (lang) => _buildLanguageTile(
+                        lang,
+                        isDark: isDark,
+                        isSelected: lang.code == _currentSelectedCode,
+                      ),
+                    ),
+                    const Gap(24),
+                  ],
+                ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String label, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 4, bottom: 4),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          color: AppColors.accent,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLanguageTile(
+    Language language, {
+    required bool isDark,
+    required bool isSelected,
+  }) {
+    return InkWell(
+      onTap: () => _select(language),
+      borderRadius: BorderRadius.circular(16),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
+        child: Row(
           children: [
+            SizedBox(
+              width: 28,
+              child: isSelected
+                  ? Icon(
+                      PhosphorIcons.check(PhosphorIconsStyle.bold),
+                      size: 20,
+                      color: AppColors.accent,
+                    )
+                  : const SizedBox.shrink(),
+            ),
+            const Gap(8),
             Expanded(
-              child: ListView(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                children: [
-                  _buildSectionHeader(
-                    isDark,
-                    'اللغة المصدر',
-                    'Source Language',
-                    PhosphorIcons.microphone(),
-                  ).animate().fadeIn(duration: 300.ms).slideX(begin: 0.05),
-                  const Gap(8),
-                  Obx(() => _buildLanguageList(isDark, isSource: true)),
-                  const Gap(20),
-                  _buildSwapButton(isDark)
-                      .animate()
-                      .fadeIn(delay: 200.ms, duration: 400.ms)
-                      .scale(begin: const Offset(0.95, 0.95)),
-                  const Gap(20),
-                  _buildSectionHeader(
-                    isDark,
-                    'اللغة الهدف',
-                    'Target Language',
-                    PhosphorIcons.translate(),
-                  ).animate().fadeIn(delay: 300.ms, duration: 300.ms).slideX(begin: 0.05),
-                  const Gap(8),
-                  Obx(() => _buildLanguageList(isDark, isSource: false)),
-                  const Gap(100),
-                ],
+              child: Text(
+                language.nameAr,
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  color: isSelected
+                      ? AppColors.accent
+                      : (isDark
+                          ? AppColors.textOnDark
+                          : AppColors.textPrimary),
+                ),
               ),
             ),
           ],
-        ),
-        floatingActionButton: _buildSaveButton(isDark),
-        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      ),
-    );
-  }
-
-  Widget _buildSectionHeader(
-    bool isDark,
-    String titleAr,
-    String titleEn,
-    IconData icon,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(9),
-            decoration: BoxDecoration(
-              gradient: AppColors.heroGradient,
-              borderRadius: BorderRadius.circular(11),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.25),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Icon(icon, color: Colors.white, size: 18),
-          ),
-          const Gap(10),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                titleAr,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: isDark ? AppColors.textOnDark : AppColors.textPrimary,
-                ),
-              ),
-              Text(
-                titleEn,
-                style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLanguageList(bool isDark, {required bool isSource}) {
-    final selectedLanguage = isSource
-        ? controller.selectedSourceLanguage.value
-        : controller.selectedTargetLanguage.value;
-
-    return Column(
-      children: controller.availableLanguages.map((language) {
-        final isSelected = language.code == selectedLanguage.code;
-
-        return LanguageCard(
-          language: language,
-          isSelected: isSelected,
-          onTap: () {
-            HapticFeedback.lightImpact();
-            if (isSource) {
-              controller.selectSourceLanguage(language);
-            } else {
-              controller.selectTargetLanguage(language);
-            }
-          },
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _buildSwapButton(bool isDark) {
-    return Center(
-      child: GestureDetector(
-        onTap: () {
-          HapticFeedback.lightImpact();
-          controller.swapLanguages();
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
-          decoration: BoxDecoration(
-            color: isDark ? AppColors.cardDark : AppColors.card,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: isDark ? AppColors.cardBorderDark : AppColors.cardBorder,
-            ),
-            boxShadow: AppColors.cardShadow,
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  gradient: AppColors.heroGradient,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(PhosphorIcons.arrowsLeftRight(),
-                    color: Colors.white, size: 18),
-              ),
-              const Gap(10),
-              Text(
-                'تبديل اللغات',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.primary,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSaveButton(bool isDark) {
-    return Container(
-      width: double.infinity,
-      height: 52,
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      decoration: BoxDecoration(
-        gradient: AppColors.heroGradient,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.35),
-            blurRadius: 14,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: () {
-            HapticFeedback.mediumImpact();
-            controller.saveAndGoBack();
-          },
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(PhosphorIcons.checkCircle(), color: Colors.white, size: 20),
-              Gap(10),
-              Text(
-                'حفظ التغييرات',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );

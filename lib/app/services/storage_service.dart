@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
@@ -320,6 +322,33 @@ class StorageService {
           defaultValue: defaultLanguage,
         ) ??
         defaultLanguage;
+  }
+
+  // ============ Recently Used Languages ============
+
+  static const String _kRecentLanguagesKey = 'recent_languages';
+
+  /// Read recently-used language codes (newest first)
+  Future<List<String>> getRecentLanguages() async {
+    final raw = _prefs?.getString(_kRecentLanguagesKey);
+    if (raw == null || raw.isEmpty) return [];
+    try {
+      final decoded = jsonDecode(raw);
+      return List<String>.from(decoded);
+    } catch (_) {
+      return [];
+    }
+  }
+
+  /// Push a language code to the front of the recent list (max 5).
+  Future<void> addRecentLanguage(String code) async {
+    final list = await getRecentLanguages();
+    list.remove(code);
+    list.insert(0, code);
+    while (list.length > 5) {
+      list.removeLast();
+    }
+    await _prefs?.setString(_kRecentLanguagesKey, jsonEncode(list));
   }
 
   // ============ TTS Settings ============

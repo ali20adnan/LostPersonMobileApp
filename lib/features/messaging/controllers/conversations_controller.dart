@@ -88,20 +88,56 @@ class ConversationsController extends GetxController {
       }
     });
 
-    // Messages read → update unread count
-    socket.on('messagesRead', 'conversations', (_) {
+    // Messages read → clear that conversation's unread badge + refresh total
+    socket.on('messagesRead', 'conversations', (data) {
+      if (data is Map<String, dynamic>) {
+        final convId = (data['conversationId'] ?? data['conversation_id']) as int?;
+        if (convId != null) {
+          markConversationRead(convId);
+        }
+      }
       _loadUnreadCount();
     });
   }
 
-  /// Update a conversation with a new message (move to top)
+  /// Clear the unread badge for a single conversation locally.
+  /// Called optimistically when the user opens a chat (so the badge
+  /// disappears immediately) and again when the server confirms via
+  /// the `messagesRead` socket event (covers multi-device sync).
+  void markConversationRead(int conversationId) {
+    final index = conversations.indexWhere((c) => c.id == conversationId);
+    if (index == -1) return;
+    final conv = conversations[index];
+    if (conv.unreadCount == 0) return;
+    final cleared = conv.unreadCount;
+    conversations[index] = conv.copyWith(unreadCount: 0);
+    final next = totalUnreadCount.value - cleared;
+    totalUnreadCount.value = next < 0 ? 0 : next;
+  }
+
+  /// Update a conversation with a new message (move to top + bump unread).
+  /// Updates the RxList in-place using the socket payload — no API roundtrip,
+  /// so the UI reacts in real-time. Mirrors the web messagesStore pattern: own
+  /// messages don't bump unread; if the user is already inside the chat, the
+  /// chat controller will subsequently call `markConversationRead` to clear.
   void _updateConversationWithMessage(ChatMessage message) {
     final index =
         conversations.indexWhere((c) => c.id == message.conversationId);
-    if (index != -1) {
-      // Reload to get updated lastMessage and unreadCount
-      loadConversations();
-    }
+    if (index == -1) return;
+
+    final conv = conversations[index];
+    final isOwn = message.senderId == currentUserId;
+    final newUnread = isOwn ? conv.unreadCount : conv.unreadCount + 1;
+
+    final updated = conv.copyWith(
+      unreadCount: newUnread,
+      lastMessage: message,
+      updatedAt: DateTime.now(),
+    );
+
+    // Move to top and replace; `removeAt`+`insert` triggers RxList rebuild.
+    conversations.removeAt(index);
+    conversations.insert(0, updated);
   }
 
   /// Search users to start a new conversation

@@ -48,6 +48,7 @@ class NotificationsPageController extends GetxController {
   final notifications = <NotificationEntry>[].obs;
   final isLoading = false.obs;
   final selectedFilter = 'all'.obs; // all | alerts | messages | reports | missingPersons
+  final searchQuery = ''.obs;
 
   Worker? _missingPersonWatcher;
 
@@ -164,16 +165,24 @@ class NotificationsPageController extends GetxController {
   }
 
   List<NotificationEntry> get filteredNotifications {
-    if (selectedFilter.value == 'all') return notifications;
-    if (selectedFilter.value == 'missingPersons') {
-      return notifications.where((n) => n.type == 'missingPerson').toList();
+    Iterable<NotificationEntry> result = notifications;
+    final filter = selectedFilter.value;
+    if (filter != 'all') {
+      if (filter == 'missingPersons') {
+        result = result.where((n) => n.type == 'missingPerson');
+      } else if (filter == 'centerReports') {
+        result = result.where((n) => n.type == 'centerReport');
+      } else {
+        final typeKey = filter.replaceAll('s', '');
+        result = result.where((n) => n.type == typeKey);
+      }
     }
-    if (selectedFilter.value == 'centerReports') {
-      return notifications.where((n) => n.type == 'centerReport').toList();
+    final query = searchQuery.value.trim();
+    if (query.isNotEmpty) {
+      result = result.where((n) =>
+          n.title.contains(query) || n.subtitle.contains(query));
     }
-    return notifications
-        .where((n) => n.type == selectedFilter.value.replaceAll('s', ''))
-        .toList();
+    return result.toList();
   }
 
   /// Mark alert as read

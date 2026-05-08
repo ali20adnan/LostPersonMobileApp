@@ -411,7 +411,10 @@ class MissingPersonDetailPage extends GetView<MissingPersonDetailController> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(PhosphorIcons.checkCircle(), size: 20, color: Colors.white),
+                      const Directionality(
+                        textDirection: TextDirection.ltr,
+                        child: Icon(Icons.check_circle, size: 20, color: Colors.white),
+                      ),
                       Gap(8),
                       Text(
                         'تم العثور عليه',

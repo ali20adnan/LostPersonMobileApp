@@ -5,8 +5,10 @@ import 'package:gap/gap.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 import '../../../app/themes/app_colors.dart';
+import '../../../core/constants/api_constants.dart';
 import '../controllers/chat_controller.dart';
 import '../../../data/models/chat_models.dart';
 
@@ -39,8 +41,13 @@ class ChatPage extends GetView<ChatController> {
                 return _buildEmptyState(isDark);
               }
 
-              return ListView.builder(
-                controller: controller.scrollController,
+              final showUnreadDivider = controller.initialUnreadCount > 0 &&
+                  controller.initialUnreadCount < msgs.length;
+              final unreadBoundary = controller.unreadBoundary;
+
+              return ScrollablePositionedList.builder(
+                itemScrollController: controller.itemScrollController,
+                itemPositionsListener: controller.itemPositionsListener,
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 itemCount: msgs.length,
                 itemBuilder: (context, index) {
@@ -48,9 +55,12 @@ class ChatPage extends GetView<ChatController> {
                   final isMe = msg.senderId == controller.currentUserId;
                   final showDate = index == 0 ||
                       !_sameDay(msgs[index - 1].sentAt, msg.sentAt);
+                  final showDivider =
+                      showUnreadDivider && index == unreadBoundary;
 
                   return Column(
                     children: [
+                      if (showDivider) _NewMessagesDivider(isDark: isDark),
                       if (showDate) _DateSeparator(date: msg.sentAt, isDark: isDark),
                       _MessageBubble(
                         message: msg,
@@ -337,28 +347,7 @@ class _MessageBubble extends StatelessWidget {
               ),
 
             // Image
-            if (message.imageUrl != null)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: Image.network(
-                    message.imageUrl!,
-                    width: 200,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      width: 200,
-                      height: 100,
-                      decoration: BoxDecoration(
-                        color: AppColors.errorLight,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(PhosphorIcons.imageBroken(),
-                          color: AppColors.error),
-                    ),
-                  ),
-                ),
-              ),
+            if (message.imageUrl != null) _buildImage(context),
 
             // Text
             if (message.content != null && message.content!.isNotEmpty)
@@ -396,6 +385,174 @@ class _MessageBubble extends StatelessWidget {
     final h = dt.hour.toString().padLeft(2, '0');
     final m = dt.minute.toString().padLeft(2, '0');
     return '$h:$m';
+  }
+
+  Widget _buildImage(BuildContext context) {
+    final resolvedUrl = ApiConstants.resolveUploadUrl(message.imageUrl);
+    if (resolvedUrl == null) return const SizedBox.shrink();
+
+    final heroTag = 'chat-image-${message.id}-$resolvedUrl';
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: GestureDetector(
+        onTap: () => _openImageViewer(context, resolvedUrl, heroTag),
+        child: Hero(
+          tag: heroTag,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: Image.network(
+              resolvedUrl,
+              width: 200,
+              fit: BoxFit.cover,
+              loadingBuilder: (_, child, progress) {
+                if (progress == null) return child;
+                return Container(
+                  width: 200,
+                  height: 150,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: LoadingAnimationWidget.staggeredDotsWave(
+                    color: AppColors.primary,
+                    size: 28,
+                  ),
+                );
+              },
+              errorBuilder: (_, __, ___) => Container(
+                width: 200,
+                height: 100,
+                decoration: BoxDecoration(
+                  color: AppColors.errorLight,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  PhosphorIcons.imageBroken(),
+                  color: AppColors.error,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _openImageViewer(BuildContext context, String url, String heroTag) {
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        opaque: false,
+        barrierColor: Colors.black,
+        pageBuilder: (_, __, ___) =>
+            _ImageViewerPage(url: url, heroTag: heroTag),
+        transitionsBuilder: (_, animation, __, child) =>
+            FadeTransition(opacity: animation, child: child),
+      ),
+    );
+  }
+}
+
+/// Fullscreen image viewer with pinch-to-zoom
+class _ImageViewerPage extends StatelessWidget {
+  final String url;
+  final String heroTag;
+
+  const _ImageViewerPage({required this.url, required this.heroTag});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: GestureDetector(
+              onTap: () => Navigator.of(context).maybePop(),
+              child: Center(
+                child: Hero(
+                  tag: heroTag,
+                  child: InteractiveViewer(
+                    minScale: 1,
+                    maxScale: 5,
+                    child: Image.network(
+                      url,
+                      fit: BoxFit.contain,
+                      loadingBuilder: (_, child, progress) {
+                        if (progress == null) return child;
+                        return Center(
+                          child: LoadingAnimationWidget.staggeredDotsWave(
+                            color: Colors.white,
+                            size: 48,
+                          ),
+                        );
+                      },
+                      errorBuilder: (_, __, ___) => Icon(
+                        PhosphorIcons.imageBroken(),
+                        color: Colors.white,
+                        size: 80,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 8,
+            right: 8,
+            child: Material(
+              color: Colors.black.withValues(alpha: 0.45),
+              shape: const CircleBorder(),
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white),
+                onPressed: () => Navigator.of(context).maybePop(),
+                tooltip: 'إغلاق',
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Divider drawn between the last read message and the first unread message.
+class _NewMessagesDivider extends StatelessWidget {
+  final bool isDark;
+
+  const _NewMessagesDivider({required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    final lineColor = AppColors.primary.withValues(alpha: 0.4);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Row(
+        children: [
+          Expanded(child: Divider(color: lineColor, thickness: 1, height: 1)),
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.cardDark : AppColors.primarySoft,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Text(
+              'رسائل جديدة',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: AppColors.primary,
+              ),
+            ),
+          ),
+          Expanded(child: Divider(color: lineColor, thickness: 1, height: 1)),
+        ],
+      ),
+    );
   }
 }
 

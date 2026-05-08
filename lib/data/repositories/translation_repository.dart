@@ -8,7 +8,6 @@ import '../../app/services/audio_storage_service.dart';
 import '../../app/services/soniox_service.dart';
 import '../../app/services/storage_service.dart';
 import '../../app/services/tts_service.dart';
-import '../models/conversation_model.dart';
 import '../models/soniox_response_model.dart';
 import '../models/translation_model.dart';
 
@@ -25,9 +24,6 @@ class TranslationRepository {
   // Current session state
   String? _currentConversationId;
   final List<Translation> _currentTranslations = [];
-  String _currentOriginalText = '';
-  String _currentTranslatedText = '';
-  DateTime? _sessionStartTime;
 
   // Debouncing state
   String _pendingTranscription = '';
@@ -119,9 +115,6 @@ class TranslationRepository {
       // Create new conversation
       _currentConversationId = const Uuid().v4();
       _currentTranslations.clear();
-      _currentOriginalText = '';
-      _currentTranslatedText = '';
-      _sessionStartTime = DateTime.now();
 
       // Clear token lists for new session
       _finalOriginalTokens.clear();
@@ -305,7 +298,7 @@ class TranslationRepository {
   }
 
   /// Stop translation session
-  Future<void> stopSession({bool saveConversation = true}) async {
+  Future<void> stopSession() async {
     try {
       debugPrint('TranslationRepository: Stopping session');
 
@@ -318,46 +311,12 @@ class TranslationRepository {
       await _sonioxService.disconnect();
       await _ttsService.stop();
 
-      // Save audio file and get path
-      String? audioFilePath;
-      if (saveConversation && _currentConversationId != null) {
-        audioFilePath = await _audioStorageService
-            .stopAndSaveRecording(_currentConversationId!);
-        debugPrint('TranslationRepository: Audio saved to: $audioFilePath');
-      } else {
-        _audioStorageService.cancelRecording();
-      }
-
-      // Save conversation if requested and there are translations
-      if (saveConversation && _currentTranslations.isNotEmpty && _currentConversationId != null) {
-        final sourceLanguage = await _storageService.getSourceLanguage();
-        final targetLanguage = await _storageService.getTargetLanguage();
-
-        final startTime = _sessionStartTime ?? DateTime.now();
-        final endTime = DateTime.now();
-        final durationSeconds = endTime.difference(startTime).inSeconds;
-
-        final conversation = Conversation(
-          id: _currentConversationId!,
-          translations: List.from(_currentTranslations),
-          startTime: startTime,
-          endTime: endTime,
-          sourceLanguage: sourceLanguage,
-          targetLanguage: targetLanguage,
-          audioFilePath: audioFilePath,
-          durationSeconds: durationSeconds,
-        );
-
-        await _storageService.saveConversation(conversation);
-        debugPrint('TranslationRepository: Conversation saved with audio file');
-      }
+      // Discard the audio buffer — history is disabled
+      _audioStorageService.cancelRecording();
 
       // Clear session state
       _currentConversationId = null;
       _currentTranslations.clear();
-      _currentOriginalText = '';
-      _currentTranslatedText = '';
-      _sessionStartTime = null;
 
       // Clear token lists
       _finalOriginalTokens.clear();

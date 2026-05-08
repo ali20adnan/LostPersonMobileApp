@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../app/routes/app_routes.dart';
-import '../../../app/services/auth_service.dart';
 import '../../../app/services/socket_service.dart';
 import '../services/app_notifications_service.dart';
 
@@ -14,21 +13,15 @@ class AppNotificationsBootstrap {
   static bool _initialized = false;
 
   /// Set up listeners. Idempotent — safe to call multiple times.
+  ///
+  /// Listens for every authenticated user — missing-person notifications are
+  /// broadcast `toAll` server-side so the role gate that used to restrict
+  /// PATROL/VOLUNTEER/CENTER/ADMIN was dropping events for OPS_CENTER and
+  /// any future role.
   static Future<void> setup() async {
     if (_initialized) return;
     if (!Get.isRegistered<SocketService>()) return;
-    if (!Get.isRegistered<AuthService>()) return;
     if (!Get.isRegistered<AppNotificationsService>()) return;
-
-    final auth = Get.find<AuthService>();
-    final role = auth.currentUser.value?.role;
-    if (role != 'PATROL' &&
-        role != 'VOLUNTEER' &&
-        role != 'CENTER' &&
-        role != 'ADMIN') {
-      // Other roles don't receive this notification stream.
-      return;
-    }
 
     final socket = Get.find<SocketService>();
     final service = Get.find<AppNotificationsService>();

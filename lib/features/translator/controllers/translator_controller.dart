@@ -1,19 +1,24 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../../../app/services/audio_service.dart';
 import '../../../app/services/audio_storage_service.dart';
+import '../../../app/services/libre_translate_service.dart';
 import '../../../app/services/permission_service.dart';
 import '../../../app/services/soniox_service.dart';
 import '../../../app/services/storage_service.dart';
 import '../../../app/services/tts_service.dart';
 import '../../../core/constants/language_constants.dart';
 import '../../../data/models/language_model.dart';
-import '../../../data/models/translation_message_model.dart';
 import '../../../data/repositories/translation_repository.dart';
-import '../views/translation_history_page.dart';
+import '../../languages/views/languages_page.dart';
+import '../../ocr_reader/controllers/ocr_reader_controller.dart';
+import '../views/translator_lens_page.dart';
+import '../views/translator_text_page.dart';
+import '../views/translator_voice_page.dart';
 
 class TranslatorController extends GetxController {
   // Services
@@ -24,9 +29,9 @@ class TranslatorController extends GetxController {
   late final StorageService _storageService;
   late final AudioStorageService _audioStorageService;
   late final TranslationRepository _translationRepository;
+  late final LibreTranslateService _libreTranslateService;
 
-  // Observable state
-  final toolMode = 0.obs; // 0 = voice translator, 1 = OCR reader
+  // Recording state
   final isRecording = false.obs;
   final isInitializing = false.obs;
   final isSpeaking = false.obs;
@@ -35,12 +40,16 @@ class TranslatorController extends GetxController {
   final connectionStatus = ConnectionStatus.disconnected.obs;
   final audioLevel = 0.0.obs;
 
+  // Languages
   final sourceLanguage = Rx<Language>(LanguageConstants.arabic);
   final targetLanguage = Rx<Language>(LanguageConstants.english);
 
-  // Message history for chat-like UI
-  final messages = <TranslationMessage>[].obs;
-  TranslationMessage? _currentMessage;
+  // Text-input mode state
+  final TextEditingController inputController = TextEditingController();
+  final inputText = ''.obs;
+  final isTranslatingText = false.obs;
+  Timer? _textDebounce;
+  bool _suppressInputListener = false;
 
   // Stream subscriptions
   StreamSubscription? _transcriptionSubscription;
@@ -49,7 +58,7 @@ class TranslatorController extends GetxController {
   StreamSubscription? _connectionSubscription;
   StreamSubscription? _amplitudeSubscription;
 
-  // Session tracking
+  // Session tracking (auto-stop after 30 minutes)
   DateTime? _sessionStartTime;
   Timer? _sessionTimer;
 
@@ -58,9 +67,22 @@ class TranslatorController extends GetxController {
     super.onInit();
     _initializeServices();
     _loadSavedLanguages();
+
+    inputController.addListener(_onInputChanged);
+
+    // Re-translate text when languages change (text mode only)
+    ever(sourceLanguage, (_) {
+      if (!isRecording.value && inputText.value.trim().isNotEmpty) {
+        _runTextTranslation();
+      }
+    });
+    ever(targetLanguage, (_) {
+      if (!isRecording.value && inputText.value.trim().isNotEmpty) {
+        _runTextTranslation();
+      }
+    });
   }
 
-  /// Initialize all services
   void _initializeServices() {
     _permissionService = PermissionService();
     _sonioxService = SonioxService();
@@ -69,17 +91,9 @@ class TranslatorController extends GetxController {
     _storageService = StorageService();
     _audioStorageService = AudioStorageService();
 
-    // Initialize storage first
-    _storageService.init().then((_) {
-      debugPrint('TranslatorController: Storage initialized');
-    });
+    _storageService.init();
+    _audioStorageService.init();
 
-    // Initialize audio storage
-    _audioStorageService.init().then((_) {
-      debugPrint('TranslatorController: Audio storage initialized');
-    });
-
-    // Initialize repository
     _translationRepository = TranslationRepository(
       sonioxService: _sonioxService,
       audioService: _audioService,
@@ -88,10 +102,109 @@ class TranslatorController extends GetxController {
       audioStorageService: _audioStorageService,
     );
 
-    debugPrint('TranslatorController: Services initialized');
+    _libreTranslateService = Get.find<LibreTranslateService>();
   }
 
-  /// Load saved language preferences
+  // ─── Text-mode translation ─────────────────────────────────────
+
+  void _onInputChanged() {
+    if (_suppressInputListener) return;
+    if (isRecording.value) return;
+
+    final text = inputController.text;
+    inputText.value = text;
+
+    _textDebounce?.cancel();
+
+    if (text.trim().isEmpty) {
+      currentTranslation.value = '';
+      isTranslatingText.value = false;
+      return;
+    }
+
+    _textDebounce =
+        Timer(const Duration(milliseconds: 500), _runTextTranslation);
+  }
+
+  Future<void> _runTextTranslation() async {
+    final text = inputText.value.trim();
+    if (text.isEmpty) return;
+    if (isRecording.value) return;
+    if (sourceLanguage.value.code == targetLanguage.value.code) {
+      currentTranslation.value = text;
+      return;
+    }
+
+    isTranslatingText.value = true;
+    try {
+      final result = await _libreTranslateService.translate(
+        text: text,
+        source: sourceLanguage.value.code,
+        target: targetLanguage.value.code,
+      );
+      if (text == inputText.value.trim()) {
+        currentTranslation.value = result;
+      }
+    } catch (e) {
+      debugPrint('TranslatorController: text translation error - $e');
+    } finally {
+      isTranslatingText.value = false;
+    }
+  }
+
+  void clearInput() {
+    _suppressInputListener = true;
+    inputController.clear();
+    _suppressInputListener = false;
+
+    inputText.value = '';
+    currentTranscription.value = '';
+    currentTranslation.value = '';
+    _textDebounce?.cancel();
+    isTranslatingText.value = false;
+  }
+
+  Future<void> pasteFromClipboard() async {
+    if (isRecording.value) return;
+    final data = await Clipboard.getData(Clipboard.kTextPlain);
+    final text = data?.text;
+    if (text == null || text.isEmpty) return;
+    inputController.text = text;
+    inputController.selection = TextSelection.collapsed(offset: text.length);
+  }
+
+  Future<void> copyTranslation() async {
+    final text = currentTranslation.value.trim();
+    if (text.isEmpty) return;
+    await Clipboard.setData(ClipboardData(text: text));
+    Get.snackbar(
+      'تم النسخ',
+      'تم نسخ الترجمة إلى الحافظة',
+      snackPosition: SnackPosition.BOTTOM,
+      duration: const Duration(seconds: 1),
+    );
+  }
+
+  Future<void> copyInput() async {
+    final text = inputController.text.trim();
+    if (text.isEmpty) return;
+    await Clipboard.setData(ClipboardData(text: text));
+    Get.snackbar(
+      'تم النسخ',
+      'تم نسخ النص إلى الحافظة',
+      snackPosition: SnackPosition.BOTTOM,
+      duration: const Duration(seconds: 1),
+    );
+  }
+
+  Future<void> speakInput() async {
+    final text = inputController.text.trim();
+    if (text.isEmpty) return;
+    await _ttsService.speak(text, sourceLanguage.value.code);
+  }
+
+  // ─── Languages ─────────────────────────────────────────────────
+
   Future<void> _loadSavedLanguages() async {
     final savedSourceCode = await _storageService.getSourceLanguage();
     final savedTargetCode = await _storageService.getTargetLanguage();
@@ -99,73 +212,66 @@ class TranslatorController extends GetxController {
     final savedSource = LanguageConstants.getLanguageByCode(savedSourceCode);
     final savedTarget = LanguageConstants.getLanguageByCode(savedTargetCode);
 
-    if (savedSource != null) {
-      sourceLanguage.value = savedSource;
-    }
-    if (savedTarget != null) {
-      targetLanguage.value = savedTarget;
-    }
-
-    debugPrint(
-      'TranslatorController: Loaded languages ${sourceLanguage.value.code} → ${targetLanguage.value.code}',
-    );
+    if (savedSource != null) sourceLanguage.value = savedSource;
+    if (savedTarget != null) targetLanguage.value = savedTarget;
   }
 
-  /// Reload languages from storage (called when returning from languages page)
-  Future<void> reloadLanguages() async {
-    await _loadSavedLanguages();
-    debugPrint('TranslatorController: Languages reloaded from storage');
+  Future<void> reloadLanguages() async => _loadSavedLanguages();
+
+  void swapLanguages() {
+    final temp = sourceLanguage.value;
+    sourceLanguage.value = targetLanguage.value;
+    targetLanguage.value = temp;
+
+    _storageService.saveSourceLanguage(sourceLanguage.value.code);
+    _storageService.saveTargetLanguage(targetLanguage.value.code);
+
+    if (!isRecording.value) {
+      final previousInput = inputController.text;
+      final previousOutput = currentTranslation.value;
+
+      _suppressInputListener = true;
+      inputController.value = TextEditingValue(
+        text: previousOutput,
+        selection: TextSelection.collapsed(offset: previousOutput.length),
+      );
+      _suppressInputListener = false;
+
+      inputText.value = previousOutput;
+      currentTranslation.value = previousInput;
+
+      if (inputText.value.trim().isNotEmpty) {
+        _textDebounce?.cancel();
+        _runTextTranslation();
+      }
+    }
   }
 
-  /// Start recording and translation
+  // ─── Recording ─────────────────────────────────────────────────
+
   Future<void> startRecording() async {
-    debugPrint('═══════════════════════════════════════════════════════');
-    debugPrint('TranslatorController: START RECORDING REQUESTED');
-    debugPrint('═══════════════════════════════════════════════════════');
-
-    if (isRecording.value) {
-      debugPrint('TranslatorController: ⚠️ Already recording, ignoring request');
-      return;
-    }
+    if (isRecording.value) return;
 
     try {
       isInitializing.value = true;
-      debugPrint('TranslatorController: ✓ Set initializing state to true');
 
-      // Check microphone permission
-      debugPrint('TranslatorController: Checking microphone permission...');
-      final hasPermission = await _permissionService.requestMicrophonePermission();
-      debugPrint('TranslatorController: Permission result = $hasPermission');
-
+      final hasPermission =
+          await _permissionService.requestMicrophonePermission();
       if (!hasPermission) {
-        debugPrint('TranslatorController: ✗ PERMISSION DENIED');
         _permissionService.showPermissionDeniedMessage();
         isInitializing.value = false;
         return;
       }
-      debugPrint('TranslatorController: ✓ Microphone permission granted');
 
-      // Clear previous transcription/translation buffers but preserve message
-      // history so the conversation persists across recording sessions.
       currentTranscription.value = '';
       currentTranslation.value = '';
-      _currentMessage = null;
-      debugPrint('TranslatorController: ✓ Cleared transcription/translation buffers (preserving message history)');
-
-      // Start translation session
-      debugPrint('TranslatorController: Starting translation session...');
-      debugPrint('  Source Language: ${sourceLanguage.value.code} (${sourceLanguage.value.nameEn})');
-      debugPrint('  Target Language: ${targetLanguage.value.code} (${targetLanguage.value.nameEn})');
 
       final started = await _translationRepository.startSession(
         sourceLanguage: sourceLanguage.value.code,
         targetLanguage: targetLanguage.value.code,
       );
 
-      debugPrint('TranslatorController: Session start result = $started');
-
       if (!started) {
-        debugPrint('TranslatorController: ✗ FAILED TO START SESSION');
         Get.snackbar(
           'خطأ في الاتصال',
           'فشل الاتصال بخدمة الترجمة. يرجى المحاولة مرة أخرى.',
@@ -176,118 +282,50 @@ class TranslatorController extends GetxController {
         isInitializing.value = false;
         return;
       }
-      debugPrint('TranslatorController: ✓ Session started successfully');
 
-      // Subscribe to streams
-      debugPrint('TranslatorController: Setting up stream subscriptions...');
+      _transcriptionSubscription =
+          _translationRepository.transcriptionStream.listen((text) {
+        currentTranscription.value = text;
 
-      _transcriptionSubscription = _translationRepository.transcriptionStream.listen(
-        (text) {
-          debugPrint('TranslatorController: 📝 Transcription received: "$text"');
-          currentTranscription.value = text;
+        // Mirror live transcription into the input field (read-only during recording)
+        _suppressInputListener = true;
+        inputController.value = TextEditingValue(
+          text: text,
+          selection: TextSelection.collapsed(offset: text.length),
+        );
+        inputText.value = text;
+        _suppressInputListener = false;
+      });
 
-          // Update or create current message
-          if (text.trim().isNotEmpty) {
-            if (_currentMessage == null) {
-              _currentMessage = TranslationMessage(
-                originalText: text,
-                translatedText: currentTranslation.value,
-                timestamp: DateTime.now(),
-                isFinal: false,
-              );
-            } else {
-              _currentMessage = _currentMessage!.copyWith(originalText: text);
-            }
-            _updateMessagesList();
-          }
-        },
-      );
-      debugPrint('TranslatorController: ✓ Subscribed to transcription stream');
-
-      _translationSubscription = _translationRepository.translationStream.listen(
-        (text) {
-          debugPrint('TranslatorController: 🌐 Translation received: "$text"');
-          currentTranslation.value = text;
-
-          // Update or create current message
-          if (text.trim().isNotEmpty) {
-            if (_currentMessage == null) {
-              _currentMessage = TranslationMessage(
-                originalText: currentTranscription.value,
-                translatedText: text,
-                timestamp: DateTime.now(),
-                isFinal: false,
-              );
-            } else {
-              _currentMessage = _currentMessage!.copyWith(translatedText: text);
-            }
-            _updateMessagesList();
-          }
-        },
-      );
-      debugPrint('TranslatorController: ✓ Subscribed to translation stream');
+      _translationSubscription =
+          _translationRepository.translationStream.listen((text) {
+        currentTranslation.value = text;
+      });
 
       _finalizedTranslationSubscription = _translationRepository
           .finalizedTranslationStream
-          .listen((translation) {
-        debugPrint('TranslatorController: ✅ Sentence finalized — locking bubble and starting a new one');
-        if (_currentMessage != null && messages.isNotEmpty) {
-          messages[messages.length - 1] = _currentMessage!.copyWith(
-            originalText: translation.originalText,
-            translatedText: translation.translatedText,
-            isFinal: true,
-          );
-        }
-        _currentMessage = null;
-        currentTranscription.value = '';
-        currentTranslation.value = '';
+          .listen((_) {
+        // No-op: history disabled. Soniox stream keeps flowing into the Rx fields.
       });
-      debugPrint('TranslatorController: ✓ Subscribed to finalized translation stream');
 
-      _connectionSubscription = _translationRepository.connectionStatusStream?.listen(
-        (status) {
-          debugPrint('TranslatorController: 🔌 Connection status changed: $status');
-          connectionStatus.value = status;
-        },
-      );
-      // Set initial connection status (in case we missed the initial broadcast)
+      _connectionSubscription =
+          _translationRepository.connectionStatusStream?.listen((status) {
+        connectionStatus.value = status;
+      });
       connectionStatus.value = _sonioxService.status;
-      debugPrint('TranslatorController: ✓ Subscribed to connection status stream (initial: ${_sonioxService.status})');
 
-      _amplitudeSubscription = _translationRepository.amplitudeStream?.listen(
-        (level) {
-          // Don't log every amplitude update (too verbose)
-          audioLevel.value = level;
-        },
-      );
-      debugPrint('TranslatorController: ✓ Subscribed to amplitude stream');
+      _amplitudeSubscription =
+          _translationRepository.amplitudeStream?.listen((level) {
+        audioLevel.value = level;
+      });
 
-      // Start session timer
       _sessionStartTime = DateTime.now();
       _startSessionTimer();
-      debugPrint('TranslatorController: ✓ Session timer started');
 
       isRecording.value = true;
       isInitializing.value = false;
-
-      debugPrint('═══════════════════════════════════════════════════════');
-      debugPrint('TranslatorController: ✓✓✓ RECORDING STARTED SUCCESSFULLY ✓✓✓');
-      debugPrint('═══════════════════════════════════════════════════════');
-
-      Get.snackbar(
-        'بدأ التسجيل',
-        'يتم الآن ترجمة كلامك في الوقت الفعلي',
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.green.withValues(alpha: 0.8),
-        colorText: Colors.white,
-        duration: const Duration(seconds: 2),
-      );
-    } catch (e, stackTrace) {
-      debugPrint('═══════════════════════════════════════════════════════');
-      debugPrint('TranslatorController: ✗✗✗ ERROR STARTING RECORDING ✗✗✗');
-      debugPrint('Error: $e');
-      debugPrint('Stack trace: $stackTrace');
-      debugPrint('═══════════════════════════════════════════════════════');
+    } catch (e) {
+      debugPrint('TranslatorController: error starting recording - $e');
       isInitializing.value = false;
       Get.snackbar(
         'خطأ',
@@ -299,60 +337,33 @@ class TranslatorController extends GetxController {
     }
   }
 
-  /// Stop recording and save conversation
   Future<void> stopRecording() async {
-    debugPrint('═══════════════════════════════════════════════════════');
-    debugPrint('TranslatorController: STOP RECORDING REQUESTED');
-    debugPrint('═══════════════════════════════════════════════════════');
-
-    if (!isRecording.value) {
-      debugPrint('TranslatorController: ⚠️ Not recording, ignoring stop request');
-      return;
-    }
+    if (!isRecording.value) return;
 
     try {
-      debugPrint('TranslatorController: Canceling stream subscriptions...');
-      // Cancel subscriptions
       await _transcriptionSubscription?.cancel();
       await _translationSubscription?.cancel();
       await _finalizedTranslationSubscription?.cancel();
       await _connectionSubscription?.cancel();
       await _amplitudeSubscription?.cancel();
 
-      // Stop session
-      await _translationRepository.stopSession(saveConversation: true);
-
-      // Stop session timer
+      await _translationRepository.stopSession();
       _sessionTimer?.cancel();
 
-      // Update usage tracking
       if (_sessionStartTime != null) {
         final duration = DateTime.now().difference(_sessionStartTime!);
-        final minutes = duration.inMinutes;
-        await _storageService.incrementUsageMinutes(minutes);
+        await _storageService.incrementUsageMinutes(duration.inMinutes);
         await _storageService.saveLastUsageDate(DateTime.now());
       }
 
       isRecording.value = false;
       connectionStatus.value = ConnectionStatus.disconnected;
       audioLevel.value = 0.0;
-
-      debugPrint('TranslatorController: Recording stopped');
-
-      Get.snackbar(
-        'توقف التسجيل',
-        'تم حفظ المحادثة',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.blue.withValues(alpha: 0.8),
-        colorText: Colors.white,
-        duration: const Duration(seconds: 2),
-      );
     } catch (e) {
-      debugPrint('TranslatorController: Error stopping recording - $e');
+      debugPrint('TranslatorController: error stopping recording - $e');
     }
   }
 
-  /// Toggle recording (start/stop)
   Future<void> toggleRecording() async {
     if (isRecording.value) {
       await stopRecording();
@@ -361,32 +372,26 @@ class TranslatorController extends GetxController {
     }
   }
 
-  /// Swap source and target languages
-  void swapLanguages() {
-    final temp = sourceLanguage.value;
-    sourceLanguage.value = targetLanguage.value;
-    targetLanguage.value = temp;
-
-    // Save to storage
-    _storageService.saveSourceLanguage(sourceLanguage.value.code);
-    _storageService.saveTargetLanguage(targetLanguage.value.code);
-
-    debugPrint(
-      'TranslatorController: Languages swapped ${sourceLanguage.value.code} ↔ ${targetLanguage.value.code}',
-    );
-
-    Get.snackbar(
-      'تم تبديل اللغات',
-      '${sourceLanguage.value.nameAr} → ${targetLanguage.value.nameAr}',
-      snackPosition: SnackPosition.TOP,
-      duration: const Duration(seconds: 1),
-    );
+  void _startSessionTimer() {
+    _sessionTimer = Timer.periodic(const Duration(minutes: 1), (_) {
+      if (_sessionStartTime != null) {
+        final duration = DateTime.now().difference(_sessionStartTime!);
+        if (duration.inMinutes >= 30) {
+          Get.snackbar(
+            'انتهى الوقت',
+            'توقف التسجيل تلقائياً بعد 30 دقيقة',
+            snackPosition: SnackPosition.TOP,
+            backgroundColor: Colors.orange.withValues(alpha: 0.8),
+            colorText: Colors.white,
+          );
+          stopRecording();
+        }
+      }
+    });
   }
 
-  /// Speak current translation
-  ///
-  /// Pauses mic forwarding while TTS plays so the speaker output isn't
-  /// re-captured as a new utterance and re-translated in a feedback loop.
+  // ─── TTS ───────────────────────────────────────────────────────
+
   Future<void> speakTranslation() async {
     if (currentTranslation.value.isEmpty) {
       Get.snackbar(
@@ -396,79 +401,41 @@ class TranslatorController extends GetxController {
       );
       return;
     }
-
     if (isSpeaking.value) return;
 
     final wasRecording = isRecording.value;
     isSpeaking.value = true;
 
     try {
-      if (wasRecording) {
-        await _translationRepository.pauseSession();
-      }
-
+      if (wasRecording) await _translationRepository.pauseSession();
       await _translationRepository.speakTranslation(
         currentTranslation.value,
         targetLanguage.value.code,
       );
     } finally {
       isSpeaking.value = false;
-
       if (wasRecording && isRecording.value) {
         await _translationRepository.resumeSession();
       }
     }
   }
 
-  /// Update messages list with current message
-  void _updateMessagesList() {
-    if (_currentMessage == null) return;
+  // ─── Navigation helpers ────────────────────────────────────────
 
-    if (messages.isEmpty) {
-      messages.add(_currentMessage!);
-    } else {
-      // Update the last message (current one)
-      messages[messages.length - 1] = _currentMessage!;
-    }
-
-    // Check if we should finalize this message and start a new one
-    // This happens when we detect a pause or sentence end
-    final originalEmpty = _currentMessage!.originalText.trim().isEmpty;
-    final translationEmpty = _currentMessage!.translatedText.trim().isEmpty;
-
-    if (!originalEmpty && !translationEmpty) {
-      // Both have content, this is a valid message
-      // We'll create a new message on the next token if there's a pause
-    }
+  void openTextPage() {
+    Get.to(() => const TranslatorTextPage());
   }
 
-  /// Start session timer to track duration and auto-stop
-  void _startSessionTimer() {
-    _sessionTimer = Timer.periodic(
-      const Duration(minutes: 1),
-      (timer) {
-        if (_sessionStartTime != null) {
-          final duration = DateTime.now().difference(_sessionStartTime!);
-
-          // Auto-stop after 30 minutes
-          if (duration.inMinutes >= 30) {
-            Get.snackbar(
-              'انتهى الوقت',
-              'توقف التسجيل تلقائياً بعد 30 دقيقة',
-              snackPosition: SnackPosition.TOP,
-              backgroundColor: Colors.orange.withValues(alpha: 0.8),
-              colorText: Colors.white,
-            );
-            stopRecording();
-          }
-        }
-      },
-    );
+  void openVoicePage() {
+    Get.to(() => const TranslatorVoicePage());
   }
 
-  /// Navigate to language selection
-  Future<void> goToLanguageSelection() async {
-    // Prevent language change during recording
+  Future<void> pasteAndOpenText() async {
+    await pasteFromClipboard();
+    openTextPage();
+  }
+
+  Future<void> openLanguagePicker({required bool isSource}) async {
     if (isRecording.value) {
       Get.snackbar(
         'تنبيه',
@@ -476,44 +443,59 @@ class TranslatorController extends GetxController {
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.orange.withValues(alpha: 0.8),
         colorText: Colors.white,
-        margin: const EdgeInsets.all(16),
-        borderRadius: 12,
-        duration: const Duration(seconds: 2),
+      );
+      return;
+    }
+    await Get.to(() => LanguagesPage(isSource: isSource));
+    await reloadLanguages();
+    if (inputText.value.trim().isNotEmpty) _runTextTranslation();
+  }
+
+  Future<void> openCameraAndScan() async {
+    final ocrCtrl = Get.find<OcrReaderController>();
+    await ocrCtrl.captureAndScan();
+
+    if (ocrCtrl.recognizedBlocks.isEmpty) {
+      if (ocrCtrl.capturedImagePath.value.isEmpty) return;
+      Get.snackbar(
+        'لا يوجد نص',
+        'لم يتم اكتشاف نص في الصورة',
+        snackPosition: SnackPosition.BOTTOM,
       );
       return;
     }
 
-    await Get.toNamed('/languages');
-    // Reload languages when returning from language selection
-    await reloadLanguages();
+    // Sync OCR languages with hub languages, then translate all blocks
+    ocrCtrl.sourceLanguage.value = sourceLanguage.value;
+    ocrCtrl.targetLanguage.value = targetLanguage.value;
+    await Get.to(() => const TranslatorLensPage());
   }
 
-  /// Navigate to history
-  void goToHistory() {
-    Get.to(() => const TranslationHistoryPage());
+  /// Push extracted OCR text into the input field and open the text page.
+  void sendOcrTextToTranslator(String text) {
+    inputController.text = text;
+    inputController.selection = TextSelection.collapsed(offset: text.length);
+    inputText.value = text;
+    Get.until((route) => route.isFirst);
+    openTextPage();
   }
 
-  /// Navigate to settings
-  void goToSettings() {
-    Get.toNamed('/settings');
-  }
+  void goToSettings() => Get.toNamed('/settings');
 
   @override
   void onClose() {
-    // Cancel subscriptions
     _transcriptionSubscription?.cancel();
     _translationSubscription?.cancel();
     _finalizedTranslationSubscription?.cancel();
     _connectionSubscription?.cancel();
     _amplitudeSubscription?.cancel();
     _sessionTimer?.cancel();
+    _textDebounce?.cancel();
 
-    // Stop recording if active
-    if (isRecording.value) {
-      stopRecording();
-    }
+    inputController.removeListener(_onInputChanged);
+    inputController.dispose();
 
-    // Dispose repository
+    if (isRecording.value) stopRecording();
     _translationRepository.dispose();
 
     super.onClose();

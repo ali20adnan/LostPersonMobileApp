@@ -10,8 +10,8 @@ import '../../../app/themes/app_colors.dart';
 import '../controllers/conversations_controller.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../data/models/chat_models.dart';
-import '../../../data/models/user_model.dart';
 import '../../notifications/controllers/notifications_controller.dart';
+import 'new_chat_sheet.dart';
 
 /// Floating messaging button at top-right + Instagram-style slide-in panel
 class MessagingOverlay extends StatelessWidget {
@@ -246,7 +246,7 @@ class _PanelHeader extends StatelessWidget {
             onPressed: () {
               HapticFeedback.mediumImpact();
               controller.isMessagingPanelOpen.value = false;
-              _showNewChatDialog(context, controller);
+              _showNewChatDialog();
             },
             icon: Container(
               padding: const EdgeInsets.all(6),
@@ -263,152 +263,8 @@ class _PanelHeader extends StatelessWidget {
     );
   }
 
-  void _showNewChatDialog(
-      BuildContext context, ConversationsController controller) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final searchCtrl = TextEditingController();
-    final users = <ChatUser>[].obs;
-    final isSearching = false.obs;
-
-    Get.bottomSheet(
-      Container(
-        height: MediaQuery.of(context).size.height * 0.6,
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.surfaceDark : Colors.white,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          children: [
-            const SizedBox(height: 8),
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  Icon(PhosphorIcons.chatDots(), color: AppColors.primary, size: 22),
-                  const SizedBox(width: 8),
-                  Text('محادثة جديدة',
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      )),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: TextField(
-                controller: searchCtrl,
-                onChanged: (val) async {
-                  if (val.length >= 2) {
-                    isSearching.value = true;
-                    users.value = await controller.searchUsers(val);
-                    isSearching.value = false;
-                  } else {
-                    users.clear();
-                  }
-                },
-                decoration: InputDecoration(
-                  hintText: 'ابحث عن مستخدم...',
-                  prefixIcon: Icon(PhosphorIcons.magnifyingGlass(), size: 20),
-                  filled: true,
-                  fillColor: theme.colorScheme.surfaceContainerHighest
-                      .withValues(alpha: 0.5),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide.none,
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 12),
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Expanded(
-              child: Obx(() {
-                if (isSearching.value) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (users.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(PhosphorIcons.magnifyingGlass(),
-                            size: 40,
-                            color: theme.colorScheme.onSurface
-                                .withValues(alpha: 0.2)),
-                        const SizedBox(height: 8),
-                        Text(
-                          'ابحث عن مستخدم لبدء محادثة',
-                          style: TextStyle(
-                            color: theme.colorScheme.onSurface
-                                .withValues(alpha: 0.4),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-                return ListView.builder(
-                  itemCount: users.length,
-                  itemBuilder: (context, index) {
-                    final user = users[index];
-                    return ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: AppColors.primarySoft,
-                        backgroundImage:
-                            ApiConstants.resolveAvatarUrl(user.avatarUrl) !=
-                                    null
-                                ? NetworkImage(
-                                    ApiConstants.resolveAvatarUrl(
-                                        user.avatarUrl)!)
-                                : null,
-                        child:
-                            ApiConstants.resolveAvatarUrl(user.avatarUrl) ==
-                                    null
-                                ? Text(
-                                    user.fullName.isNotEmpty
-                                        ? user.fullName[0]
-                                        : '?',
-                                    style: const TextStyle(
-                                      color: AppColors.primary,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  )
-                                : null,
-                      ),
-                      title: Text(user.fullName),
-                      subtitle: user.role != null
-                          ? Text(roleDisplayArOf(user.role),
-                              style: theme.textTheme.bodySmall)
-                          : null,
-                      onTap: () async {
-                        Get.back();
-                        final conv =
-                            await controller.createConversation(user.id);
-                        if (conv != null) {
-                          Get.toNamed('/chat',
-                              arguments: {'conversationId': conv.id});
-                        }
-                      },
-                    );
-                  },
-                );
-              }),
-            ),
-          ],
-        ),
-      ),
-      isScrollControlled: true,
-    ).then((_) => searchCtrl.dispose());
+  void _showNewChatDialog() {
+    Get.bottomSheet(const NewChatSheet(), isScrollControlled: true);
   }
 }
 

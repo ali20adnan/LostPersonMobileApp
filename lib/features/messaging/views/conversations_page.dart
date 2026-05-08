@@ -11,7 +11,7 @@ import '../../../app/themes/app_colors.dart';
 import '../controllers/conversations_controller.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../data/models/chat_models.dart';
-import '../../../data/models/user_model.dart';
+import 'new_chat_sheet.dart';
 
 class ConversationsPage extends GetView<ConversationsController> {
   const ConversationsPage({super.key});
@@ -121,7 +121,7 @@ class ConversationsPage extends GetView<ConversationsController> {
         child: FloatingActionButton(
           onPressed: () {
             HapticFeedback.mediumImpact();
-            _showNewChatDialog(context, isDark);
+            _showNewChatDialog();
           },
           backgroundColor: Colors.transparent,
           elevation: 0,
@@ -224,148 +224,8 @@ class ConversationsPage extends GetView<ConversationsController> {
     );
   }
 
-  void _showNewChatDialog(BuildContext context, bool isDark) {
-    final searchCtrl = TextEditingController();
-    final users = <ChatUser>[].obs;
-    final isSearching = false.obs;
-
-    Get.bottomSheet(
-      Container(
-        height: MediaQuery.of(context).size.height * 0.6,
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.surfaceDark : AppColors.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          children: [
-            const Gap(8),
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.textLight.withValues(alpha: 0.4),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text('محادثة جديدة',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: isDark ? AppColors.textOnDark : AppColors.textPrimary,
-                  )),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: isDark ? AppColors.cardDark : AppColors.surfaceSunken,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: isDark ? AppColors.cardBorderDark : AppColors.cardBorder,
-                  ),
-                ),
-                child: TextField(
-                  controller: searchCtrl,
-                  style: TextStyle(
-                    color: isDark ? AppColors.textOnDark : AppColors.textPrimary,
-                  ),
-                  onChanged: (val) async {
-                    if (val.length >= 2) {
-                      isSearching.value = true;
-                      users.value = await controller.searchUsers(val);
-                      isSearching.value = false;
-                    } else {
-                      users.clear();
-                    }
-                  },
-                  decoration: InputDecoration(
-                    hintText: 'ابحث عن مستخدم...',
-                    hintStyle: TextStyle(color: AppColors.textLight),
-                    prefixIcon: Icon(PhosphorIcons.magnifyingGlass(),
-                        color: AppColors.primary, size: 20),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 14),
-                  ),
-                ),
-              ),
-            ),
-            const Gap(8),
-            Expanded(
-              child: Obx(() {
-                if (isSearching.value) {
-                  return Center(
-                    child: LoadingAnimationWidget.staggeredDotsWave(
-                      color: AppColors.primary,
-                      size: 30,
-                    ),
-                  );
-                }
-                if (users.isEmpty) {
-                  return Center(
-                    child: Text(
-                      'ابحث عن مستخدم لبدء محادثة',
-                      style: TextStyle(color: AppColors.textSecondary),
-                    ),
-                  );
-                }
-                return ListView.builder(
-                  itemCount: users.length,
-                  itemBuilder: (context, index) {
-                    final user = users[index];
-                    return ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: AppColors.primarySoft,
-                        backgroundImage: ApiConstants.resolveAvatarUrl(user.avatarUrl) != null
-                            ? NetworkImage(ApiConstants.resolveAvatarUrl(user.avatarUrl)!)
-                            : null,
-                        child: ApiConstants.resolveAvatarUrl(user.avatarUrl) == null
-                            ? Text(
-                                user.fullName.isNotEmpty
-                                    ? user.fullName[0]
-                                    : '?',
-                                style: const TextStyle(
-                                  color: AppColors.primary,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              )
-                            : null,
-                      ),
-                      title: Text(user.fullName,
-                          style: TextStyle(
-                            color: isDark
-                                ? AppColors.textOnDark
-                                : AppColors.textPrimary,
-                            fontWeight: FontWeight.w600,
-                          )),
-                      subtitle: user.role != null
-                          ? Text(roleDisplayArOf(user.role),
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: AppColors.textSecondary,
-                              ))
-                          : null,
-                      onTap: () async {
-                        Get.back();
-                        final conv =
-                            await controller.createConversation(user.id);
-                        if (conv != null) {
-                          Get.toNamed('/chat',
-                              arguments: {'conversationId': conv.id});
-                        }
-                      },
-                    );
-                  },
-                );
-              }),
-            ),
-          ],
-        ),
-      ),
-      isScrollControlled: true,
-    ).then((_) => searchCtrl.dispose());
+  void _showNewChatDialog() {
+    Get.bottomSheet(const NewChatSheet(), isScrollControlled: true);
   }
 }
 
@@ -465,11 +325,15 @@ class _ConversationTile extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: hasUnread
-                              ? FontWeight.bold
-                              : FontWeight.w600,
-                          color: isDark
-                              ? AppColors.textOnDark
-                              : AppColors.textPrimary,
+                              ? FontWeight.w800
+                              : FontWeight.w500,
+                          color: hasUnread
+                              ? (isDark
+                                  ? AppColors.textOnDark
+                                  : Colors.black)
+                              : (isDark
+                                  ? AppColors.textOnDarkSecondary
+                                  : AppColors.textSecondary),
                         ),
                       ),
                       if (lastMsg != null) ...[
@@ -481,12 +345,12 @@ class _ConversationTile extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: hasUnread
-                                ? FontWeight.w600
+                                ? FontWeight.w700
                                 : FontWeight.normal,
                             color: hasUnread
                                 ? (isDark
                                     ? AppColors.textOnDark
-                                    : AppColors.textPrimary)
+                                    : Colors.black)
                                 : AppColors.textSecondary,
                           ),
                         ),

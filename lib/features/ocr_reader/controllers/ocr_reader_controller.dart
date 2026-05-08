@@ -30,6 +30,11 @@ class OcrReaderController extends GetxController {
   final selectedBlockIndices = <int>{}.obs;
   final imageSize = Rx<Size>(Size.zero);
 
+  // Lens-mode state (per-block translations + toggle)
+  final blockTranslations = <String>[].obs;
+  final isTranslatingBlocks = false.obs;
+  final lensMode = true.obs; // true = show translations, false = show originals
+
   // Language selection (same pattern as TranslatorController)
   final sourceLanguage = Rx<Language>(LanguageConstants.arabic);
   final targetLanguage = Rx<Language>(LanguageConstants.english);
@@ -283,6 +288,46 @@ class OcrReaderController extends GetxController {
     }
   }
 
+  /// Translate every recognized block independently for Lens-mode overlays.
+  /// Failures fall back silently to the original text per LibreTranslateService.
+  Future<void> translateAllBlocks() async {
+    if (recognizedBlocks.isEmpty) {
+      blockTranslations.clear();
+      return;
+    }
+
+    isTranslatingBlocks.value = true;
+    blockTranslations.assignAll(List.filled(recognizedBlocks.length, ''));
+
+    final src = sourceLanguage.value.code;
+    final tgt = targetLanguage.value.code;
+
+    final futures = recognizedBlocks.asMap().entries.map((entry) async {
+      final translated = await _translateService.translate(
+        text: entry.value.text,
+        source: src,
+        target: tgt,
+      );
+      // Avoid out-of-range write if blocks were cleared during the await.
+      if (entry.key < blockTranslations.length) {
+        blockTranslations[entry.key] = translated;
+      }
+    });
+
+    await Future.wait(futures);
+    isTranslatingBlocks.value = false;
+  }
+
+  void toggleLensMode() => lensMode.value = !lensMode.value;
+
+  void setLensMode(bool showTranslations) =>
+      lensMode.value = showTranslations;
+
+  /// Concatenate every recognized block's text — used to push OCR output
+  /// into the main translator's text input.
+  String get combinedScannedText =>
+      recognizedBlocks.map((b) => b.text).join('\n');
+
   /// Re-translate existing scanned text when language changes.
   Future<void> retranslate() async {
     final text = hasSelection ? selectedText : scannedText.value;
@@ -305,13 +350,6 @@ class OcrReaderController extends GetxController {
     final temp = sourceLanguage.value;
     sourceLanguage.value = targetLanguage.value;
     targetLanguage.value = temp;
-    retranslate();
-  }
-
-  /// Navigate to language selection page.
-  Future<void> goToLanguageSelection() async {
-    await Get.toNamed('/languages');
-    await _loadSavedLanguages();
     retranslate();
   }
 

@@ -27,7 +27,10 @@ class MissingPersonDetailController extends GetxController {
   Future<void> loadReport() async {
     try {
       isLoading.value = true;
+      debugPrint('MPDetail: loading reportId=$reportId');
       final result = await _repository.getReport(reportId);
+      debugPrint(
+          'MPDetail: got id=${result?.id}, fullName=${result?.fullName}, age=${result?.age}, status=${result?.status}');
       report.value = result;
     } catch (e) {
       debugPrint('MissingPersonDetailController: Error - $e');

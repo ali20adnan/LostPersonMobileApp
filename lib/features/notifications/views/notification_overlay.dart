@@ -7,9 +7,10 @@ import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../../../app/themes/app_colors.dart';
-import '../../../app/routes/app_routes.dart';
 import '../controllers/notifications_controller.dart';
-import '../../../data/models/alert_model.dart';
+import '../controllers/notifications_page_controller.dart';
+import '../widgets/notification_item.dart';
+import 'notifications_page.dart';
 
 /// Floating notification bell button + glassmorphic dropdown overlay
 class NotificationOverlay extends StatelessWidget {
@@ -22,9 +23,19 @@ class NotificationOverlay extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     return Obx(() {
-      return Stack(
-        clipBehavior: Clip.none,
-        children: [
+      final isOpen = controller.isOverlayOpen.value;
+      // Flutter clips hit-tests to the parent's bounds even when the visual
+      // bleeds out via Clip.none. Without the SizedBox below, taps inside
+      // the dropdown fall through to NotificationDismissBarrier and close
+      // the overlay instead of reaching the InkWell of each item.
+      return SizedBox(
+        width: isOpen
+            ? MediaQuery.of(context).size.width * 0.9
+            : 44,
+        height: isOpen ? 500 : 44,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
           // ── Bell Button ──────────────────────────────────
           GestureDetector(
             onTap: () {
@@ -109,7 +120,8 @@ class NotificationOverlay extends StatelessWidget {
                   .fadeIn(duration: 200.ms)
                   .slideY(begin: -0.1, end: 0, duration: 250.ms, curve: Curves.easeOutCubic),
             ),
-        ],
+          ],
+        ),
       );
     });
   }
@@ -198,7 +210,13 @@ class _NotificationDropdown extends StatelessWidget {
                     TextButton.icon(
                       onPressed: () {
                         controller.isOverlayOpen.value = false;
-                        Get.toNamed(AppRoutes.notifications);
+                        // Ensure the page controller is registered (the binding
+                        // chain via named routes was not firing reliably from
+                        // here), then push the page directly.
+                        if (!Get.isRegistered<NotificationsPageController>()) {
+                          Get.put(NotificationsPageController());
+                        }
+                        Get.to(() => const NotificationsPage());
                       },
                       icon: Icon(PhosphorIcons.arrowLeft(), size: 14),
                       label: const Text('عرض الكل',
@@ -214,17 +232,23 @@ class _NotificationDropdown extends StatelessWidget {
               ),
               Divider(height: 1, color: theme.dividerColor.withValues(alpha: 0.3)),
 
-              // Alert list
-              Flexible(
+              // Unified notification list (alerts + persisted + unread hints)
+              // Use ConstrainedBox + non-shrinkWrap ListView so the list
+              // actually scrolls when content exceeds the dropdown height.
+              // (Flexible inside MainAxisSize.min + shrinkWrap was breaking
+              // gesture-driven scrolling.)
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 340),
                 child: Obx(() {
-                  if (controller.isLoading.value && controller.alerts.isEmpty) {
+                  if (controller.isLoading.value &&
+                      controller.entries.isEmpty) {
                     return const Padding(
                       padding: EdgeInsets.all(32),
                       child: Center(child: CircularProgressIndicator()),
                     );
                   }
 
-                  if (controller.alerts.isEmpty) {
+                  if (controller.entries.isEmpty) {
                     return Padding(
                       padding: const EdgeInsets.all(32),
                       child: Column(
@@ -257,24 +281,15 @@ class _NotificationDropdown extends StatelessWidget {
                     );
                   }
 
-                  return ListView.separated(
-                    shrinkWrap: true,
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    itemCount: controller.alerts.length,
-                    separatorBuilder: (_, __) => Divider(
-                      height: 1,
-                      indent: 60,
-                      endIndent: 16,
-                      color: theme.dividerColor.withValues(alpha: 0.15),
-                    ),
+                  return ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+                    physics: const ClampingScrollPhysics(),
+                    itemCount: controller.entries.length,
                     itemBuilder: (context, index) {
-                      if (index == controller.alerts.length - 1) {
-                        controller.loadMore();
-                      }
-                      return _AlertTile(
-                        alert: controller.alerts[index],
-                        onTap: () =>
-                            controller.markAsRead(controller.alerts[index].id),
+                      final entry = controller.entries[index];
+                      return NotificationItem(
+                        entry: entry,
+                        onTap: () => _handleEntryTap(entry, controller),
                       );
                     },
                   );
@@ -288,124 +303,35 @@ class _NotificationDropdown extends StatelessWidget {
   }
 }
 
-/// Single alert tile with modern design
-class _AlertTile extends StatelessWidget {
-  final Alert alert;
-  final VoidCallback onTap;
-
-  const _AlertTile({required this.alert, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Type icon
-            Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: _typeColor(alert.type, theme).withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                _typeIcon(alert.type),
-                size: 18,
-                color: _typeColor(alert.type, theme),
-              ),
-            ),
-            const SizedBox(width: 12),
-
-            // Content
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: _typeColor(alert.type, theme)
-                              .withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          alert.typeDisplayAr,
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color: _typeColor(alert.type, theme),
-                          ),
-                        ),
-                      ),
-                      const Spacer(),
-                      Text(
-                        _formatTime(alert.createdAt),
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: theme.colorScheme.onSurface
-                              .withValues(alpha: 0.35),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    alert.description,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodySmall,
-                  ),
-                  if (alert.report?.personName != null) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      alert.report!.personName!,
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+/// Route a tap on a unified [NotificationEntry] to the right action.
+/// Always closes the overlay and pushes a screen so the user gets feedback
+/// that their tap was registered.
+void _handleEntryTap(NotificationEntry entry, NotificationsController ctrl) {
+  // Mark alert as read locally before routing.
+  if (entry.type == 'alert' && entry.id != null) {
+    ctrl.markAsRead(entry.id!);
   }
 
-  IconData _typeIcon(String type) {
-    switch (type) {
-      case 'found':
-        return PhosphorIcons.checkCircle();
-      default:
-        return PhosphorIcons.bell();
+  ctrl.isOverlayOpen.value = false;
+
+  // Persisted notifications have a real detail screen — open it directly.
+  if (entry.type == 'missingPerson' || entry.type == 'centerReport') {
+    if (!Get.isRegistered<NotificationsPageController>()) {
+      Get.put(NotificationsPageController());
     }
-  }
-
-  Color _typeColor(String type, ThemeData theme) {
-    switch (type) {
-      case 'found':
-        return AppColors.success;
-      default:
-        return AppColors.secondary;
+    final pageCtrl = Get.find<NotificationsPageController>();
+    if (entry.type == 'missingPerson') {
+      pageCtrl.handleMissingPersonTap(entry);
+    } else {
+      pageCtrl.handleCenterReportTap(entry);
     }
+    return;
   }
 
-  String _formatTime(DateTime dt) {
-    final diff = DateTime.now().difference(dt);
-    if (diff.inMinutes < 1) return 'الآن';
-    if (diff.inHours < 1) return 'منذ ${diff.inMinutes} د';
-    if (diff.inDays < 1) return 'منذ ${diff.inHours} س';
-    if (diff.inDays < 7) return 'منذ ${diff.inDays} ي';
-    return '${dt.day}/${dt.month}';
+  // Alerts / message hints / report hints → fall back to the full
+  // notifications page so the user can see the entry in context.
+  if (!Get.isRegistered<NotificationsPageController>()) {
+    Get.put(NotificationsPageController());
   }
+  Get.to(() => const NotificationsPage());
 }

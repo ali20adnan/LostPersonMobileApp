@@ -43,6 +43,30 @@ class ChatConversation {
     );
   }
 
+  ChatConversation copyWith({
+    int? id,
+    String? name,
+    bool? isGroup,
+    String? avatarUrl,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    List<ChatParticipant>? participants,
+    ChatMessage? lastMessage,
+    int? unreadCount,
+  }) {
+    return ChatConversation(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      isGroup: isGroup ?? this.isGroup,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      participants: participants ?? this.participants,
+      lastMessage: lastMessage ?? this.lastMessage,
+      unreadCount: unreadCount ?? this.unreadCount,
+    );
+  }
+
   /// Display name: for 1-to-1 chats, show the other person's name
   String displayName(int currentUserId) {
     if (name != null && name!.isNotEmpty) return name!;

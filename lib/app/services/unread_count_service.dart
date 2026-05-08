@@ -37,7 +37,7 @@ class UnreadCountService extends GetxService {
   Future<void> refreshAll() async {
     await Future.wait([
       _refreshAlerts(),
-      _refreshMessages(),
+      refreshMessages(),
       _refreshReports(),
     ]);
   }
@@ -50,7 +50,7 @@ class UnreadCountService extends GetxService {
     }
   }
 
-  Future<void> _refreshMessages() async {
+  Future<void> refreshMessages() async {
     try {
       messagesUnread.value = await ConversationRepository().getUnreadCount();
     } catch (e) {
@@ -93,7 +93,7 @@ class UnreadCountService extends GetxService {
     });
 
     socket.on('messagesRead', 'unreadCount', (_) {
-      _refreshMessages();
+      refreshMessages();
     });
   }
 
