@@ -5,11 +5,11 @@ class ApiConstants {
   /// Backend REST API base URL.
   /// Override via .env `API_BASE_URL` (e.g. http://10.0.2.2:3003/api for Android emulator).
   static String get apiBaseUrl =>
-      dotenv.env['API_BASE_URL'] ?? 'https://api.almuntazer.net/losts/api';
+      dotenv.env['API_BASE_URL'] ?? 'https://lostpersons.askdevelopers.online/api';
 
   /// Server root for static files (images, avatars, etc.)
   static String get filesBaseUrl =>
-      dotenv.env['FILES_BASE_URL'] ?? 'https://file.almuntazer.net/uploads/losts';
+      dotenv.env['FILES_BASE_URL'] ?? 'https://lostpersons.askdevelopers.online/uploads/losts';
 
   static String get uploadsBaseUrl {
     final normalized = filesBaseUrl.replaceAll(RegExp(r'/+$'), '');
@@ -21,7 +21,7 @@ class ApiConstants {
   /// Server root (without /api) – used for sockets and some relative paths.
   /// Override via .env `SERVER_BASE_URL` (e.g. http://10.0.2.2:3003 for Android emulator).
   static String get serverBaseUrl =>
-      dotenv.env['SERVER_BASE_URL'] ?? 'https://api.almuntazer.net/losts';
+      dotenv.env['SERVER_BASE_URL'] ?? 'https://lostpersons.askdevelopers.online';
 
   // Auth
   static const String login = '/auth/login';

@@ -15,8 +15,8 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_17.toString()
+    kotlin {
+        jvmToolchain(17)
     }
 
     defaultConfig {
@@ -28,9 +28,22 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
+        ndk {
+            abiFilters.add("arm64-v8a")
+        }
     }
 
     buildTypes {
+        debug {
+            // Enable R8 for debug to test optimization effectiveness
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
         release {
             signingConfig = signingConfigs.getByName("debug")
             isMinifyEnabled = true
@@ -39,6 +52,19 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+        }
+    }
+
+    // App Bundle optimization configuration
+    bundle {
+        language {
+            enableSplit = false  // Include all languages in each split
+        }
+        density {
+            enableSplit = true
+        }
+        abi {
+            enableSplit = true
         }
     }
 }
