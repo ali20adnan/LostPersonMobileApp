@@ -9,7 +9,7 @@ class ApiConstants {
 
   /// Server root for static files (images, avatars, etc.)
   static String get filesBaseUrl =>
-      dotenv.env['FILES_BASE_URL'] ?? 'https://lostpersons.askdevelopers.online/uploads/losts';
+      dotenv.env['FILES_BASE_URL'] ?? 'https://lostpersons.askdevelopers.online/uploads';
 
   static String get uploadsBaseUrl {
     final normalized = filesBaseUrl.replaceAll(RegExp(r'/+$'), '');
