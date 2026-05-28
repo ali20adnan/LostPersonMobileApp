@@ -542,9 +542,7 @@ class MissingPersonDetailPage extends GetView<MissingPersonDetailController> {
   }
 
   String _resolvePhotoUrl(String url) {
-    if (url.startsWith('http')) return url;
-    if (url.startsWith('/')) return '${ApiConstants.filesBaseUrl}$url';
-    return '${ApiConstants.filesBaseUrl}/$url';
+    return ApiConstants.resolveUploadUrl(url) ?? url;
   }
 
   // ── Photos gallery section ───────────────────────────────────

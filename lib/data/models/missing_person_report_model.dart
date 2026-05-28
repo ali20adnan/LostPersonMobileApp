@@ -146,23 +146,10 @@ class ReportPhoto {
   });
 
   /// Full URL for displaying the photo.
-  /// Prefers the `url` field from the API; falls back to constructing from path.
+  /// Prefers the `url` field from the API; falls back to the raw storage key.
   String? get displayUrl {
-    // Prefer full URL from backend (already includes CDN URL)
-    if (url != null && url!.isNotEmpty) {
-      if (url!.startsWith('http')) return url;
-      // Relative URL like /uploads/... — prepend files base
-      return '${ApiConstants.filesBaseUrl}${url!.startsWith('/') ? '' : '/'}$url';
-    }
-    if (path.isEmpty) return null;
-    if (path.startsWith('http')) return path;
-    // Raw storage key like missing-persons/photos/photo-xxx.jpg
-    // or uploads/losts/... — use files base
-    var cleanPath = path;
-    if (cleanPath.startsWith('/uploads/')) {
-      cleanPath = cleanPath.substring(1); // Remove leading /
-    }
-    return '${ApiConstants.filesBaseUrl}/$cleanPath';
+    final source = (url != null && url!.isNotEmpty) ? url : path;
+    return ApiConstants.resolveUploadUrl(source);
   }
 
   factory ReportPhoto.fromJson(Map<String, dynamic> json) {

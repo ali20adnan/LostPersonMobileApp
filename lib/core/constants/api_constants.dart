@@ -95,14 +95,19 @@ class ApiConstants {
     
     // 1. تنظيف المسار من أي شرطة مائلة في البداية
     String cleanPath = raw.startsWith('/') ? raw.substring(1) : raw;
-    
-    // 2. حل مشكلة التكرار: إذا كان المسار يبدأ بـ "losts/" والرابط الأساسي ينتهي بـ "losts"
-    // نقوم بحذف الجزء المكرر من المسار
+
+    // 2. حذف بادئة "uploads/" المكرّرة عندما يكون الرابط الأساسي ينتهي بـ "uploads"
+    // (الباك إند المحلي يُرجع url بصيغة "/uploads/losts/...").
+    if (filesBaseUrl.endsWith('uploads') && cleanPath.startsWith('uploads/')) {
+      cleanPath = cleanPath.substring(8); // حذف "uploads/"
+    }
+
+    // 3. حل مشكلة التكرار: إذا كان المسار يبدأ بـ "losts/" والرابط الأساسي ينتهي بـ "losts"
     if (filesBaseUrl.endsWith('losts') && cleanPath.startsWith('losts/')) {
       cleanPath = cleanPath.substring(6); // حذف "losts/"
     }
-    
-    // 3. تأكد أيضاً من عدم تكرار "uploads/losts" بالكامل
+
+    // 4. تأكد أيضاً من عدم تكرار "uploads/losts" بالكامل
     if (filesBaseUrl.endsWith('uploads/losts') && cleanPath.startsWith('uploads/losts/')) {
       cleanPath = cleanPath.substring(14); // حذف "uploads/losts/"
     }
