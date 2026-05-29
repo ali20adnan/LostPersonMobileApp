@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../../../app/themes/app_colors.dart';
@@ -32,7 +33,7 @@ class EmptyStateWidget extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Icon with gradient background circle
+            // Icon with gradient background circle — gently floats up/down
             Container(
               width: iconSize + 40,
               height: iconSize + 40,
@@ -52,7 +53,14 @@ class EmptyStateWidget extends StatelessWidget {
                 size: iconSize * 0.55,
                 color: isDark ? AppColors.primaryLight : AppColors.primary,
               ),
-            ),
+            )
+                .animate(onPlay: (c) => c.repeat(reverse: true))
+                .moveY(
+                  begin: -4,
+                  end: 4,
+                  duration: 2400.ms,
+                  curve: Curves.easeInOut,
+                ),
             const SizedBox(height: 24),
             Text(
               title,

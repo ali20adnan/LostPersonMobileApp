@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:gap/gap.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
@@ -6,6 +7,8 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../../app/services/storage_service.dart';
 import '../../../app/themes/app_colors.dart';
 import '../../../core/constants/language_constants.dart';
+import '../../../core/widgets/shared/animated_list_item.dart';
+import '../../../core/widgets/shared/motion/animated_appear.dart';
 import '../../../data/models/language_model.dart';
 
 /// Google-Translate-style language picker.
@@ -90,47 +93,76 @@ class _LanguagesPageState extends State<LanguagesPage> {
         body: SafeArea(
           child: !_ready
               ? const Center(child: CircularProgressIndicator())
-              : ListView(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w600,
-                        color: isDark
-                            ? AppColors.textOnDark
-                            : AppColors.textPrimary,
-                      ),
-                    ),
-                    const Gap(28),
-                    if (_recent.isNotEmpty) ...[
-                      _buildSectionHeader('اللغات المستخدمة مؤخرًا', isDark),
-                      const Gap(8),
-                      ..._recent.map(
-                        (lang) => _buildLanguageTile(
-                          lang,
-                          isDark: isDark,
-                          isSelected: lang.code == _currentSelectedCode,
-                        ),
-                      ),
-                      const Gap(24),
-                    ],
-                    _buildSectionHeader('جميع اللغات', isDark),
-                    const Gap(8),
-                    ...LanguageConstants.supportedLanguages.map(
-                      (lang) => _buildLanguageTile(
-                        lang,
-                        isDark: isDark,
-                        isSelected: lang.code == _currentSelectedCode,
-                      ),
-                    ),
-                    const Gap(24),
-                  ],
+              : AnimationLimiter(
+                  child: ListView(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    children: _buildBodyChildren(isDark, title),
+                  ),
                 ),
         ),
       ),
     );
+  }
+
+  List<Widget> _buildBodyChildren(bool isDark, String title) {
+    final children = <Widget>[];
+    var index = 0;
+
+    children.add(
+      AnimatedAppear(
+        child: Text(
+          title,
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.w600,
+            color: isDark ? AppColors.textOnDark : AppColors.textPrimary,
+          ),
+        ),
+      ),
+    );
+    children.add(const Gap(28));
+
+    if (_recent.isNotEmpty) {
+      children.add(AnimatedListItem(
+        index: index++,
+        verticalOffset: 16,
+        child: _buildSectionHeader('اللغات المستخدمة مؤخرًا', isDark),
+      ));
+      children.add(const Gap(8));
+      for (final lang in _recent) {
+        children.add(AnimatedListItem(
+          index: index++,
+          verticalOffset: 16,
+          child: _buildLanguageTile(
+            lang,
+            isDark: isDark,
+            isSelected: lang.code == _currentSelectedCode,
+          ),
+        ));
+      }
+      children.add(const Gap(24));
+    }
+
+    children.add(AnimatedListItem(
+      index: index++,
+      verticalOffset: 16,
+      child: _buildSectionHeader('جميع اللغات', isDark),
+    ));
+    children.add(const Gap(8));
+    for (final lang in LanguageConstants.supportedLanguages) {
+      children.add(AnimatedListItem(
+        index: index++,
+        verticalOffset: 16,
+        child: _buildLanguageTile(
+          lang,
+          isDark: isDark,
+          isSelected: lang.code == _currentSelectedCode,
+        ),
+      ));
+    }
+    children.add(const Gap(24));
+
+    return children;
   }
 
   Widget _buildSectionHeader(String label, bool isDark) {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../app/services/unread_count_service.dart';
 import '../../../data/repositories/incident_repository.dart';
 import '../../../data/models/incident_model.dart';
 import '../../../core/constants/incident_constants.dart';
@@ -30,6 +31,28 @@ class IncidentsListController extends GetxController {
     super.onInit();
     _reportRepository = Get.find<ReportRepository>();
     loadReports();
+    markAllAsReadOnView();
+  }
+
+  /// Mark all reports as read when the list page becomes active.
+  /// Optimistically clears the tab/notifications badge, then syncs with the server.
+  Future<void> markAllAsReadOnView() async {
+    if (!Get.isRegistered<UnreadCountService>()) {
+      // No unread service to sync — still hit the server so the next session reflects it.
+      await _reportRepository.markAllAsRead();
+      return;
+    }
+    final unreadService = Get.find<UnreadCountService>();
+    if (unreadService.reportsUnread.value == 0) return;
+
+    // Optimistic clear so the badge disappears instantly.
+    unreadService.reportsUnread.value = 0;
+
+    final ok = await _reportRepository.markAllAsRead();
+    if (!ok) {
+      // Roll back by re-fetching the authoritative count.
+      await unreadService.refreshAll();
+    }
   }
 
   /// Load reports from API

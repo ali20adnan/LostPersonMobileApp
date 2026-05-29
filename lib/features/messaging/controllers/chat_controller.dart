@@ -24,6 +24,7 @@ class ChatController extends GetxController {
   final typingUserName = ''.obs;
 
   final messageController = TextEditingController();
+  final messageFocusNode = FocusNode();
   final itemScrollController = ItemScrollController();
   final itemPositionsListener = ItemPositionsListener.create();
 
@@ -46,6 +47,13 @@ class ChatController extends GetxController {
     conversationId = Get.arguments?['conversationId'] as int? ?? 0;
     _loadConversation();
     _setupSocketListeners();
+    messageFocusNode.addListener(_onMessageFocusChanged);
+  }
+
+  /// Scroll to the latest message whenever the input gains focus, so the
+  /// keyboard doesn't end up covering the message the user was reading.
+  void _onMessageFocusChanged() {
+    if (messageFocusNode.hasFocus) _scrollToBottom();
   }
 
   /// Load conversation details and messages
@@ -252,21 +260,33 @@ class ChatController extends GetxController {
     });
   }
 
-  /// Scroll to the latest message. Uses a post-frame + small delay so the
-  /// underlying ScrollablePositionedList finishes laying out the newly-added
-  /// item before we ask it to scroll. Without the delay, the call sometimes
-  /// no-ops because the list hasn't yet reported the new index as reachable.
+  /// Scroll so the latest bubble is fully visible above the input/keyboard.
+  ///
+  /// Implementation note: the chat list renders an extra sentinel item at
+  /// `index == messages.length` (a 1px SizedBox). We target THAT index with
+  /// alignment 1.0, which reliably parks the sentinel at the viewport's
+  /// trailing edge — leaving the last real bubble fully exposed above it.
+  /// Targeting `messages.length - 1` directly is unreliable in
+  /// ScrollablePositionedList when the bubble is taller than the remaining
+  /// viewport.
+  ///
+  /// Two passes: first ~80ms after the new frame so the list has measured
+  /// the new bubble; second ~350ms later so the keyboard's appearance
+  /// animation finishes before the final scroll lands.
   void _scrollToBottom() {
+    void doScroll() {
+      if (messages.isEmpty || !itemScrollController.isAttached) return;
+      itemScrollController.scrollTo(
+        index: messages.length, // sentinel index (msgs.length + 1 items)
+        alignment: 1.0,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+      );
+    }
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Future.delayed(const Duration(milliseconds: 50), () {
-        if (messages.isEmpty || !itemScrollController.isAttached) return;
-        itemScrollController.scrollTo(
-          index: messages.length - 1,
-          alignment: 1.0,
-          duration: const Duration(milliseconds: 250),
-          curve: Curves.easeOut,
-        );
-      });
+      Future.delayed(const Duration(milliseconds: 80), doScroll);
+      Future.delayed(const Duration(milliseconds: 350), doScroll);
     });
   }
 
@@ -281,8 +301,9 @@ class ChatController extends GetxController {
       if (total == 0 || !itemScrollController.isAttached) return;
 
       if (unread <= 0) {
-        // Everything read — go to the latest message.
-        itemScrollController.jumpTo(index: total - 1, alignment: 1.0);
+        // Everything read — go to the latest message via the sentinel
+        // (see _scrollToBottom for why we don't target total - 1 directly).
+        itemScrollController.jumpTo(index: total, alignment: 1.0);
       } else if (unread >= total) {
         // Everything is unread (first time opening) — start from the top.
         itemScrollController.jumpTo(index: 0, alignment: 0.0);
@@ -305,6 +326,8 @@ class ChatController extends GetxController {
 
   @override
   void onClose() {
+    messageFocusNode.removeListener(_onMessageFocusChanged);
+    messageFocusNode.dispose();
     messageController.dispose();
     _stopTypingNow();
     if (Get.isRegistered<SocketService>()) {

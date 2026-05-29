@@ -5,6 +5,7 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../../app/themes/app_colors.dart';
 import '../../../app/routes/app_routes.dart';
 import '../../../core/utils/maps_launcher.dart';
+import '../../../core/widgets/shared/tap_scale.dart';
 import '../../../data/models/missing_person_report_model.dart';
 
 /// Reusable card for displaying a missing / found person
@@ -29,7 +30,7 @@ class MissingPersonCard extends StatelessWidget {
     final accentColor = isFound ? AppColors.teal : AppColors.primary;
     final urgentColor = isFound ? AppColors.teal : AppColors.accent;
 
-    return GestureDetector(
+    return TapScale(
       onTap: onTap ?? () => Get.toNamed(
         AppRoutes.missingPersonDetail,
         arguments: {'reportId': person.id},
@@ -257,21 +258,27 @@ class MissingPersonCard extends StatelessWidget {
 
   Widget _buildAvatar(Color color) {
     final photoUrl = person.primaryPhotoUrl;
-    return Container(
-      width: 48,
-      height: 48,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(color: color.withValues(alpha: 0.4), width: 2),
+    return Hero(
+      tag: 'mp-photo-${person.id}',
+      child: Material(
+        type: MaterialType.transparency,
+        child: Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: color.withValues(alpha: 0.4), width: 2),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: photoUrl != null
+              ? Image.network(
+                  photoUrl,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => _initialsWidget(color),
+                )
+              : _initialsWidget(color),
+        ),
       ),
-      clipBehavior: Clip.antiAlias,
-      child: photoUrl != null
-          ? Image.network(
-              photoUrl,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => _initialsWidget(color),
-            )
-          : _initialsWidget(color),
     );
   }
 

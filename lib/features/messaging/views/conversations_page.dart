@@ -281,36 +281,42 @@ class _ConversationTile extends StatelessWidget {
             child: Row(
               children: [
                 // Avatar
-                Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: resolvedAvatar == null
-                        ? AppColors.heroGradient
-                        : null,
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.primary.withValues(alpha: 0.2),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
+                Hero(
+                  tag: 'conv-avatar-${conversation.id}',
+                  child: Material(
+                    type: MaterialType.transparency,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: resolvedAvatar == null
+                            ? AppColors.heroGradient
+                            : null,
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withValues(alpha: 0.2),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                  child: CircleAvatar(
-                    radius: 26,
-                    backgroundColor: Colors.transparent,
-                    backgroundImage: resolvedAvatar != null
-                        ? NetworkImage(resolvedAvatar)
-                        : null,
-                    child: resolvedAvatar == null
-                        ? Text(
-                            displayName.isNotEmpty ? displayName[0] : '?',
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          )
-                        : null,
+                      child: CircleAvatar(
+                        radius: 26,
+                        backgroundColor: Colors.transparent,
+                        backgroundImage: resolvedAvatar != null
+                            ? NetworkImage(resolvedAvatar)
+                            : null,
+                        child: resolvedAvatar == null
+                            ? Text(
+                                displayName.isNotEmpty ? displayName[0] : '?',
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : null,
+                      ),
+                    ),
                   ),
                 ),
                 const Gap(14),

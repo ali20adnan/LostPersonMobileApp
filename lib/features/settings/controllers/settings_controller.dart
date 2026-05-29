@@ -2,12 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../app/services/storage_service.dart';
+
 class SettingsController extends GetxController {
   static const _darkModeKey = 'settings_dark_mode';
-  static const _notificationsKey = 'settings_notifications';
+
+  // StorageService is the source of truth for non-theme prefs so the
+  // consumers (TranslationRepository, SonioxService, notifications
+  // bootstrap, etc.) can read the same values without duplicating keys.
+  final StorageService _storage = Get.find<StorageService>();
 
   final isDarkMode = false.obs;
   final isNotificationsEnabled = true.obs;
+  final isAutoDetectLanguage = true.obs;
+  final isAutoSpeakEnabled = false.obs;
+  final isAutoSaveConversations = true.obs;
 
   @override
   void onInit() {
@@ -18,7 +27,11 @@ class SettingsController extends GetxController {
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
     isDarkMode.value = prefs.getBool(_darkModeKey) ?? false;
-    isNotificationsEnabled.value = prefs.getBool(_notificationsKey) ?? true;
+    isNotificationsEnabled.value = _storage.getNotificationsEnabled();
+    isAutoDetectLanguage.value = _storage.getAutoDetectLanguage();
+    isAutoSaveConversations.value = _storage.getAutoSaveConversations();
+    isAutoSpeakEnabled.value =
+        await _storage.getTtsEnabled(defaultValue: false);
 
     // Apply saved theme
     Get.changeThemeMode(
@@ -35,7 +48,21 @@ class SettingsController extends GetxController {
 
   Future<void> toggleNotifications(bool value) async {
     isNotificationsEnabled.value = value;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_notificationsKey, value);
+    await _storage.saveNotificationsEnabled(value);
+  }
+
+  Future<void> toggleAutoDetectLanguage(bool value) async {
+    isAutoDetectLanguage.value = value;
+    await _storage.saveAutoDetectLanguage(value);
+  }
+
+  Future<void> toggleAutoSpeak(bool value) async {
+    isAutoSpeakEnabled.value = value;
+    await _storage.saveTtsEnabled(value);
+  }
+
+  Future<void> toggleAutoSaveConversations(bool value) async {
+    isAutoSaveConversations.value = value;
+    await _storage.saveAutoSaveConversations(value);
   }
 }

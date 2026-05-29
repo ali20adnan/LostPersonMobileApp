@@ -37,10 +37,15 @@ class SonioxService {
     _statusController?.add(_status);
   }
 
-  /// Connect to Soniox WebSocket with translation configuration
+  /// Connect to Soniox WebSocket with translation configuration.
+  ///
+  /// When [autoDetect] is true, the config sends `language_hints` instead of
+  /// the strict `language_a`/`language_b` pair, allowing Soniox to detect
+  /// which of the two languages the speaker is using on each utterance.
   Future<bool> connect({
     required String languageA,
     required String languageB,
+    bool autoDetect = false,
   }) async {
     debugPrint('┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓');
     debugPrint('┃ SonioxService: CONNECT TO WEBSOCKET                ┃');
@@ -84,17 +89,21 @@ class SonioxService {
       final apiKey = ApiConstants.sonioxApiKey;
       debugPrint('SonioxService: API Key: ${apiKey.isEmpty ? "EMPTY/NOT SET" : "${apiKey.substring(0, 10)}...${apiKey.substring(apiKey.length - 4)}"}');
 
-      final config = {
+      final translation = <String, dynamic>{
+        'type': ApiConstants.translationMode,
+        'language_a': languageA,
+        'language_b': languageB,
+      };
+      final config = <String, dynamic>{
         'api_key': apiKey,
         'model': ApiConstants.sonioxModel,
         'audio_format': ApiConstants.audioFormat,
         'num_channels': ApiConstants.numChannels,
         'sample_rate': ApiConstants.sampleRate,
-        'translation': {
-          'type': ApiConstants.translationMode,
-          'language_a': languageA,
-          'language_b': languageB,
-        },
+        'translation': translation,
+        // Auto-detect: let Soniox identify the spoken language from the two
+        // candidates instead of forcing a single source.
+        if (autoDetect) 'language_hints': [languageA, languageB],
       };
 
       debugPrint('SonioxService: Configuration:');

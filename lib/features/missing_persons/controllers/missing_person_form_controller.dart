@@ -7,6 +7,7 @@ import '../../../app/services/permission_service.dart';
 import '../../../data/models/governorate_model.dart';
 import '../../../data/repositories/governorate_repository.dart';
 import '../../../data/repositories/missing_persons_repository.dart';
+import '../../home/controllers/home_controller.dart';
 import '../views/map_picker_page.dart';
 import 'missing_persons_controller.dart';
 
@@ -171,40 +172,46 @@ class MissingPersonFormController extends GetxController {
     }
   }
 
+  // Required fields when adding a missing person (project-wide policy):
+  //   1. الاسم        (fullName)
+  //   2. العمر        (age)
+  //   3. الجنس        (gender)        — defaults to a non-null option in UI
+  //   4. المحافظة     (residence governorate, forwarded as lastSeenLocation.governorateId)
+  //   5. اسم المبلّغ   (reporterName)
+  //   6. رقم الهاتف   (reporterPhone)
+  // Everything else — including the photo — is optional.
   bool _validate() {
-    if (fullNameController.text.trim().isEmpty) {
-      Get.snackbar('خطأ', 'يرجى إدخال الاسم الكامل',
+    void showError(String message) {
+      Get.snackbar('خطأ', message,
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: Colors.red.withValues(alpha: 0.8),
           colorText: Colors.white);
+    }
+
+    if (fullNameController.text.trim().isEmpty) {
+      showError('يرجى إدخال الاسم الكامل');
+      return false;
+    }
+    final ageText = ageController.text.trim();
+    final parsedAge = int.tryParse(ageText);
+    if (ageText.isEmpty || parsedAge == null || parsedAge < 0 || parsedAge > 150) {
+      showError('يرجى إدخال عمر صحيح');
+      return false;
+    }
+    if (selectedGender.value.isEmpty) {
+      showError('يرجى اختيار الجنس');
+      return false;
+    }
+    if (selectedResidenceGovernorate.value == null) {
+      showError('يرجى اختيار المحافظة');
       return false;
     }
     if (reporterNameController.text.trim().isEmpty) {
-      Get.snackbar('خطأ', 'يرجى إدخال اسم المُبلّغ',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red.withValues(alpha: 0.8),
-          colorText: Colors.white);
+      showError('يرجى إدخال اسم المُبلّغ');
       return false;
     }
     if (reporterPhoneController.text.trim().isEmpty) {
-      Get.snackbar('خطأ', 'يرجى إدخال رقم هاتف المُبلّغ',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red.withValues(alpha: 0.8),
-          colorText: Colors.white);
-      return false;
-    }
-    if (missingDateController.text.trim().isEmpty) {
-      Get.snackbar('خطأ', 'يرجى تحديد تاريخ الفقدان',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red.withValues(alpha: 0.8),
-          colorText: Colors.white);
-      return false;
-    }
-    if (selectedPhotos.isEmpty) {
-      Get.snackbar('خطأ', 'يرجى إضافة صورة واحدة على الأقل',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red.withValues(alpha: 0.8),
-          colorText: Colors.white);
+      showError('يرجى إدخال رقم هاتف المُبلّغ');
       return false;
     }
     return true;
@@ -273,6 +280,9 @@ class MissingPersonFormController extends GetxController {
             backgroundColor: Colors.green.withValues(alpha: 0.8),
             colorText: Colors.white);
         Get.back();
+        if (Get.isRegistered<HomeController>()) {
+          Get.find<HomeController>().changePage(1);
+        }
       } else {
         Get.snackbar('خطأ', response.errorMessage ?? 'فشل إرسال البلاغ',
             snackPosition: SnackPosition.BOTTOM,

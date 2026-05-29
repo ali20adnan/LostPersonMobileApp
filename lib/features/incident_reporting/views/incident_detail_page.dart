@@ -10,6 +10,7 @@ import 'package:video_player/video_player.dart';
 import '../../../app/themes/app_colors.dart';
 import '../../../core/constants/incident_constants.dart';
 import '../../../core/utils/maps_launcher.dart';
+import '../../../core/widgets/shared/motion/animated_appear.dart';
 import '../../../data/models/incident_model.dart';
 import '../../../data/models/user_model.dart';
 import '../controllers/incident_detail_controller.dart';
@@ -45,22 +46,39 @@ class IncidentDetailPage extends GetView<IncidentDetailController> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildStatusHeader(report, isDark),
+                      AnimatedAppear(
+                        child: _buildStatusHeader(report, isDark),
+                      ),
                       const Gap(12),
                       if (report.description != null &&
                           report.description!.isNotEmpty) ...[
-                        _buildDescriptionSection(report, isDark),
+                        AnimatedAppear(
+                          delay: const Duration(milliseconds: 80),
+                          child: _buildDescriptionSection(report, isDark),
+                        ),
                         const Gap(12),
                       ],
                       if (report.photos.isNotEmpty) ...[
-                        _buildPhotosGallery(report, isDark),
+                        AnimatedAppear(
+                          delay: const Duration(milliseconds: 160),
+                          child: _buildPhotosGallery(report, isDark),
+                        ),
                         const Gap(12),
                       ],
-                      _buildDetailsSection(report, isDark),
+                      AnimatedAppear(
+                        delay: const Duration(milliseconds: 240),
+                        child: _buildDetailsSection(report, isDark),
+                      ),
                       const Gap(12),
-                      _buildLocationSection(report, isDark),
+                      AnimatedAppear(
+                        delay: const Duration(milliseconds: 320),
+                        child: _buildLocationSection(report, isDark),
+                      ),
                       const Gap(12),
-                      _buildPeopleSection(report, isDark),
+                      AnimatedAppear(
+                        delay: const Duration(milliseconds: 400),
+                        child: _buildPeopleSection(report, isDark),
+                      ),
                       const Gap(120),
                     ],
                   ),

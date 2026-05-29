@@ -8,6 +8,7 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../../../app/services/unread_count_service.dart';
 import '../../../app/themes/app_colors.dart';
+import '../../../core/widgets/shared/sacred_lottie.dart';
 import '../controllers/notifications_page_controller.dart';
 import '../widgets/notification_item.dart';
 
@@ -241,21 +242,29 @@ class NotificationsPage extends GetView<NotificationsPageController> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              gradient: AppColors.heroGradient,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.3),
-                  blurRadius: 24,
-                  offset: const Offset(0, 8),
-                ),
-              ],
+          // Tries a Lottie loop; falls back to the existing gradient bell.
+          SacredLottie(
+            asset: 'assets/lottie/empty_notifications.json',
+            width: 160,
+            height: 160,
+            repeat: true,
+            tint: AppColors.accent,
+            fallback: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                gradient: AppColors.heroGradient,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.3),
+                    blurRadius: 24,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Icon(PhosphorIcons.bellRinging(),
+                  size: 48, color: Colors.white),
             ),
-            child: Icon(PhosphorIcons.bellRinging(),
-                size: 48, color: Colors.white),
           ),
           const Gap(20),
           Text(

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 
+import '../../../app/themes/app_motion.dart';
+
 /// Wraps a list child widget with staggered slide + fade animation.
 /// Use inside [AnimationLimiter] for coordinated list entrance.
 class AnimatedListItem extends StatelessWidget {
@@ -16,7 +18,7 @@ class AnimatedListItem extends StatelessWidget {
     required this.child,
     this.verticalOffset = 50.0,
     this.horizontalOffset = 0.0,
-    this.duration = const Duration(milliseconds: 375),
+    this.duration = AppMotion.standard,
   });
 
   @override

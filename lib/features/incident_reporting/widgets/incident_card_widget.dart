@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../../app/themes/app_colors.dart';
 import '../../../core/utils/maps_launcher.dart';
+import '../../../core/widgets/shared/tap_scale.dart';
 import '../../../data/models/incident_model.dart';
 import '../../../core/constants/incident_constants.dart';
 
@@ -26,7 +27,7 @@ class IncidentCardWidget extends StatelessWidget {
     final severity = ReportSeverity.fromString(incident.severity ?? 'medium');
     final status = ReportStatus.fromApiString(incident.status);
 
-    return GestureDetector(
+    return TapScale(
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),

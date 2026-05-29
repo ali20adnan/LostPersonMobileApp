@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../translator/views/translator_hub_page.dart';
 import '../../missing_persons/views/missing_persons_page.dart';
+import '../../incident_reporting/controllers/incidents_list_controller.dart';
 import '../../incident_reporting/views/incidents_list_page.dart';
 import '../../profile/views/profile_page.dart';
 
@@ -23,6 +24,9 @@ class HomeController extends GetxController {
   void changePage(int index) {
     currentIndex.value = index;
     debugPrint('HomeController: Changed to page $index');
+    if (index == 2 && Get.isRegistered<IncidentsListController>()) {
+      Get.find<IncidentsListController>().markAllAsReadOnView();
+    }
   }
 
   /// Navigate to specific page

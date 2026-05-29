@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -31,14 +32,14 @@ class HomePage extends GetView<HomeController> {
           extendBody: true,
           body: Stack(
             children: [
-              // Main content with animated switching
-              Obx(() => AnimatedSwitcher(
+              // Main content with Material fade-through transition between tabs
+              Obx(() => PageTransitionSwitcher(
                     duration: const Duration(milliseconds: 300),
-                    switchInCurve: Curves.easeOutCubic,
-                    switchOutCurve: Curves.easeInCubic,
-                    transitionBuilder: (child, animation) {
-                      return FadeTransition(
-                        opacity: animation,
+                    transitionBuilder: (child, primary, secondary) {
+                      return FadeThroughTransition(
+                        animation: primary,
+                        secondaryAnimation: secondary,
+                        fillColor: Colors.transparent,
                         child: child,
                       );
                     },
@@ -323,18 +324,26 @@ class _NavItem extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 200),
+            TweenAnimationBuilder<double>(
+              // Keying on (badgeCount, isSelected) re-runs the tween when
+              // either changes — gives a subtle "pop" on count increment
+              // and a small bounce when the tab is activated.
+              key: ValueKey('navitem-$badgeCount-$isSelected'),
+              tween: Tween(begin: 0.85, end: 1.0),
+              duration: const Duration(milliseconds: 240),
+              curve: Curves.easeOutBack,
+              builder: (_, scale, child) =>
+                  Transform.scale(scale: scale, child: child),
               child: Badge(
                 isLabelVisible: badgeCount > 0,
                 label: Text(
                   badgeCount > 99 ? '99+' : '$badgeCount',
-                  style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                      fontSize: 9, fontWeight: FontWeight.bold),
                 ),
                 backgroundColor: AppColors.accent,
                 child: Icon(
                   isSelected ? activeIcon : icon,
-                  key: ValueKey(isSelected),
                   color: isSelected
                       ? AppColors.accent
                       : theme.colorScheme.onSurface.withValues(alpha: 0.45),

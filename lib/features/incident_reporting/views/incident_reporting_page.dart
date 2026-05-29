@@ -3,9 +3,9 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:gap/gap.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
-import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 import '../../../app/themes/app_colors.dart';
+import '../../../core/widgets/shared/morph_submit_button.dart';
 import '../controllers/incident_reporting_controller.dart';
 import '../widgets/severity_selector_widget.dart';
 import '../widgets/media_picker_widget.dart';
@@ -328,57 +328,16 @@ class IncidentReportingPage extends GetView<IncidentReportingController> {
 
             const Gap(28),
 
-            // Submit button — gradient
-            Obx(() => GestureDetector(
-                  onTap: controller.isSubmitting.value
-                      ? null
-                      : controller.submitReport,
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    decoration: BoxDecoration(
-                      gradient: controller.isSubmitting.value
-                          ? null
-                          : AppColors.heroGradient,
-                      color: controller.isSubmitting.value
-                          ? (isDark ? AppColors.surfaceDark : Colors.grey[300])
-                          : null,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: controller.isSubmitting.value
-                          ? null
-                          : [
-                              BoxShadow(
-                                color: AppColors.primary.withValues(alpha: 0.4),
-                                blurRadius: 12,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        if (controller.isSubmitting.value)
-                          LoadingAnimationWidget.staggeredDotsWave(
-                            color: AppColors.primary,
-                            size: 28,
-                          )
-                        else ...[
-                          Icon(PhosphorIcons.paperPlaneTilt(), color: Colors.white),
-                          const Gap(8),
-                          const Text(
-                            'إرسال البلاغ',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                )).animate().fadeIn(duration: 500.ms, delay: 650.ms).slideY(begin: 0.1),
+            // Submit button — morphs to spinner during submit
+            Obx(() => MorphSubmitButton(
+                  label: 'إرسال البلاغ',
+                  icon: PhosphorIcons.paperPlaneTilt(),
+                  isSubmitting: controller.isSubmitting.value,
+                  onPressed: controller.submitReport,
+                ))
+                .animate()
+                .fadeIn(duration: 500.ms, delay: 650.ms)
+                .slideY(begin: 0.1),
 
             const Gap(16),
 

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
+import '../../../core/widgets/shared/motion/animated_appear.dart';
 import '../controllers/ocr_reader_controller.dart';
 
 class OcrReaderPage extends GetView<OcrReaderController> {
@@ -36,27 +37,36 @@ class OcrReaderPage extends GetView<OcrReaderController> {
             const SizedBox(height: 12),
 
             // Language selector
-            _buildLanguageBar(theme),
+            AnimatedAppear(child: _buildLanguageBar(theme)),
 
             const SizedBox(height: 12),
 
             // Image preview / empty state
             Expanded(
               flex: 3,
-              child: _buildImagePreview(theme),
+              child: AnimatedAppear(
+                delay: const Duration(milliseconds: 80),
+                child: _buildImagePreview(theme),
+              ),
             ),
 
             const SizedBox(height: 12),
 
             // Action buttons
-            _buildActionButtons(theme),
+            AnimatedAppear(
+              delay: const Duration(milliseconds: 160),
+              child: _buildActionButtons(theme),
+            ),
 
             const SizedBox(height: 12),
 
             // Scanned text + translation display
             Expanded(
               flex: 2,
-              child: _buildTextDisplay(theme),
+              child: AnimatedAppear(
+                delay: const Duration(milliseconds: 240),
+                child: _buildTextDisplay(theme),
+              ),
             ),
 
             const SizedBox(height: 16),

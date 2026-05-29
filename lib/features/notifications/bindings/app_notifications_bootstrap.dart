@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../../app/routes/app_routes.dart';
 import '../../../app/services/socket_service.dart';
+import '../../../app/services/storage_service.dart';
 import '../services/app_notifications_service.dart';
 
 /// Wires socket events for "missing person created" notifications and
@@ -25,8 +26,16 @@ class AppNotificationsBootstrap {
 
     final socket = Get.find<SocketService>();
     final service = Get.find<AppNotificationsService>();
+    // Read once at setup time; user changes take effect after re-login or
+    // app restart. Lookup is per-event below to also respect runtime flips.
+    final storage = Get.isRegistered<StorageService>()
+        ? Get.find<StorageService>()
+        : null;
+    bool notificationsEnabled() =>
+        storage?.getNotificationsEnabled() ?? true;
 
     socket.on('newNotification', _listenerKey, (data) {
+      if (!notificationsEnabled()) return;
       if (data is! Map) return;
       final m = Map<String, dynamic>.from(data);
 
@@ -47,12 +56,14 @@ class AppNotificationsBootstrap {
     });
 
     socket.on('notificationRead', _listenerKey, (data) {
+      if (!notificationsEnabled()) return;
       if (data is! Map) return;
       final id = data['id'];
       if (id is int) service.markAsReadLocal(id);
     });
 
     socket.on('notificationsAllRead', _listenerKey, (_) {
+      if (!notificationsEnabled()) return;
       service.markAllAsReadLocal();
     });
 

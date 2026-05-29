@@ -54,8 +54,16 @@ class SettingsPage extends GetView<SettingsController> {
                   icon: PhosphorIcons.microphone(),
                   iconGradient: AppColors.heroGradient,
                   title: 'الكشف التلقائي للغة',
-                  subtitle: 'كشف لغة المتحدث تلقائياً',
-                  trailing: _buildSwitch(true),
+                  subtitle: controller.isAutoDetectLanguage.value
+                      ? 'مفعل — Soniox يكتشف اللغة من بين اللغتين'
+                      : 'معطل — التزام صارم بلغة المصدر والهدف',
+                  trailing: _buildSwitch(
+                    controller.isAutoDetectLanguage.value,
+                    onChanged: (v) {
+                      HapticFeedback.lightImpact();
+                      controller.toggleAutoDetectLanguage(v);
+                    },
+                  ),
                 ),
                 _buildDivider(isDark),
                 _buildSettingTile(
@@ -63,8 +71,16 @@ class SettingsPage extends GetView<SettingsController> {
                   icon: PhosphorIcons.speakerHigh(),
                   iconGradient: AppColors.successGradient,
                   title: 'نطق الترجمة تلقائياً',
-                  subtitle: 'تشغيل صوت الترجمة بعد اكتمالها',
-                  trailing: _buildSwitch(false),
+                  subtitle: controller.isAutoSpeakEnabled.value
+                      ? 'مفعل — تنطق الترجمة بعد اكتمالها'
+                      : 'معطل — اضغط زر السمّاعة للنطق',
+                  trailing: _buildSwitch(
+                    controller.isAutoSpeakEnabled.value,
+                    onChanged: (v) {
+                      HapticFeedback.lightImpact();
+                      controller.toggleAutoSpeak(v);
+                    },
+                  ),
                 ),
                 _buildDivider(isDark),
                 _buildSettingTile(
@@ -72,8 +88,16 @@ class SettingsPage extends GetView<SettingsController> {
                   icon: PhosphorIcons.floppyDisk(),
                   iconGradient: AppColors.heroGradient,
                   title: 'حفظ المحادثات تلقائياً',
-                  subtitle: 'حفظ سجل الترجمة بشكل تلقائي',
-                  trailing: _buildSwitch(true),
+                  subtitle: controller.isAutoSaveConversations.value
+                      ? 'مفعل — يُحفظ سجل الترجمة'
+                      : 'معطل — لن يُحفظ السجل',
+                  trailing: _buildSwitch(
+                    controller.isAutoSaveConversations.value,
+                    onChanged: (v) {
+                      HapticFeedback.lightImpact();
+                      controller.toggleAutoSaveConversations(v);
+                    },
+                  ),
                 ),
               ],
             ).animate().fadeIn(delay: 100.ms, duration: 400.ms).slideY(begin: 0.05),

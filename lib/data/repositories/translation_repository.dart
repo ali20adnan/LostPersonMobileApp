@@ -85,11 +85,12 @@ class TranslationRepository {
       await _ttsService.init();
       debugPrint('  ✓ TtsService initialized');
 
-      // Connect to Soniox
+      // Connect to Soniox (auto-detect honors the user's settings toggle)
       debugPrint('TranslationRepository: Connecting to Soniox...');
       final connected = await _sonioxService.connect(
         languageA: sourceLanguage,
         languageB: targetLanguage,
+        autoDetect: _storageService.getAutoDetectLanguage(),
       );
 
       debugPrint('TranslationRepository: Soniox connection result = $connected');
@@ -266,6 +267,11 @@ class TranslationRepository {
           _currentTranslations.add(translation);
           _finalizedTranslationController.add(translation);
           debugPrint('  ✓ Translation saved (${_currentTranslations.length} total)');
+
+          // Auto-speak when the user has enabled the "نطق الترجمة تلقائياً"
+          // toggle. speakTranslation() itself re-checks the same preference,
+          // so this stays correct if the toggle flips mid-session.
+          unawaited(speakTranslation(translatedText, targetLanguage));
 
           // Clear token lists for next sentence
           _finalOriginalTokens.clear();

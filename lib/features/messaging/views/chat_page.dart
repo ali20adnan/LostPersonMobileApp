@@ -49,8 +49,14 @@ class ChatPage extends GetView<ChatController> {
                 itemScrollController: controller.itemScrollController,
                 itemPositionsListener: controller.itemPositionsListener,
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                itemCount: msgs.length,
+                // +1 sentinel item at the end so scrollTo can reliably land
+                // past the last bubble (alignment 0.0 on the sentinel pins
+                // it to the viewport top → bubble fully visible above).
+                itemCount: msgs.length + 1,
                 itemBuilder: (context, index) {
+                  if (index == msgs.length) {
+                    return const SizedBox(height: 1);
+                  }
                   final msg = msgs[index];
                   final isMe = msg.senderId == controller.currentUserId;
                   final showDate = index == 0 ||
@@ -107,6 +113,19 @@ class ChatPage extends GetView<ChatController> {
     );
   }
 
+  Widget _initialBadge(String initial) {
+    return Center(
+      child: Text(
+        initial,
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+          fontSize: 16,
+        ),
+      ),
+    );
+  }
+
   PreferredSizeWidget _buildAppBar(BuildContext context, bool isDark) {
     return AppBar(
       elevation: 0,
@@ -115,17 +134,66 @@ class ChatPage extends GetView<ChatController> {
       ),
       backgroundColor: Colors.transparent,
       centerTitle: true,
-      title: Obx(() => controller.isLoading.value
-          ? Text('جاري التحميل...',
-              style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 14))
-          : Text(
-              controller.chatTitle,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+      title: Obx(() {
+        final isLoading = controller.isLoading.value;
+        final displayName = controller.chatTitle;
+        final initial = displayName.isNotEmpty ? displayName[0] : '?';
+        final avatarUrl = controller.conversation == null
+            ? null
+            : ApiConstants.resolveAvatarUrl(
+                controller.conversation!.displayAvatarUrl(controller.currentUserId));
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Hero(
+              tag: 'conv-avatar-${controller.conversationId}',
+              child: Material(
+                type: MaterialType.transparency,
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient:
+                        avatarUrl == null ? AppColors.heroGradient : null,
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.4),
+                      width: 1.5,
+                    ),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: avatarUrl != null
+                      ? Image.network(
+                          avatarUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) =>
+                              _initialBadge(initial),
+                        )
+                      : _initialBadge(initial),
+                ),
               ),
-            )),
+            ),
+            const Gap(10),
+            Flexible(
+              child: isLoading
+                  ? Text('جاري التحميل...',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.8),
+                        fontSize: 14,
+                      ))
+                  : Text(
+                      displayName,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+            ),
+          ],
+        );
+      }),
       leading: IconButton(
         icon: Icon(PhosphorIcons.arrowRight(), color: Colors.white),
         onPressed: () => Get.back(),
@@ -228,6 +296,7 @@ class ChatPage extends GetView<ChatController> {
                 ),
                 child: TextField(
                   controller: controller.messageController,
+                  focusNode: controller.messageFocusNode,
                   maxLines: null,
                   textInputAction: TextInputAction.newline,
                   onChanged: (_) => controller.onTyping(),

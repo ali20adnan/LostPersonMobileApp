@@ -13,6 +13,7 @@ import 'app/themes/app_theme.dart';
 import 'app/services/api_service.dart';
 import 'app/services/auth_service.dart';
 import 'app/services/socket_service.dart';
+import 'app/services/storage_service.dart';
 import 'app/services/unread_count_service.dart';
 import 'core/widgets/app_error_widget.dart';
 import 'features/notifications/bindings/app_notifications_bootstrap.dart';
@@ -50,6 +51,15 @@ void main() async {
   // Initialize API & Auth services globally
   await Get.putAsync<ApiService>(() async => ApiService());
   await Get.putAsync<AuthService>(() => AuthService().init());
+
+  // StorageService must be registered BEFORE SettingsController because
+  // the controller's field initializer does Get.find<StorageService>() to
+  // back its toggles (auto-detect, auto-tts, auto-save, notifications).
+  await Get.putAsync<StorageService>(() async {
+    final s = StorageService();
+    await s.init();
+    return s;
+  });
 
   // Initialize settings (dark mode, notifications)
   Get.put(SettingsController(), permanent: true);

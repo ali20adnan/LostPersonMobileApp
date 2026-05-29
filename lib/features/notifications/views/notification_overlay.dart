@@ -33,93 +33,107 @@ class NotificationOverlay extends StatelessWidget {
             ? MediaQuery.of(context).size.width * 0.9
             : 44,
         height: isOpen ? 500 : 44,
+        // Non-directional alignment + explicit Positioned for the bell:
+        // under RTL the default AlignmentDirectional.topStart resolves to
+        // top-RIGHT, so when the SizedBox grew on open the bell jumped
+        // rightward with the new corner. Pinning to (0, 0) keeps the
+        // visual position identical between collapsed and expanded states.
         child: Stack(
+          alignment: Alignment.topLeft,
           clipBehavior: Clip.none,
           children: [
-          // ── Bell Button ──────────────────────────────────
-          GestureDetector(
-            onTap: () {
-              HapticFeedback.lightImpact();
-              controller.toggleOverlay();
-            },
-            child: Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: isDark
-                    ? AppColors.surfaceDark.withValues(alpha: 0.8)
-                    : Colors.white.withValues(alpha: 0.85),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: isDark ? AppColors.glassBorderDark : AppColors.glassBorder,
-                ),
-                boxShadow: AppColors.cardShadow,
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(14),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    alignment: Alignment.center,
-                    children: [
-                      Icon(
-                        controller.isOverlayOpen.value
-                            ? PhosphorIcons.bell()
-                            : PhosphorIcons.bell(),
-                        color: AppColors.primary,
-                        size: 22,
-                      ),
-                      // Unread badge
-                      if (controller.unreadCount.value > 0)
-                        Positioned(
-                          top: 6,
-                          right: 6,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 4, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: AppColors.accent,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: isDark
-                                    ? AppColors.surfaceDark
-                                    : Colors.white,
-                                width: 1.5,
-                              ),
-                            ),
-                            constraints: const BoxConstraints(
-                                minWidth: 16, minHeight: 16),
-                            child: Text(
-                              controller.unreadCount.value > 99
-                                  ? '99+'
-                                  : '${controller.unreadCount.value}',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 9,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
+            // ── Bell Button (fixed at the SizedBox's top-left) ─────
+            Positioned(
+              top: 0,
+              left: 0,
+              child: GestureDetector(
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  controller.toggleOverlay();
+                },
+                child: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? AppColors.surfaceDark.withValues(alpha: 0.8)
+                        : Colors.white.withValues(alpha: 0.85),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: isDark
+                          ? AppColors.glassBorderDark
+                          : AppColors.glassBorder,
+                    ),
+                    boxShadow: AppColors.cardShadow,
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(14),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        alignment: Alignment.center,
+                        children: [
+                          Icon(
+                            PhosphorIcons.bell(),
+                            color: AppColors.primary,
+                            size: 22,
                           ),
-                        ),
-                    ],
+                          // Unread badge
+                          if (controller.unreadCount.value > 0)
+                            Positioned(
+                              top: 6,
+                              right: 6,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 4, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: AppColors.accent,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: isDark
+                                        ? AppColors.surfaceDark
+                                        : Colors.white,
+                                    width: 1.5,
+                                  ),
+                                ),
+                                constraints: const BoxConstraints(
+                                    minWidth: 16, minHeight: 16),
+                                child: Text(
+                                  controller.unreadCount.value > 99
+                                      ? '99+'
+                                      : '${controller.unreadCount.value}',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
 
-          // ── Dropdown Overlay ─────────────────────────────
-          if (controller.isOverlayOpen.value)
-            Positioned(
-              top: 52,
-              left: 0,
-              child: _NotificationDropdown(controller: controller)
-                  .animate()
-                  .fadeIn(duration: 200.ms)
-                  .slideY(begin: -0.1, end: 0, duration: 250.ms, curve: Curves.easeOutCubic),
-            ),
+            // ── Dropdown Overlay ─────────────────────────────
+            if (controller.isOverlayOpen.value)
+              Positioned(
+                top: 52,
+                left: 0,
+                child: _NotificationDropdown(controller: controller)
+                    .animate()
+                    .fadeIn(duration: 200.ms)
+                    .slideY(
+                        begin: -0.1,
+                        end: 0,
+                        duration: 250.ms,
+                        curve: Curves.easeOutCubic),
+              ),
           ],
         ),
       );

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:get/get.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
+
+import '../../../app/themes/app_motion.dart';
 
 /// Full-screen map picker — tap to place a pin, confirm to return LatLng.
 class MapPickerPage extends StatefulWidget {
@@ -137,7 +140,7 @@ class _MapPickerPageState extends State<MapPickerPage> {
             ),
           ),
 
-          // Bottom confirm button (always visible when location selected)
+          // Bottom confirm button (slides up when location selected)
           if (_selected != null)
             Positioned(
               bottom: 24,
@@ -155,7 +158,15 @@ class _MapPickerPageState extends State<MapPickerPage> {
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12)),
                 ),
-              ),
+              )
+                  .animate()
+                  .moveY(
+                    begin: 60,
+                    end: 0,
+                    duration: AppMotion.emphasized,
+                    curve: AppMotion.emphasizedCurve,
+                  )
+                  .fadeIn(duration: AppMotion.standard),
             ),
         ],
       ),

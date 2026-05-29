@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:gap/gap.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../../../app/themes/app_colors.dart';
+import '../../../app/themes/app_motion.dart';
+import '../../../core/widgets/shared/motion/animated_appear.dart';
 import '../controllers/translator_controller.dart';
 
 /// Hub screen — the new main translator surface (Image 1).
@@ -38,10 +41,20 @@ class TranslatorHubPage extends GetView<TranslatorController> {
         body: SafeArea(
           child: Column(
             children: [
-              Expanded(child: _buildTextTapArea(isDark)),
-              _buildLanguagesRow(isDark),
+              Expanded(
+                child: AnimatedAppear(
+                  child: _buildTextTapArea(isDark),
+                ),
+              ),
+              AnimatedAppear(
+                delay: const Duration(milliseconds: 120),
+                child: _buildLanguagesRow(isDark),
+              ),
               const Gap(16),
-              _buildActionButtons(isDark),
+              AnimatedAppear(
+                delay: const Duration(milliseconds: 200),
+                child: _buildActionButtons(isDark),
+              ),
               const Gap(28),
             ],
           ),
@@ -325,6 +338,14 @@ class TranslatorHubPage extends GetView<TranslatorController> {
           color: Colors.black87,
         ),
       ),
-    );
+    )
+        .animate(delay: const Duration(milliseconds: 280))
+        .scale(
+          begin: const Offset(0.85, 0.85),
+          end: const Offset(1, 1),
+          duration: AppMotion.emphasized,
+          curve: AppMotion.emphasizedCurve,
+        )
+        .fadeIn(duration: AppMotion.standard);
   }
 }

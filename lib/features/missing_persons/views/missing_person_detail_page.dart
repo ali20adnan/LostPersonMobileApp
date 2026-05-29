@@ -8,6 +8,7 @@ import 'package:loading_animation_widget/loading_animation_widget.dart';
 import '../../../app/themes/app_colors.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/utils/maps_launcher.dart';
+import '../../../core/widgets/shared/motion/animated_appear.dart';
 import '../../../data/models/missing_person_report_model.dart';
 import '../controllers/missing_person_detail_controller.dart';
 
@@ -42,25 +43,50 @@ class MissingPersonDetailPage extends GetView<MissingPersonDetailController> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildStatusHeader(report, isDark),
-                      if (report.isFound) ...[                        const Gap(12),
-                        _buildFoundInfoSection(report, isDark),
+                      AnimatedAppear(
+                        child: _buildStatusHeader(report, isDark),
+                      ),
+                      if (report.isFound) ...[
+                        const Gap(12),
+                        AnimatedAppear(
+                          delay: const Duration(milliseconds: 60),
+                          child: _buildFoundInfoSection(report, isDark),
+                        ),
                       ],
                       const Gap(16),
-                      _buildPersonInfoSection(report, isDark),
+                      AnimatedAppear(
+                        delay: const Duration(milliseconds: 80),
+                        child: _buildPersonInfoSection(report, isDark),
+                      ),
                       const Gap(12),
                       if (report.description != null &&
                           report.description!.isNotEmpty) ...[
-                        _buildDescriptionSection(report, isDark),
+                        AnimatedAppear(
+                          delay: const Duration(milliseconds: 160),
+                          child: _buildDescriptionSection(report, isDark),
+                        ),
                         const Gap(12),
                       ],
-                      _buildPhysicalSection(report, isDark),
+                      AnimatedAppear(
+                        delay: const Duration(milliseconds: 240),
+                        child: _buildPhysicalSection(report, isDark),
+                      ),
                       const Gap(12),
-                      _buildLocationSection(report, isDark),
+                      AnimatedAppear(
+                        delay: const Duration(milliseconds: 320),
+                        child: _buildLocationSection(report, isDark),
+                      ),
                       const Gap(12),
-                      _buildReporterSection(report, isDark),
+                      AnimatedAppear(
+                        delay: const Duration(milliseconds: 400),
+                        child: _buildReporterSection(report, isDark),
+                      ),
                       const Gap(24),
-                      if (report.isMissing) _buildActionButtons(report, isDark),
+                      if (report.isMissing)
+                        AnimatedAppear(
+                          delay: const Duration(milliseconds: 480),
+                          child: _buildActionButtons(report, isDark),
+                        ),
                       const Gap(32),
                     ],
                   ),
@@ -122,12 +148,16 @@ class MissingPersonDetailPage extends GetView<MissingPersonDetailController> {
             ? Stack(
                 fit: StackFit.expand,
                 children: [
-                  Image.network(
-                    _resolvePhotoUrl(photoUrl),
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      color: AppColors.primary,
-                      child: Icon(PhosphorIcons.user(), size: 80, color: Colors.white38),
+                  Hero(
+                    tag: 'mp-photo-${report.id}',
+                    child: Image.network(
+                      _resolvePhotoUrl(photoUrl),
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        color: AppColors.primary,
+                        child: Icon(PhosphorIcons.user(),
+                            size: 80, color: Colors.white38),
+                      ),
                     ),
                   ),
                   Container(

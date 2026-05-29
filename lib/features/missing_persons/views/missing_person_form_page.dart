@@ -5,9 +5,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
-import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 import '../../../app/themes/app_colors.dart';
+import '../../../core/widgets/shared/morph_submit_button.dart';
 import '../../../data/models/governorate_model.dart';
 import '../controllers/missing_person_form_controller.dart';
 
@@ -829,54 +829,14 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
   }
 
   Widget _buildSubmitButton(bool isDark) {
-    return Obx(() => GestureDetector(
-          onTap: controller.isSubmitting.value
-              ? null
-              : () {
-                  HapticFeedback.mediumImpact();
-                  controller.submitReport();
-                },
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            decoration: BoxDecoration(
-              gradient: controller.isSubmitting.value ? null : AppColors.heroGradient,
-              color: controller.isSubmitting.value ? AppColors.textLight : null,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: controller.isSubmitting.value
-                  ? null
-                  : [
-                      BoxShadow(
-                        color: AppColors.primary.withValues(alpha: 0.4),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-            ),
-            child: Center(
-              child: controller.isSubmitting.value
-                  ? LoadingAnimationWidget.staggeredDotsWave(
-                      color: Colors.white,
-                      size: 24,
-                    )
-                  : Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(PhosphorIcons.paperPlaneTilt(), color: Colors.white),
-                        SizedBox(width: 10),
-                        Text(
-                          'إرسال البلاغ',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 17,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-            ),
-          ).animate().fadeIn(delay: 200.ms),
-        ));
+    return Obx(() => MorphSubmitButton(
+          label: 'إرسال البلاغ',
+          icon: PhosphorIcons.paperPlaneTilt(),
+          isSubmitting: controller.isSubmitting.value,
+          onPressed: () {
+            HapticFeedback.mediumImpact();
+            controller.submitReport();
+          },
+        ).animate().fadeIn(delay: 200.ms));
   }
 }

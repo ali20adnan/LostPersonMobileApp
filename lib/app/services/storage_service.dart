@@ -447,6 +447,26 @@ class StorageService {
     return _prefs?.getBool(StorageKeys.autoSaveConversations) ?? defaultValue;
   }
 
+  /// Save auto-detect language setting (gates Soniox `language_hints` vs
+  /// strict `language_a`/`language_b` config).
+  Future<void> saveAutoDetectLanguage(bool enabled) async {
+    await _prefs?.setBool(StorageKeys.autoDetectLanguage, enabled);
+  }
+
+  bool getAutoDetectLanguage({bool defaultValue = true}) {
+    return _prefs?.getBool(StorageKeys.autoDetectLanguage) ?? defaultValue;
+  }
+
+  /// Save notifications-enabled setting (gates in-app banners + unread
+  /// count refresh; socket connection itself stays up).
+  Future<void> saveNotificationsEnabled(bool enabled) async {
+    await _prefs?.setBool(StorageKeys.notificationsEnabled, enabled);
+  }
+
+  bool getNotificationsEnabled({bool defaultValue = true}) {
+    return _prefs?.getBool(StorageKeys.notificationsEnabled) ?? defaultValue;
+  }
+
   // ============ Utility ============
 
   /// Clear all storage

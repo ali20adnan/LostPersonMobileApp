@@ -12,6 +12,10 @@ class StorageKeys {
   static const String themeMode = 'theme_mode';
   static const String apiKey = 'api_key';
   static const String autoSaveConversations = 'auto_save_conversations';
+  static const String autoDetectLanguage = 'settings_auto_detect_language';
+  // Matches the legacy raw-SharedPreferences key already used by
+  // SettingsController so the existing saved value is preserved.
+  static const String notificationsEnabled = 'settings_notifications';
 
   // Secure storage keys
   static const String secureApiKey = 'secure_api_key';

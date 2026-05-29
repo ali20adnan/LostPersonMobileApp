@@ -12,7 +12,9 @@ import '../../../app/services/soniox_service.dart';
 import '../../../app/services/storage_service.dart';
 import '../../../app/services/tts_service.dart';
 import '../../../core/constants/language_constants.dart';
+import '../../../data/models/conversation_model.dart';
 import '../../../data/models/language_model.dart';
+import '../../../data/models/translation_model.dart';
 import '../../../data/repositories/translation_repository.dart';
 import '../../languages/views/languages_page.dart';
 import '../../ocr_reader/controllers/ocr_reader_controller.dart';
@@ -347,13 +349,42 @@ class TranslatorController extends GetxController {
       await _connectionSubscription?.cancel();
       await _amplitudeSubscription?.cancel();
 
+      // Snapshot translations + conversation id BEFORE stopSession() clears
+      // them inside the repository.
+      final finalizedTranslations =
+          List<Translation>.from(_translationRepository.currentTranslations);
+      final conversationId = _translationRepository.currentConversationId;
+
       await _translationRepository.stopSession();
       _sessionTimer?.cancel();
 
+      Duration? sessionDuration;
       if (_sessionStartTime != null) {
-        final duration = DateTime.now().difference(_sessionStartTime!);
-        await _storageService.incrementUsageMinutes(duration.inMinutes);
+        sessionDuration = DateTime.now().difference(_sessionStartTime!);
+        await _storageService.incrementUsageMinutes(sessionDuration.inMinutes);
         await _storageService.saveLastUsageDate(DateTime.now());
+      }
+
+      // Auto-save the session as a Conversation row when the user has the
+      // "حفظ المحادثات تلقائياً" toggle on. Skip empty sessions (zero
+      // finalized translations) so we don't pollute the history with noise.
+      if (_storageService.getAutoSaveConversations() &&
+          finalizedTranslations.isNotEmpty &&
+          conversationId != null) {
+        final conversation = Conversation(
+          id: conversationId,
+          translations: finalizedTranslations,
+          startTime: _sessionStartTime ?? DateTime.now(),
+          endTime: DateTime.now(),
+          sourceLanguage: sourceLanguage.value.code,
+          targetLanguage: targetLanguage.value.code,
+          durationSeconds: sessionDuration?.inSeconds,
+        );
+        try {
+          await _storageService.saveConversation(conversation);
+        } catch (e) {
+          debugPrint('TranslatorController: auto-save failed - $e');
+        }
       }
 
       isRecording.value = false;

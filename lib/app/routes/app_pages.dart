@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 
+import '../../core/widgets/shared/motion/page_transitions.dart';
 import '../../features/splash/bindings/splash_binding.dart';
 import '../../features/splash/views/splash_page.dart';
 import '../../bindings/home_binding.dart';
@@ -26,6 +27,10 @@ import '../../features/incident_reporting/views/incident_detail_page.dart';
 import 'app_routes.dart';
 
 class AppPages {
+  static final _sharedAxisX = SharedAxisXTransition();
+  static final _sharedAxisY = SharedAxisYTransition();
+  static final _fadeThrough = FadeThroughGetTransition();
+
   static final routes = [
     GetPage(
       name: AppRoutes.splash,
@@ -36,56 +41,67 @@ class AppPages {
       name: AppRoutes.login,
       page: () => const LoginPage(),
       binding: AuthBinding(),
+      customTransition:_fadeThrough,
     ),
     GetPage(
       name: AppRoutes.home,
       page: () => const HomePage(),
       binding: HomeBinding(),
+      customTransition:_fadeThrough,
     ),
     GetPage(
       name: AppRoutes.settings,
       page: () => const SettingsPage(),
       binding: SettingsBinding(),
+      customTransition:_fadeThrough,
     ),
     GetPage(
       name: AppRoutes.incidentReporting,
       page: () => const IncidentReportingPage(),
       binding: IncidentReportingBinding(),
+      customTransition:_sharedAxisX,
     ),
     GetPage(
       name: AppRoutes.incidentsList,
       page: () => const IncidentsListPage(),
       binding: IncidentReportingBinding(),
+      customTransition:_sharedAxisX,
     ),
     GetPage(
       name: AppRoutes.missingPersonForm,
       page: () => const MissingPersonFormPage(),
       binding: MissingPersonFormBinding(),
+      customTransition:_sharedAxisX,
     ),
     GetPage(
       name: AppRoutes.chat,
       page: () => const ChatPage(),
       binding: MessagingBinding(),
+      customTransition:_sharedAxisX,
     ),
     GetPage(
       name: AppRoutes.alerts,
       page: () => const AlertsPage(),
       binding: AlertsBinding(),
+      customTransition:_sharedAxisY,
     ),
     GetPage(
       name: AppRoutes.notifications,
       page: () => const NotificationsPage(),
       binding: NotificationsBinding(),
+      customTransition:_sharedAxisY,
     ),
     GetPage(
       name: AppRoutes.missingPersonDetail,
       page: () => const MissingPersonDetailPage(),
       binding: MissingPersonDetailBinding(),
+      customTransition:_sharedAxisX,
     ),
     GetPage(
       name: AppRoutes.incidentDetail,
       page: () => const IncidentDetailPage(),
       binding: IncidentDetailBinding(),
+      customTransition:_sharedAxisX,
     ),
   ];
 }
