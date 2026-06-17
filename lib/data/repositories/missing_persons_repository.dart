@@ -115,12 +115,12 @@ class MissingPersonsRepository {
     double? latitude,
     double? longitude,
     required String reporterName,
-    required String reporterPhone,
+    String? reporterPhone,
     String? reporterRelationship,
     String? residenceGovernorateId,
     String? residenceDistrictId,
     required String status,
-    required String missingDate,
+    String? missingDate,
     String? description,
     List<XFile>? photos,
   }) async {
@@ -148,7 +148,8 @@ class MissingPersonsRepository {
       if (longitude != null)
         'lastSeenLocation.longitude': longitude.toString(),
       'reporterName': reporterName,
-      'reporterPhone': reporterPhone,
+      if (reporterPhone != null && reporterPhone.isNotEmpty)
+        'reporterPhone': reporterPhone,
       if (reporterRelationship != null)
         'reporterRelationship': reporterRelationship,
       if (residenceGovernorateId != null)
@@ -156,7 +157,8 @@ class MissingPersonsRepository {
       if (residenceDistrictId != null)
         'residenceDistrictId': residenceDistrictId,
       'status': status,
-      'missingDate': missingDate,
+      if (missingDate != null && missingDate.isNotEmpty)
+        'missingDate': missingDate,
       if (description != null) 'description': description,
     };
 
@@ -179,7 +181,7 @@ class MissingPersonsRepository {
     );
   }
 
-  /// Request marking a person as found (for PATROL/VOLUNTEER — needs approval)
+  /// Request marking a person as found (for VOLUNTEER — needs approval)
   Future<ApiResponse> requestFound(int reportId,
       {Map<String, dynamic>? data}) async {
     return await _api.post(

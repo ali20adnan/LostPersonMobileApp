@@ -3,15 +3,12 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 /// Report types matching the API
 enum ReportType {
-  emergency,
-  other;
+  emergency;
 
   String get displayNameAr {
     switch (this) {
       case ReportType.emergency:
         return 'طوارئ';
-      case ReportType.other:
-        return 'أخرى';
     }
   }
 
@@ -19,16 +16,46 @@ enum ReportType {
     switch (this) {
       case ReportType.emergency:
         return PhosphorIcons.warning();
-      case ReportType.other:
-        return PhosphorIcons.warningCircle();
     }
   }
 
   static ReportType fromString(String value) {
     return ReportType.values.firstWhere(
       (e) => e.name == value,
-      orElse: () => ReportType.other,
+      orElse: () => ReportType.emergency,
     );
+  }
+}
+
+/// Report categories (nature of the emergency) matching the API
+enum ReportCategory {
+  medical,
+  accident,
+  death,
+  fight,
+  harassment;
+
+  String get displayNameAr {
+    switch (this) {
+      case ReportCategory.medical:
+        return 'طبية';
+      case ReportCategory.accident:
+        return 'حادث';
+      case ReportCategory.death:
+        return 'موت';
+      case ReportCategory.fight:
+        return 'مشاجرة';
+      case ReportCategory.harassment:
+        return 'تحرش';
+    }
+  }
+
+  static ReportCategory? fromString(String? value) {
+    if (value == null) return null;
+    for (final c in ReportCategory.values) {
+      if (c.name == value) return c;
+    }
+    return null;
   }
 }
 

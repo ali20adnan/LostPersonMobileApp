@@ -104,12 +104,10 @@ class NotificationsController extends GetxController {
       final svc = Get.find<AppNotificationsService>();
       for (final n in svc.items) {
         if (n.entityType == 'Report') {
-          final reportType = (n.data?['reportType'] as String?) ?? 'other';
+          final reportType = (n.data?['reportType'] as String?) ?? 'emergency';
           out.add(NotificationEntry(
             type: 'centerReport',
-            title: n.title.isNotEmpty
-                ? n.title
-                : (reportType == 'emergency' ? 'بلاغ طارئ' : 'بلاغ آخر'),
+            title: n.title.isNotEmpty ? n.title : 'بلاغ طارئ',
             subtitle: n.body,
             createdAt: n.createdAt,
             notificationId: n.id,

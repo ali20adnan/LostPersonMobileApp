@@ -1,11 +1,13 @@
 import '../../core/constants/api_constants.dart';
+import '../../core/constants/incident_constants.dart';
 
-/// Report model matching the /reports API (emergency & other incident reports)
+/// Report model matching the /reports API (emergency incident reports)
 class Report {
   final int id;
-  final String type; // emergency | other
+  final String type; // emergency
   final String status; // pending | in_progress | resolved | closed
   final String? severity; // low | medium | high | critical
+  final String? category; // medical | accident | death | fight | harassment
   final String? title;
   final String? description;
   final double? latitude;
@@ -25,6 +27,7 @@ class Report {
     required this.type,
     required this.status,
     this.severity,
+    this.category,
     this.title,
     this.description,
     this.latitude,
@@ -53,15 +56,20 @@ class Report {
 
   String get displayTitle {
     if (title != null && title!.isNotEmpty) return title!;
-    return isEmergency ? 'بلاغ طوارئ' : 'بلاغ آخر';
+    return 'بلاغ طوارئ';
   }
+
+  /// Arabic label of the report category (nature of the case), or null.
+  String? get categoryDisplayAr =>
+      ReportCategory.fromString(category)?.displayNameAr;
 
   factory Report.fromJson(Map<String, dynamic> json) {
     return Report(
       id: json['id'] as int,
-      type: json['type'] as String? ?? 'other',
+      type: json['type'] as String? ?? 'emergency',
       status: json['status'] as String? ?? 'pending',
       severity: json['severity'] as String?,
+      category: json['category'] as String?,
       title: json['title'] as String?,
       description: json['description'] as String?,
       latitude: (json['latitude'] as num?)?.toDouble(),

@@ -29,31 +29,96 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            // Section 0 - Person Info
-            _buildCollapsibleSection(
-              isDark: isDark,
-              index: 0,
+            _buildModeToggle(isDark),
+            const SizedBox(height: 16),
+            Obx(() => controller.isBriefForm.value
+                ? _buildBriefForm(context, isDark)
+                : _buildFullForm(context, isDark)),
+            const SizedBox(height: 24),
+            _buildSubmitButton(isDark),
+            const SizedBox(height: 32),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Segmented toggle between the full report and the brief report.
+  Widget _buildModeToggle(bool isDark) {
+    Widget tab(String label, bool brief) {
+      final isSelected = controller.isBriefForm.value == brief;
+      return Expanded(
+        child: GestureDetector(
+          onTap: () => controller.setBriefForm(brief),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            decoration: BoxDecoration(
+              gradient: isSelected ? AppColors.heroGradient : null,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              label,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: isSelected
+                    ? Colors.white
+                    : (isDark ? AppColors.textOnDark : AppColors.textPrimary),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Obx(() => Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.cardDark : AppColors.card,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: isDark ? AppColors.cardBorderDark : AppColors.cardBorder,
+            ),
+          ),
+          child: Row(
+            children: [
+              tab('بلاغ كامل', false),
+              tab('بلاغ مختصر', true),
+            ],
+          ),
+        ));
+  }
+
+  /// The full multi-section report (original form).
+  Widget _buildFullForm(BuildContext context, bool isDark) {
+    return Column(
+      children: [
+        // Section 0 - Person Info
+        _buildCollapsibleSection(
+          isDark: isDark,
+          index: 0,
+          icon: PhosphorIcons.user(),
+          title: 'معلومات الشخص',
+          children: [
+            _buildTextField(
+              controller: controller.fullNameController,
+              label: 'الاسم الكامل *',
               icon: PhosphorIcons.user(),
-              title: 'معلومات الشخص',
-              children: [
-                _buildTextField(
-                  controller: controller.fullNameController,
-                  label: 'الاسم الكامل *',
-                  icon: PhosphorIcons.user(),
-                  isDark: isDark,
-                ),
-                const SizedBox(height: 12),
-                _buildGenderSelector(isDark),
-                const SizedBox(height: 12),
-                _buildTextField(
-                  controller: controller.ageController,
-                  label: 'العمر',
-                  icon: PhosphorIcons.cake(),
-                  keyboardType: TextInputType.number,
-                  isDark: isDark,
-                ),
-                const SizedBox(height: 12),
-                Row(
+              isDark: isDark,
+            ),
+            const SizedBox(height: 12),
+            _buildGenderSelector(isDark),
+            const SizedBox(height: 12),
+            _buildTextField(
+              controller: controller.ageController,
+              label: 'العمر',
+              icon: PhosphorIcons.cake(),
+              keyboardType: TextInputType.number,
+              isDark: isDark,
+            ),
+            const SizedBox(height: 12),
+            Row(
                   children: [
                     Expanded(
                       child: _buildTextField(
@@ -252,24 +317,137 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            // Section 4 - Photos
-            _buildCollapsibleSection(
-              isDark: isDark,
-              index: 4,
-              icon: PhosphorIcons.camera(),
-              title: 'الصور *',
-              children: [
-                _buildPhotoPicker(isDark),
-              ],
-            ),
-            const SizedBox(height: 24),
-            _buildSubmitButton(isDark),
-            const SizedBox(height: 32),
+        const SizedBox(height: 12),
+        // Section 4 - Photos
+        _buildCollapsibleSection(
+          isDark: isDark,
+          index: 4,
+          icon: PhosphorIcons.camera(),
+          title: 'الصور *',
+          children: [
+            _buildPhotoPicker(isDark),
           ],
         ),
-      ),
+      ],
     );
+  }
+
+  /// The brief report: only name, age, gender, governorate, photo + reporter.
+  Widget _buildBriefForm(BuildContext context, bool isDark) {
+    return Column(
+      children: [
+        _buildCollapsibleSection(
+          isDark: isDark,
+          index: 0,
+          icon: PhosphorIcons.user(),
+          title: 'معلومات الشخص',
+          children: [
+            _buildTextField(
+              controller: controller.fullNameController,
+              label: 'الاسم الكامل *',
+              icon: PhosphorIcons.user(),
+              isDark: isDark,
+            ),
+            const SizedBox(height: 12),
+            _buildGenderSelector(isDark),
+            const SizedBox(height: 12),
+            _buildTextField(
+              controller: controller.ageController,
+              label: 'العمر *',
+              icon: PhosphorIcons.cake(),
+              keyboardType: TextInputType.number,
+              isDark: isDark,
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        _buildCollapsibleSection(
+          isDark: isDark,
+          index: 1,
+          icon: PhosphorIcons.house(),
+          title: 'المحافظة',
+          children: [
+            _buildGovernoratePickerField(isDark),
+          ],
+        ),
+        const SizedBox(height: 12),
+        _buildCollapsibleSection(
+          isDark: isDark,
+          index: 3,
+          icon: PhosphorIcons.phone(),
+          title: 'معلومات المُبلّغ',
+          children: [
+            _buildBriefReporterSection(isDark),
+          ],
+        ),
+        const SizedBox(height: 12),
+        _buildCollapsibleSection(
+          isDark: isDark,
+          index: 4,
+          icon: PhosphorIcons.camera(),
+          title: 'الصورة',
+          children: [
+            _buildPhotoPicker(isDark),
+          ],
+        ),
+      ],
+    );
+  }
+
+  /// Reporter block for the brief form: defaults to the logged-in user (name
+  /// only); a toggle reveals name + phone + relationship for another reporter.
+  Widget _buildBriefReporterSection(bool isDark) {
+    return Obx(() {
+      final isOther = controller.reporterIsOther.value;
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SwitchListTile.adaptive(
+            contentPadding: EdgeInsets.zero,
+            value: isOther,
+            onChanged: (value) => controller.reporterIsOther.value = value,
+            title: Text(
+              'المُبلّغ شخص آخر',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: isDark ? AppColors.textOnDark : AppColors.textPrimary,
+              ),
+            ),
+            subtitle: Text(
+              isOther
+                  ? 'أدخل بيانات المُبلّغ (شخص ليس لديه حساب)'
+                  : 'سيُسجَّل البلاغ باسمك: '
+                      '${controller.defaultReporterName.isNotEmpty ? controller.defaultReporterName : 'المستخدم الحالي'}',
+              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+            ),
+          ),
+          if (isOther) ...[
+            const SizedBox(height: 8),
+            _buildTextField(
+              controller: controller.reporterNameController,
+              label: 'اسم المُبلّغ *',
+              icon: PhosphorIcons.user(),
+              isDark: isDark,
+            ),
+            const SizedBox(height: 12),
+            _buildTextField(
+              controller: controller.reporterPhoneController,
+              label: 'رقم الهاتف *',
+              icon: PhosphorIcons.phone(),
+              keyboardType: TextInputType.phone,
+              isDark: isDark,
+            ),
+            const SizedBox(height: 12),
+            _buildTextField(
+              controller: controller.reporterRelationshipController,
+              label: 'صلته بالمفقود',
+              icon: PhosphorIcons.users(),
+              isDark: isDark,
+            ),
+          ],
+        ],
+      );
+    });
   }
 
   Widget _buildCollapsibleSection({

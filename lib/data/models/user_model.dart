@@ -61,8 +61,6 @@ String roleDisplayArOf(String? role) {
       return 'مركز المفقودين';
     case 'OPS_CENTER':
       return 'المركز';
-    case 'PATROL':
-      return 'فرق الجوالة';
     case 'VOLUNTEER':
       return 'متطوع';
     default:

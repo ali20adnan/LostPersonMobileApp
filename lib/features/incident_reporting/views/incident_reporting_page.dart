@@ -194,6 +194,57 @@ class IncidentReportingPage extends GetView<IncidentReportingController> {
                   }).toList(),
                 )).animate().fadeIn(duration: 500.ms, delay: 100.ms),
 
+            const Gap(24),
+            // Category (nature of the case) selector — required
+            _buildSectionHeader(PhosphorIcons.listChecks(), 'نوع الحالة', isDark)
+                .animate().fadeIn(duration: 400.ms, delay: 120.ms).slideX(begin: -0.1),
+            const Gap(12),
+            Obx(() => Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                    color: isDark ? AppColors.cardDark : AppColors.card,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: isDark
+                          ? AppColors.cardBorderDark
+                          : AppColors.cardBorder,
+                    ),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<ReportCategory>(
+                      isExpanded: true,
+                      value: controller.selectedCategory.value,
+                      hint: Text(
+                        'اختر نوع الحالة',
+                        style: TextStyle(
+                          color: isDark
+                              ? AppColors.textOnDark
+                              : AppColors.textSecondary,
+                        ),
+                      ),
+                      icon: Icon(PhosphorIcons.caretDown(), size: 18),
+                      dropdownColor: isDark ? AppColors.cardDark : AppColors.card,
+                      borderRadius: BorderRadius.circular(14),
+                      items: ReportCategory.values
+                          .map((c) => DropdownMenuItem<ReportCategory>(
+                                value: c,
+                                child: Text(
+                                  c.displayNameAr,
+                                  style: TextStyle(
+                                    color: isDark
+                                        ? AppColors.textOnDark
+                                        : AppColors.textPrimary,
+                                  ),
+                                ),
+                              ))
+                          .toList(),
+                      onChanged: (c) {
+                        if (c != null) controller.changeCategory(c);
+                      },
+                    ),
+                  ),
+                )).animate().fadeIn(duration: 500.ms, delay: 150.ms),
+
             // Title + Description: hidden for emergency
             Obx(() {
               if (controller.selectedType.value == ReportType.emergency) {

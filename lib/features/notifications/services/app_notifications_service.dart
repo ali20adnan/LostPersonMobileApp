@@ -5,7 +5,7 @@ import '../../../data/models/app_notification_model.dart';
 import '../../../data/repositories/notifications_repository.dart';
 
 /// In-memory store + fetch coordinator for persisted in-app notifications.
-/// Targeted at PATROL + VOLUNTEER users for "missing person created" events,
+/// Targeted at VOLUNTEER users for "missing person created" events,
 /// but the type list is open-ended.
 class AppNotificationsService extends GetxService {
   final NotificationsRepository _repo = NotificationsRepository();

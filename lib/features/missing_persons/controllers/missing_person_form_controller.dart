@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../../../app/services/auth_service.dart';
 import '../../../app/services/permission_service.dart';
 import '../../../data/models/governorate_model.dart';
 import '../../../data/repositories/governorate_repository.dart';
@@ -63,8 +64,25 @@ class MissingPersonFormController extends GetxController {
   // Photos
   final selectedPhotos = <XFile>[].obs;
 
+  // Brief report mode: only name/age/gender/governorate/photo + reporter.
+  final isBriefForm = false.obs;
+  // When false (default) the logged-in user is the reporter (name only).
+  // When true, the reporter is another person → name + phone + relationship.
+  final reporterIsOther = false.obs;
+
   // State
   final isSubmitting = false.obs;
+
+  /// Name of the logged-in user — used as the default reporter in brief mode.
+  String get _currentUserName =>
+      Get.find<AuthService>().currentUser.value?.fullName.trim() ?? '';
+
+  /// Public alias for the logged-in user's name (shown in the brief form UI).
+  String get defaultReporterName => _currentUserName;
+
+  void setBriefForm(bool value) {
+    isBriefForm.value = value;
+  }
 
   // Collapsible sections (0=person,1=residence,2=last seen,3=reporter,4=photos)
   final expandedSections = <int>{0, 1, 3, 4}.obs;
@@ -206,6 +224,18 @@ class MissingPersonFormController extends GetxController {
       showError('يرجى اختيار المحافظة');
       return false;
     }
+
+    // Reporter validation.
+    // Brief mode + logged-in user as reporter: only the user's name is needed.
+    if (isBriefForm.value && !reporterIsOther.value) {
+      if (_currentUserName.isEmpty) {
+        showError('تعذّر تحديد اسم المُبلّغ، يرجى تسجيل الدخول مجدداً');
+        return false;
+      }
+      return true;
+    }
+
+    // Full form, or brief mode with "another reporter": name + phone required.
     if (reporterNameController.text.trim().isEmpty) {
       showError('يرجى إدخال اسم المُبلّغ');
       return false;
@@ -225,45 +255,66 @@ class MissingPersonFormController extends GetxController {
 
       final residenceGovId = selectedResidenceGovernorate.value?.id;
       final residenceDistId = selectedResidenceDistrict.value?.id;
+      final isBrief = isBriefForm.value;
+
+      // In brief mode the logged-in user is the reporter (name only); the
+      // "another reporter" toggle reveals name + phone + relationship fields.
+      final reporterIsCurrentUser = isBrief && !reporterIsOther.value;
+      final reporterName = reporterIsCurrentUser
+          ? _currentUserName
+          : reporterNameController.text.trim();
+      final reporterPhone = reporterIsCurrentUser
+          ? null
+          : reporterPhoneController.text.trim();
+      final reporterRelationship = reporterIsCurrentUser
+          ? null
+          : (reporterRelationshipController.text.trim().isNotEmpty
+              ? reporterRelationshipController.text.trim()
+              : null);
 
       final response = await _repository.createReport(
         fullName: fullNameController.text.trim(),
         gender: selectedGender.value,
         age: int.tryParse(ageController.text.trim()),
-        heightCm: int.tryParse(heightController.text.trim()),
-        weightKg: int.tryParse(weightController.text.trim()),
-        hairColor: selectedHairColor.value,
-        eyeColor: selectedEyeColor.value,
-        distinguishingFeatures:
-            distinguishingFeaturesController.text.trim().isNotEmpty
+        heightCm: isBrief ? null : int.tryParse(heightController.text.trim()),
+        weightKg: isBrief ? null : int.tryParse(weightController.text.trim()),
+        hairColor: isBrief ? null : selectedHairColor.value,
+        eyeColor: isBrief ? null : selectedEyeColor.value,
+        distinguishingFeatures: isBrief
+            ? null
+            : (distinguishingFeaturesController.text.trim().isNotEmpty
                 ? distinguishingFeaturesController.text.trim()
-                : null,
-        medicalConditions: medicalConditionsController.text.trim().isNotEmpty
-            ? medicalConditionsController.text.trim()
-            : null,
-        clothingDescription:
-            clothingDescriptionController.text.trim().isNotEmpty
+                : null),
+        medicalConditions: isBrief
+            ? null
+            : (medicalConditionsController.text.trim().isNotEmpty
+                ? medicalConditionsController.text.trim()
+                : null),
+        clothingDescription: isBrief
+            ? null
+            : (clothingDescriptionController.text.trim().isNotEmpty
                 ? clothingDescriptionController.text.trim()
-                : null,
+                : null),
         governorateId: residenceGovId,
         residenceGovernorateId: residenceGovId,
-        residenceDistrictId: residenceDistId,
-        addressLine: addressLineController.text.trim().isNotEmpty
-            ? addressLineController.text.trim()
-            : null,
-        latitude: selectedMapLocation.value?.latitude,
-        longitude: selectedMapLocation.value?.longitude,
-        reporterName: reporterNameController.text.trim(),
-        reporterPhone: reporterPhoneController.text.trim(),
-        reporterRelationship:
-            reporterRelationshipController.text.trim().isNotEmpty
-                ? reporterRelationshipController.text.trim()
-                : null,
+        residenceDistrictId: isBrief ? null : residenceDistId,
+        addressLine: isBrief
+            ? null
+            : (addressLineController.text.trim().isNotEmpty
+                ? addressLineController.text.trim()
+                : null),
+        latitude: isBrief ? null : selectedMapLocation.value?.latitude,
+        longitude: isBrief ? null : selectedMapLocation.value?.longitude,
+        reporterName: reporterName,
+        reporterPhone: reporterPhone,
+        reporterRelationship: reporterRelationship,
         status: 'missing',
-        missingDate: missingDateController.text.trim(),
-        description: descriptionController.text.trim().isNotEmpty
-            ? descriptionController.text.trim()
-            : null,
+        missingDate: isBrief ? null : missingDateController.text.trim(),
+        description: isBrief
+            ? null
+            : (descriptionController.text.trim().isNotEmpty
+                ? descriptionController.text.trim()
+                : null),
         photos: selectedPhotos.isNotEmpty ? selectedPhotos.toList() : null,
       );
 

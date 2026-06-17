@@ -24,6 +24,7 @@ class IncidentReportingController extends GetxController {
 
   // Observable state
   final selectedType = Rx<ReportType>(ReportType.emergency);
+  final selectedCategory = Rx<ReportCategory?>(null);
   final selectedSeverity = Rx<ReportSeverity>(ReportSeverity.medium);
   final selectedMediaFiles = <XFile>[].obs;
   final currentLocation = Rx<Position?>(null);
@@ -50,6 +51,10 @@ class IncidentReportingController extends GetxController {
 
   void changeSeverity(ReportSeverity severity) {
     selectedSeverity.value = severity;
+  }
+
+  void changeCategory(ReportCategory category) {
+    selectedCategory.value = category;
   }
 
   bool _canAddMoreMediaFiles() {
@@ -235,7 +240,16 @@ class IncidentReportingController extends GetxController {
   }
 
   bool _validateForm() {
-    // Emergency: no validation needed — submits immediately
+    // Category (nature of the case) is required for every report.
+    if (selectedCategory.value == null) {
+      Get.snackbar('خطأ في النموذج', 'يرجى تحديد نوع الحالة',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red.withValues(alpha: 0.8),
+          colorText: Colors.white);
+      return false;
+    }
+
+    // Emergency: no further validation needed — submits immediately
     if (selectedType.value == ReportType.emergency) return true;
 
     if (titleController.text.trim().isEmpty) {
@@ -270,6 +284,7 @@ class IncidentReportingController extends GetxController {
       final response = isEmergency
         ? await _reportRepository.createReport(
           type: selectedType.value.name,
+          category: selectedCategory.value!.name,
           severity: selectedSeverity.value.name,
           title: 'بلاغ طارئ',
           description: '',
@@ -282,6 +297,7 @@ class IncidentReportingController extends GetxController {
         : selectedMediaFiles.isNotEmpty
           ? await _reportRepository.createReportWithPhotos(
             type: selectedType.value.name,
+            category: selectedCategory.value!.name,
             severity: null,
             title: titleController.text.trim().isNotEmpty
               ? titleController.text.trim()
@@ -298,6 +314,7 @@ class IncidentReportingController extends GetxController {
           )
           : await _reportRepository.createReport(
             type: selectedType.value.name,
+            category: selectedCategory.value!.name,
             severity: null,
             title: titleController.text.trim().isNotEmpty
               ? titleController.text.trim()
@@ -346,6 +363,7 @@ class IncidentReportingController extends GetxController {
     selectedMediaFiles.clear();
     currentLocation.value = null;
     selectedType.value = ReportType.emergency;
+    selectedCategory.value = null;
     selectedSeverity.value = ReportSeverity.medium;
   }
 

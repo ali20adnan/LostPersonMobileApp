@@ -285,6 +285,17 @@ class IncidentDetailPage extends GetView<IncidentDetailController> {
                             : AppColors.textPrimary,
                       ),
                     ),
+                    if (report.categoryDisplayAr != null) ...[
+                      const Gap(2),
+                      Text(
+                        report.categoryDisplayAr!,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ],
                     const Gap(4),
                     Text(
                       _formatDate(report.createdAt),

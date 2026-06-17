@@ -17,7 +17,7 @@ class AppNotificationsBootstrap {
   ///
   /// Listens for every authenticated user — missing-person notifications are
   /// broadcast `toAll` server-side so the role gate that used to restrict
-  /// PATROL/VOLUNTEER/CENTER/ADMIN was dropping events for OPS_CENTER and
+  /// VOLUNTEER/CENTER/ADMIN was dropping events for OPS_CENTER and
   /// any future role.
   static Future<void> setup() async {
     if (_initialized) return;

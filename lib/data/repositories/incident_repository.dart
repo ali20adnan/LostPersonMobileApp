@@ -85,6 +85,7 @@ class ReportRepository {
   /// Create a new report
   Future<ApiResponse> createReport({
     required String type,
+    String? category,
     String? severity,
     String? title,
     String? description,
@@ -94,6 +95,7 @@ class ReportRepository {
   }) async {
     return await _api.post(ApiConstants.reports, body: {
       'type': type,
+      if (category != null) 'category': category,
       if (severity != null) 'severity': severity,
       if (title != null) 'title': title,
       if (description != null) 'description': description,
@@ -106,6 +108,7 @@ class ReportRepository {
   /// Create a new report with attached files
   Future<ApiResponse> createReportWithPhotos({
     required String type,
+    String? category,
     String? severity,
     String? title,
     String? description,
@@ -116,6 +119,7 @@ class ReportRepository {
   }) async {
     final fields = <String, String>{
       'type': type,
+      if (category != null) 'category': category,
       if (severity != null) 'severity': severity,
       if (title != null) 'title': title,
       if (description != null) 'description': description,
