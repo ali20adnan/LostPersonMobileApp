@@ -84,19 +84,42 @@ jobs:
       # ---------------------------------------------------------------------
       # UNSIGNED PATH — default. Always produces a real .ipa file.
       # ---------------------------------------------------------------------
-      # `flutter build ios --no-codesign` builds the device .app with NO signing and
-      # NO Development Team required (unlike `build ipa`, whose archive/export step
-      # still demands a team). We then wrap the .app into a Payload/ zip = a real .ipa.
-      - name: Build UNSIGNED app (no team required)
+      # Flutter's own `build ios --no-codesign` compiles fine but its post-build
+      # wrapper still hard-errors on a missing Development Team. So we bypass it:
+      # generate the Xcode config + pods, then archive directly with xcodebuild and
+      # signing fully disabled, and wrap the resulting .app into a real .ipa.
+      - name: Generate iOS build config (no codesign)
         if: ${{ inputs.signed != true }}
-        run: flutter build ios --release --no-codesign
+        run: flutter build ios --release --no-codesign --config-only
+
+      - name: CocoaPods install
+        if: ${{ inputs.signed != true }}
+        run: cd ios && pod install
+
+      - name: Archive UNSIGNED (xcodebuild)
+        if: ${{ inputs.signed != true }}
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -workspace ios/Runner.xcworkspace \
+            -scheme Runner \
+            -configuration Release \
+            -sdk iphoneos \
+            -archivePath "$RUNNER_TEMP/Runner.xcarchive" \
+            archive \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGN_ENTITLEMENTS="" \
+            DEVELOPMENT_TEAM=""
 
       - name: Package UNSIGNED .ipa
         if: ${{ inputs.signed != true }}
         run: |
           set -euo pipefail
-          APP_PATH=build/ios/iphoneos/Runner.app
-          test -d "$APP_PATH" || { echo "Runner.app not found"; exit 1; }
+          APP_PATH=$(find "$RUNNER_TEMP/Runner.xcarchive/Products/Applications" -maxdepth 1 -name "*.app" | head -1)
+          test -n "$APP_PATH" || { echo "No .app in archive"; exit 1; }
+          echo "App: $APP_PATH"
           mkdir -p build/ios/ipa/Payload
           cp -R "$APP_PATH" build/ios/ipa/Payload/
           (cd build/ios/ipa && zip -qr Runner-unsigned.ipa Payload && rm -rf Payload)
