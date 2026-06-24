@@ -11,6 +11,7 @@ import '../../../core/utils/maps_launcher.dart';
 import '../../../core/widgets/shared/motion/animated_appear.dart';
 import '../../../data/models/missing_person_report_model.dart';
 import '../controllers/missing_person_detail_controller.dart';
+import '../services/pending_found_requests_service.dart';
 
 class MissingPersonDetailPage extends GetView<MissingPersonDetailController> {
   const MissingPersonDetailPage({super.key});
@@ -177,10 +178,7 @@ class MissingPersonDetailPage extends GetView<MissingPersonDetailController> {
             : Container(
                 decoration: const BoxDecoration(color: AppColors.primary),
               ),
-        title: Text(
-          report.fullName ?? 'غير معروف',
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-        ),
+        title: _OutlinedTitle(text: report.fullName ?? 'غير معروف'),
         centerTitle: true,
       ),
     );
@@ -414,52 +412,71 @@ class MissingPersonDetailPage extends GetView<MissingPersonDetailController> {
   }
 
   Widget _buildActionButtons(MissingPersonReport report, bool isDark) {
+    final pending = Get.find<PendingFoundRequestsService>();
     return Column(
       children: [
-        // Mark as found button
+        // Mark as found button — turns into a disabled "under review" state
+        // while a volunteer's request is awaiting CENTER/ADMIN approval.
         SizedBox(
           width: double.infinity,
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: AppColors.successGradient,
-              borderRadius: BorderRadius.circular(14),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.teal.withValues(alpha: 0.3),
-                  blurRadius: 8,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: controller.markAsFound,
+          child: Obx(() {
+            final isPending = pending.isPending(report.id);
+            return Container(
+              decoration: BoxDecoration(
+                gradient: isPending ? null : AppColors.successGradient,
+                color: isPending
+                    ? (isDark ? AppColors.cardDark : AppColors.surfaceSunken)
+                    : null,
                 borderRadius: BorderRadius.circular(14),
-                child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: 14),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Directionality(
-                        textDirection: TextDirection.ltr,
-                        child: Icon(Icons.check_circle, size: 20, color: Colors.white),
-                      ),
-                      Gap(8),
-                      Text(
-                        'تم العثور عليه',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                          fontSize: 15,
+                border: isPending
+                    ? Border.all(color: AppColors.teal.withValues(alpha: 0.4))
+                    : null,
+                boxShadow: isPending
+                    ? null
+                    : [
+                        BoxShadow(
+                          color: AppColors.teal.withValues(alpha: 0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
                         ),
-                      ),
-                    ],
+                      ],
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: isPending ? null : controller.markAsFound,
+                  borderRadius: BorderRadius.circular(14),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Directionality(
+                          textDirection: TextDirection.ltr,
+                          child: Icon(
+                            isPending
+                                ? Icons.hourglass_top
+                                : Icons.check_circle,
+                            size: 20,
+                            color: isPending ? AppColors.teal : Colors.white,
+                          ),
+                        ),
+                        const Gap(8),
+                        Text(
+                          isPending ? 'طلب قيد المراجعة' : 'تم العثور عليه',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: isPending ? AppColors.teal : Colors.white,
+                            fontSize: 15,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          ),
+            );
+          }),
         ),
       ],
     ).animate().fadeIn(duration: 400.ms, delay: 200.ms);
@@ -618,6 +635,57 @@ class MissingPersonDetailPage extends GetView<MissingPersonDetailController> {
       height: 120,
       color: AppColors.surfaceSunken,
       child: Icon(PhosphorIcons.images(), color: AppColors.textLight, size: 32),
+    );
+  }
+}
+
+/// App-bar title for the hero image: white text with a dark stroke around each
+/// glyph (plus a soft shadow), so the name stays readable over any photo —
+/// mirroring the outlined style used for the translation overlay text.
+class _OutlinedTitle extends StatelessWidget {
+  final String text;
+
+  const _OutlinedTitle({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    const baseStyle = TextStyle(
+      fontWeight: FontWeight.bold,
+      fontSize: 18,
+      height: 1.1,
+    );
+
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        // Outline: a stroke painted around each letter.
+        Text(
+          text,
+          textAlign: TextAlign.center,
+          style: baseStyle.copyWith(
+            foreground: Paint()
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = 3
+              ..strokeJoin = StrokeJoin.round
+              ..color = Colors.black.withValues(alpha: 0.85),
+          ),
+        ),
+        // Fill: white text on top, with a soft shadow for extra separation.
+        Text(
+          text,
+          textAlign: TextAlign.center,
+          style: baseStyle.copyWith(
+            color: Colors.white,
+            shadows: [
+              Shadow(
+                color: Colors.black.withValues(alpha: 0.5),
+                blurRadius: 4,
+                offset: const Offset(0, 1),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

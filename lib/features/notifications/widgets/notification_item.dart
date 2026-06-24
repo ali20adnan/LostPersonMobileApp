@@ -3,6 +3,7 @@ import 'package:gap/gap.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../../../app/themes/app_colors.dart';
+import '../../../core/constants/api_constants.dart';
 import '../controllers/notifications_page_controller.dart';
 
 /// Single notification tile — styled to match the conversations screen.
@@ -18,8 +19,11 @@ class NotificationItem extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
     final color = _entryColor(entry);
     final hasUnread = !entry.isRead;
-    final hasThumb =
-        entry.thumbnailUrl != null && entry.thumbnailUrl!.isNotEmpty;
+    // Resolve relative backend paths (e.g. "/uploads/losts/...") into a full
+    // URL, exactly like the missing-person screens do. Passing the raw path to
+    // NetworkImage fails silently and leaves an empty avatar circle.
+    final thumbUrl = ApiConstants.resolveUploadUrl(entry.thumbnailUrl);
+    final hasThumb = thumbUrl != null && thumbUrl.isNotEmpty;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
@@ -73,7 +77,7 @@ class NotificationItem extends StatelessWidget {
                     radius: 26,
                     backgroundColor: Colors.transparent,
                     backgroundImage:
-                        hasThumb ? NetworkImage(entry.thumbnailUrl!) : null,
+                        hasThumb ? NetworkImage(thumbUrl) : null,
                     onBackgroundImageError: hasThumb ? (_, _) {} : null,
                     child: hasThumb
                         ? null

@@ -5,6 +5,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart';
 
 import '../../data/models/user_model.dart';
+import '../../features/missing_persons/services/pending_found_requests_service.dart';
 import 'api_service.dart';
 
 /// Service for authentication and token management
@@ -15,6 +16,15 @@ class AuthService extends GetxService {
 
   final currentUser = Rx<User?>(null);
   bool get isLoggedIn => currentUser.value != null;
+
+  /// Whether the current user may resolve a missing-person case directly
+  /// (mark as found without approval). Only ADMIN and CENTER can; everyone
+  /// else (VOLUNTEER, …) must send a request that ADMIN/CENTER approves.
+  /// Role text is normalized (trim + uppercase) to match `roleDisplayArOf`.
+  bool get canDirectlyResolveMissing {
+    final role = (currentUser.value?.role ?? '').trim().toUpperCase();
+    return role == 'ADMIN' || role == 'CENTER';
+  }
 
   /// Initialize – restore saved user from secure storage
   Future<AuthService> init() async {
@@ -63,6 +73,9 @@ class AuthService extends GetxService {
     await _api.deleteToken();
     await _storage.delete(key: _userKey);
     currentUser.value = null;
+    if (Get.isRegistered<PendingFoundRequestsService>()) {
+      Get.find<PendingFoundRequestsService>().reset();
+    }
     Get.offAllNamed('/login');
     debugPrint('AuthService: Logged out');
   }

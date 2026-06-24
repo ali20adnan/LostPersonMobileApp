@@ -7,6 +7,7 @@ import '../../../app/routes/app_routes.dart';
 import '../../../core/utils/maps_launcher.dart';
 import '../../../core/widgets/shared/tap_scale.dart';
 import '../../../data/models/missing_person_report_model.dart';
+import '../services/pending_found_requests_service.dart';
 
 /// Reusable card for displaying a missing / found person
 class MissingPersonCard extends StatelessWidget {
@@ -199,50 +200,79 @@ class MissingPersonCard extends StatelessWidget {
 
                     if (!isFound) ...[
                       const SizedBox(height: 10),
-                      // Mark as Found button
+                      // Mark as Found button — shows "قيد المراجعة" (disabled)
+                      // while a volunteer's request awaits CENTER/ADMIN approval.
                       SizedBox(
                         width: double.infinity,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            gradient: AppColors.successGradient,
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.teal.withValues(alpha: 0.3),
-                                blurRadius: 8,
-                                offset: const Offset(0, 3),
-                              ),
-                            ],
-                          ),
-                          child: Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              onTap: onMarkFound,
+                        child: Obx(() {
+                          final isPending = Get.find<PendingFoundRequestsService>()
+                              .isPending(person.id);
+                          return Container(
+                            decoration: BoxDecoration(
+                              gradient:
+                                  isPending ? null : AppColors.successGradient,
+                              color: isPending
+                                  ? (isDark
+                                      ? AppColors.cardDark
+                                      : AppColors.surfaceSunken)
+                                  : null,
                               borderRadius: BorderRadius.circular(12),
-                              child: Padding(
-                                padding: EdgeInsets.symmetric(vertical: 10),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    const Directionality(
-                                      textDirection: TextDirection.ltr,
-                                      child: Icon(Icons.check_circle, size: 16, color: Colors.white),
-                                    ),
-                                    SizedBox(width: 6),
-                                    Text(
-                                      'تم العثور',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                        fontSize: 12,
+                              border: isPending
+                                  ? Border.all(
+                                      color: AppColors.teal.withValues(alpha: 0.4))
+                                  : null,
+                              boxShadow: isPending
+                                  ? null
+                                  : [
+                                      BoxShadow(
+                                        color:
+                                            AppColors.teal.withValues(alpha: 0.3),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 3),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                            ),
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: isPending ? null : onMarkFound,
+                                borderRadius: BorderRadius.circular(12),
+                                child: Padding(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 10),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Directionality(
+                                        textDirection: TextDirection.ltr,
+                                        child: Icon(
+                                          isPending
+                                              ? Icons.hourglass_top
+                                              : Icons.check_circle,
+                                          size: 16,
+                                          color: isPending
+                                              ? AppColors.teal
+                                              : Colors.white,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        isPending ? 'قيد المراجعة' : 'تم العثور',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: isPending
+                                              ? AppColors.teal
+                                              : Colors.white,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                        ),
+                          );
+                        }),
                       ),
                     ],
                   ],

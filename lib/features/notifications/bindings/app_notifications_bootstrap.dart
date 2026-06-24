@@ -4,6 +4,9 @@ import 'package:get/get.dart';
 import '../../../app/routes/app_routes.dart';
 import '../../../app/services/socket_service.dart';
 import '../../../app/services/storage_service.dart';
+import '../../missing_persons/controllers/missing_person_detail_controller.dart';
+import '../../missing_persons/controllers/missing_persons_controller.dart';
+import '../../missing_persons/services/pending_found_requests_service.dart';
 import '../services/app_notifications_service.dart';
 
 /// Wires socket events for "missing person created" notifications and
@@ -55,6 +58,15 @@ class AppNotificationsBootstrap {
       );
     });
 
+    // Result of a volunteer's "found" request: CENTER/ADMIN approved or
+    // rejected it. The backend targets this event at the requesting volunteer
+    // (and the center roles) — see activity-logs.service.toRolesAndUser.
+    socket.on('approvalUpdate', _listenerKey, (data) {
+      if (data is! Map) return;
+      final m = Map<String, dynamic>.from(data);
+      _handleApprovalUpdate(m, showBanner: notificationsEnabled());
+    });
+
     socket.on('notificationRead', _listenerKey, (data) {
       if (!notificationsEnabled()) return;
       if (data is! Map) return;
@@ -76,10 +88,69 @@ class AppNotificationsBootstrap {
     if (Get.isRegistered<SocketService>()) {
       final socket = Get.find<SocketService>();
       socket.off('newNotification', _listenerKey);
+      socket.off('approvalUpdate', _listenerKey);
       socket.off('notificationRead', _listenerKey);
       socket.off('notificationsAllRead', _listenerKey);
     }
     _initialized = false;
+  }
+
+  /// Handle a `found`-request approval/rejection: clear the local pending flag,
+  /// refresh any open missing-persons screens, and (optionally) show a banner.
+  static void _handleApprovalUpdate(
+    Map<String, dynamic> data, {
+    required bool showBanner,
+  }) {
+    final status = (data['approvalStatus'] ?? '').toString().toUpperCase();
+    final entityId = data['entityId'] is int
+        ? data['entityId'] as int
+        : int.tryParse(data['entityId']?.toString() ?? '');
+    if (entityId == null) return;
+
+    final approved = status == 'APPROVED';
+
+    // Clear the "قيد المراجعة" flag for this report.
+    if (Get.isRegistered<PendingFoundRequestsService>()) {
+      Get.find<PendingFoundRequestsService>().clear(entityId);
+    }
+
+    // Refresh open lists/detail so the status flips live. The approve flow only
+    // broadcasts `approvalUpdate` (not `missingPersonUpdated`), so we refresh here.
+    if (Get.isRegistered<MissingPersonsController>()) {
+      // ignore: discarded_futures
+      Get.find<MissingPersonsController>().refreshReports();
+    }
+    if (Get.isRegistered<MissingPersonDetailController>()) {
+      final detail = Get.find<MissingPersonDetailController>();
+      if (detail.reportId == entityId) {
+        // ignore: discarded_futures
+        detail.loadReport();
+      }
+    }
+
+    if (!showBanner) return;
+    Get.snackbar(
+      approved ? 'تمت الموافقة على تأكيد العثور' : 'تم رفض طلب تأكيد العثور',
+      approved
+          ? 'تم تأكيد العثور على الشخص وتحديث حالته.'
+          : 'لم تتم الموافقة على طلب تأكيد العثور.',
+      snackPosition: SnackPosition.TOP,
+      duration: const Duration(seconds: 5),
+      backgroundColor: approved
+          ? Colors.green.withValues(alpha: 0.9)
+          : Colors.redAccent.withValues(alpha: 0.9),
+      colorText: Colors.white,
+      margin: const EdgeInsets.all(12),
+      borderRadius: 12,
+      icon: Icon(
+        approved ? Icons.check_circle : Icons.cancel,
+        color: Colors.white,
+      ),
+      onTap: (_) => Get.toNamed(
+        AppRoutes.missingPersonDetail,
+        arguments: {'reportId': entityId},
+      ),
+    );
   }
 
   static void _showBanner({

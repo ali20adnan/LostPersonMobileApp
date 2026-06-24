@@ -16,6 +16,7 @@ import 'app/services/socket_service.dart';
 import 'app/services/storage_service.dart';
 import 'app/services/unread_count_service.dart';
 import 'core/widgets/app_error_widget.dart';
+import 'features/missing_persons/services/pending_found_requests_service.dart';
 import 'features/notifications/bindings/app_notifications_bootstrap.dart';
 import 'features/notifications/services/app_notifications_service.dart';
 import 'features/settings/controllers/settings_controller.dart';
@@ -63,6 +64,9 @@ void main() async {
 
   // Initialize settings (dark mode, notifications)
   Get.put(SettingsController(), permanent: true);
+
+  // Tracks volunteer "found" requests awaiting approval (in-memory, app-wide).
+  Get.put(PendingFoundRequestsService(), permanent: true);
 
   // Initialize Socket.IO if user is already logged in
   final authService = Get.find<AuthService>();

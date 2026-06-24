@@ -5,11 +5,14 @@ import '../../../app/services/auth_service.dart';
 import '../../../app/services/socket_service.dart';
 import '../../../data/models/missing_person_report_model.dart';
 import '../../../data/repositories/missing_persons_repository.dart';
+import '../services/pending_found_requests_service.dart';
 import '../widgets/found_info_dialog.dart';
 
 class MissingPersonsController extends GetxController {
   late final MissingPersonsRepository _repository;
   final AuthService _auth = Get.find<AuthService>();
+  final PendingFoundRequestsService _pending =
+      Get.find<PendingFoundRequestsService>();
 
   // Observable state
   final selectedTab = 0.obs;
@@ -119,19 +122,21 @@ class MissingPersonsController extends GetxController {
     final data = await FoundInfoDialog.show(context);
     if (data == null) return;
 
-    final role = _auth.currentUser.value?.role;
-    final canDirectlyUpdate = role == 'ADMIN' || role == 'CENTER';
+    final canDirectlyUpdate = _auth.canDirectlyResolveMissing;
 
     final response = canDirectlyUpdate
         ? await _repository.updateStatus(person.id, status: 'found', extra: data)
         : await _repository.requestFound(person.id, data: data);
 
     if (response.isSuccess) {
+      // Volunteer requests are pending until CENTER/ADMIN approve — reflect
+      // that locally so the card button shows "قيد المراجعة".
+      if (!canDirectlyUpdate) _pending.markPending(person.id);
       Get.snackbar(
         'تم',
         canDirectlyUpdate
             ? 'تم تحديث حالة الشخص إلى تم العثور عليه'
-            : 'تم إرسال طلب تأكيد العثور',
+            : 'تم إرسال طلب تأكيد العثور. في انتظار موافقة المركز.',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.green.withValues(alpha: 0.8),
         colorText: Colors.white,
