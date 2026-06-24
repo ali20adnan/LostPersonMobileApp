@@ -84,16 +84,19 @@ jobs:
       # ---------------------------------------------------------------------
       # UNSIGNED PATH — default. Always produces a real .ipa file.
       # ---------------------------------------------------------------------
-      - name: Build UNSIGNED archive
+      # `flutter build ios --no-codesign` builds the device .app with NO signing and
+      # NO Development Team required (unlike `build ipa`, whose archive/export step
+      # still demands a team). We then wrap the .app into a Payload/ zip = a real .ipa.
+      - name: Build UNSIGNED app (no team required)
         if: ${{ inputs.signed != true }}
-        run: flutter build ipa --release --no-codesign
+        run: flutter build ios --release --no-codesign
 
-      - name: Package UNSIGNED .ipa from archive
+      - name: Package UNSIGNED .ipa
         if: ${{ inputs.signed != true }}
         run: |
           set -euo pipefail
-          APP_PATH=$(find build/ios/archive/Runner.xcarchive/Products/Applications -maxdepth 1 -name "*.app" | head -1)
-          echo "App: $APP_PATH"
+          APP_PATH=build/ios/iphoneos/Runner.app
+          test -d "$APP_PATH" || { echo "Runner.app not found"; exit 1; }
           mkdir -p build/ios/ipa/Payload
           cp -R "$APP_PATH" build/ios/ipa/Payload/
           (cd build/ios/ipa && zip -qr Runner-unsigned.ipa Payload && rm -rf Payload)
