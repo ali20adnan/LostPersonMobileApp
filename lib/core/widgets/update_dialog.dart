@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:speech_translator_app/core/utils/icon_direction.dart';
 
@@ -6,12 +9,17 @@ import '../../app/themes/app_colors.dart';
 import '../../app/services/update_service.dart';
 
 /// Elegant "update available" dialog shown by [UpdateService].
-/// When [force] is true it cannot be dismissed (back button / barrier) —
-/// the user must update to keep using the app.
-class UpdateDialog extends StatelessWidget {
+/// On Android it downloads the APK in-app (with a progress bar) and opens the
+/// installer; on iOS it redirects to the distribution page. When [force] is
+/// true the dialog cannot be dismissed — the user must update.
+class UpdateDialog extends StatefulWidget {
   final AppVersionInfo info;
   final bool force;
-  final VoidCallback onUpdate;
+
+  /// Runs the update, reporting download progress (0..1). Returns an error
+  /// message to display, or null on success.
+  final Future<String?> Function(void Function(double progress) onProgress)
+      onUpdate;
 
   const UpdateDialog({
     super.key,
@@ -21,16 +29,43 @@ class UpdateDialog extends StatelessWidget {
   });
 
   @override
+  State<UpdateDialog> createState() => _UpdateDialogState();
+}
+
+class _UpdateDialogState extends State<UpdateDialog> {
+  bool _busy = false;
+  double _progress = 0;
+  String? _error;
+
+  Future<void> _runUpdate() async {
+    setState(() {
+      _busy = true;
+      _error = null;
+      _progress = 0;
+    });
+
+    final error = await widget.onUpdate((p) {
+      if (mounted) setState(() => _progress = p);
+    });
+
+    if (!mounted) return;
+    setState(() {
+      _busy = false;
+      _error = error;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final lines = info.changelog
+    final lines = widget.info.changelog
         .split('\n')
         .map((l) => l.trim())
         .where((l) => l.isNotEmpty)
         .toList();
 
     return PopScope(
-      canPop: !force,
+      canPop: !widget.force && !_busy,
       child: Dialog(
         backgroundColor: isDark ? AppColors.surfaceDark : AppColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
@@ -69,7 +104,7 @@ class UpdateDialog extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'الإصدار ${info.latestVersion}',
+                    'الإصدار ${widget.info.latestVersion}',
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.85),
                       fontSize: 13,
@@ -129,7 +164,20 @@ class UpdateDialog extends StatelessWidget {
                     const SizedBox(height: 14),
                   ],
 
-                  if (force)
+                  if (_error != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Text(
+                        _error!,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.error,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    )
+                  else if (widget.force && !_busy)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 12),
                       child: Text(
@@ -143,64 +191,99 @@ class UpdateDialog extends StatelessWidget {
                       ),
                     ),
 
-                  // ── Actions ──
-                  Row(
-                    children: [
-                      if (!force) ...[
-                        Expanded(
-                          child: TextButton(
-                            onPressed: () => Navigator.of(context).maybePop(),
-                            style: TextButton.styleFrom(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 14),
-                              foregroundColor: isDark
-                                  ? AppColors.textOnDarkSecondary
-                                  : AppColors.textSecondary,
-                            ),
-                            child: const Text('لاحقاً'),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                      ],
-                      Expanded(
-                        flex: force ? 1 : 2,
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            gradient: AppColors.accentGradient,
-                            borderRadius: BorderRadius.circular(14),
-                            boxShadow: AppColors.goldShadow,
-                          ),
-                          child: ElevatedButton.icon(
-                            onPressed: onUpdate,
-                            icon: Icon(PhosphorIcons.downloadSimple(),
-                                size: 18, color: Colors.white),
-                            label: const Text(
-                              'تحديث الآن',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                              ),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.transparent,
-                              shadowColor: Colors.transparent,
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                  if (_busy)
+                    _buildProgress(isDark)
+                  else
+                    _buildActions(context, isDark),
                 ],
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildProgress(bool isDark) {
+    final pct = (_progress * 100).clamp(0, 100).toStringAsFixed(0);
+    final downloading = Platform.isAndroid;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: LinearProgressIndicator(
+            value: _progress > 0 ? _progress : null,
+            minHeight: 8,
+            backgroundColor: AppColors.primary.withValues(alpha: 0.12),
+            valueColor:
+                const AlwaysStoppedAnimation<Color>(AppColors.primary),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          downloading ? 'جارٍ تنزيل التحديث... $pct%' : 'جارٍ الفتح...',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 12,
+            color: isDark
+                ? AppColors.textOnDarkSecondary
+                : AppColors.textSecondary,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActions(BuildContext context, bool isDark) {
+    return Row(
+      children: [
+        if (!widget.force) ...[
+          Expanded(
+            child: TextButton(
+              onPressed: () => Get.back(),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                foregroundColor: isDark
+                    ? AppColors.textOnDarkSecondary
+                    : AppColors.textSecondary,
+              ),
+              child: Text(_error != null ? 'إلغاء' : 'لاحقاً'),
+            ),
+          ),
+          const SizedBox(width: 10),
+        ],
+        Expanded(
+          flex: widget.force ? 1 : 2,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: AppColors.accentGradient,
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: AppColors.goldShadow,
+            ),
+            child: ElevatedButton.icon(
+              onPressed: _runUpdate,
+              icon: Icon(PhosphorIcons.downloadSimple(),
+                  size: 18, color: Colors.white),
+              label: Text(
+                _error != null ? 'إعادة المحاولة' : 'تحديث الآن',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
