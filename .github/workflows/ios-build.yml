@@ -82,7 +82,7 @@ jobs:
         if: ${{ inputs.signed == true }}
         run: |
           set -euo pipefail
-          flutter build ipa --release \
+          flutter build ipa --release --no-tree-shake-icons \
             --export-options-plist "$RUNNER_TEMP/ExportOptions.plist"
           ls -lh build/ios/ipa/*.ipa
 
@@ -95,7 +95,7 @@ jobs:
       # signing fully disabled, and wrap the resulting .app into a real .ipa.
       - name: Generate iOS build config (no codesign)
         if: ${{ inputs.signed != true }}
-        run: flutter build ios --release --no-codesign --config-only
+        run: flutter build ios --release --no-codesign --config-only --no-tree-shake-icons
 
       - name: CocoaPods install
         if: ${{ inputs.signed != true }}
