@@ -46,3 +46,9 @@ app.*.map.json
 
 # Downloaded build artifacts (gh run download)
 /apk/
+
+# Android signing — NEVER commit these
+*.jks
+*.keystore
+**/key.properties
+android/app/keystore_password.txt

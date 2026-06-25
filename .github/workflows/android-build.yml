@@ -1,19 +1,26 @@
 name: Build Android APK & AAB
 
 # Builds the Android app on a cloud Linux runner and produces BOTH outputs:
-#   - app-release.apk  (installable directly on a device / sideload)
+#   - app-release.apk  (installable directly on a device / sideload, OTA target)
 #   - app-release.aab  (Android App Bundle for Google Play upload)
-# Both files are collected into a single folder named `apk/` and uploaded as a
-# build artifact. The release build is debug-signed (see android/app/build.gradle:
-# signingConfig = signingConfigs.getByName("debug")), so NO keystore secrets are
-# required — the APK installs as-is. For a Play-Store upload you'd re-sign the AAB
-# with an upload key.
+#
+# The release is signed with a STABLE upload keystore stored in repo secrets
+# (ANDROID_KEYSTORE_BASE64 / ANDROID_KEYSTORE_PASSWORD / ANDROID_KEY_ALIAS /
+# ANDROID_KEY_PASSWORD). A stable signature is required so users can install
+# OTA updates over an existing install. If the secret is missing the build
+# falls back to debug signing (see android/app/build.gradle.kts).
+#
+# On a `v*` tag the APK + AAB are also published as a GitHub Release, so the
+# APK gets a stable download URL for the in-app updater (APP_ANDROID_URL).
 
 on:
   workflow_dispatch:
   push:
     tags:
       - "v*"
+
+permissions:
+  contents: write # needed to create GitHub Releases
 
 jobs:
   build-android:
@@ -47,12 +54,36 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      # ---- Release signing: rebuild key.properties + keystore from secrets ----
+      - name: Configure release signing
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if [ -z "${KEYSTORE_BASE64:-}" ]; then
+            echo "::warning::No keystore secret set — falling back to debug signing."
+            exit 0
+          fi
+          echo "$KEYSTORE_BASE64" | base64 -d > android/app/upload-keystore.jks
+          {
+            echo "storePassword=$KEYSTORE_PASSWORD"
+            echo "keyPassword=$KEY_PASSWORD"
+            echo "keyAlias=$KEY_ALIAS"
+            echo "storeFile=upload-keystore.jks"
+          } > android/key.properties
+          echo "Release signing configured."
+
       # ---- Build both artifacts (release) ----
+      # --no-tree-shake-icons: the RTL un-mirroring of check icons builds an
+      # IconData at runtime, which the icon tree-shaker rejects.
       - name: Build APK (release)
-        run: flutter build apk --release
+        run: flutter build apk --release --no-tree-shake-icons
 
       - name: Build AAB (release)
-        run: flutter build appbundle --release
+        run: flutter build appbundle --release --no-tree-shake-icons
 
       # ---- Collect both into a single `apk/` folder ----
       - name: Collect outputs into apk/
@@ -70,3 +101,14 @@ jobs:
           name: android-apk-aab
           path: apk/
           if-no-files-found: error
+
+      # ---- Publish a GitHub Release on tags (stable APK download URL) ----
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            apk/app-release.apk
+            apk/app-release.aab
+          fail_on_unmatched_files: true
+          generate_release_notes: true
