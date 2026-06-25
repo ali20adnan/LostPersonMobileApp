@@ -2,7 +2,7 @@ name: speech_translator_app
 description: Real-time multilingual speech translator for holy shrine visitors
 publish_to: 'none'
 
-version: 1.0.0+1
+version: 1.0.1+2
 
 environment:
   sdk: ^3.10.4
