@@ -2,7 +2,6 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
@@ -15,7 +14,10 @@ import 'new_chat_sheet.dart';
 
 /// Floating messaging button at top-right + Instagram-style slide-in panel
 class MessagingOverlay extends StatelessWidget {
-  const MessagingOverlay({super.key});
+  /// White-glass chip with a white icon when floating over the dark gradient
+  /// header; light chip with a navy icon over the light translator tab.
+  final bool onDark;
+  const MessagingOverlay({super.key, this.onDark = false});
 
   @override
   Widget build(BuildContext context) {
@@ -40,28 +42,38 @@ class MessagingOverlay extends StatelessWidget {
           width: 44,
           height: 44,
           decoration: BoxDecoration(
-            color: isDark
-                ? AppColors.surfaceDark.withValues(alpha: 0.8)
-                : Colors.white.withValues(alpha: 0.85),
-            borderRadius: BorderRadius.circular(14),
+            color: onDark
+                ? Colors.white.withValues(alpha: 0.18)
+                : isDark
+                    ? AppColors.surfaceDark.withValues(alpha: 0.8)
+                    : Colors.white.withValues(alpha: 0.9),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: isDark ? AppColors.glassBorderDark : AppColors.glassBorder,
+              color: onDark
+                  ? Colors.white.withValues(alpha: 0.35)
+                  : isDark
+                      ? AppColors.glassBorderDark
+                      : AppColors.glassBorder,
             ),
-            boxShadow: AppColors.cardShadow,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: onDark ? 0.18 : 0.10),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(16),
             child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
               child: Stack(
                 clipBehavior: Clip.none,
                 alignment: Alignment.center,
                 children: [
                   Icon(
-                    controller.isMessagingPanelOpen.value
-                        ? PhosphorIcons.chatCircle()
-                        : PhosphorIcons.chatCircle(),
-                    color: AppColors.primary,
+                    PhosphorIcons.chatCircle(),
+                    color: onDark ? Colors.white : AppColors.primary,
                     size: 22,
                   ),
                   if (controller.totalUnreadCount.value > 0)

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
+import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:speech_translator_app/core/utils/icon_direction.dart';
 
 import '../../../app/themes/app_colors.dart';
+import '../../../app/services/auth_service.dart';
 import '../../../core/constants/api_constants.dart';
 import '../controllers/notifications_page_controller.dart';
 
@@ -19,11 +22,15 @@ class NotificationItem extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
     final color = _entryColor(entry);
     final hasUnread = !entry.isRead;
-    // Resolve relative backend paths (e.g. "/uploads/losts/...") into a full
-    // URL, exactly like the missing-person screens do. Passing the raw path to
-    // NetworkImage fails silently and leaves an empty avatar circle.
-    final thumbUrl = ApiConstants.resolveUploadUrl(entry.thumbnailUrl);
-    final hasThumb = thumbUrl != null && thumbUrl.isNotEmpty;
+    final cardColor = isDark ? AppColors.cardDark : AppColors.card;
+
+    // Show the account owner's profile photo on every notification, with the
+    // notification type as a small colored badge on the corner.
+    final accountUser = Get.isRegistered<AuthService>()
+        ? Get.find<AuthService>().currentUser.value
+        : null;
+    final avatarUrl = ApiConstants.resolveAvatarUrl(accountUser?.avatarUrl);
+    final hasAvatar = avatarUrl != null && avatarUrl.isNotEmpty;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
@@ -54,36 +61,56 @@ class NotificationItem extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
               children: [
-                // Avatar / thumbnail (radius 26 — matches conversations)
-                Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: hasThumb
-                        ? null
-                        : LinearGradient(
-                            colors: [color, color.withValues(alpha: 0.7)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
+                // Account-owner avatar with a colored notification-type badge.
+                Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Container(
+                      width: 52,
+                      height: 52,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: color.withValues(alpha: 0.25),
+                          width: 2,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: color.withValues(alpha: 0.15),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
                           ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: color.withValues(alpha: 0.2),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
+                        ],
                       ),
-                    ],
-                  ),
-                  child: CircleAvatar(
-                    radius: 26,
-                    backgroundColor: Colors.transparent,
-                    backgroundImage:
-                        hasThumb ? NetworkImage(thumbUrl) : null,
-                    onBackgroundImageError: hasThumb ? (_, _) {} : null,
-                    child: hasThumb
-                        ? null
-                        : Icon(_entryIcon(entry),
-                            color: Colors.white, size: 22),
-                  ),
+                      clipBehavior: Clip.antiAlias,
+                      child: hasAvatar
+                          ? Image.network(
+                              avatarUrl,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, _, _) =>
+                                  _avatarFallback(accountUser?.fullName, color),
+                            )
+                          : _avatarFallback(accountUser?.fullName, color),
+                    ),
+                    // Type badge
+                    Positioned(
+                      bottom: -2,
+                      right: -2,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: color,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: cardColor, width: 2),
+                        ),
+                        child: Icon(
+                          _entryIcon(entry),
+                          color: Colors.white,
+                          size: 11,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const Gap(14),
 
@@ -170,12 +197,50 @@ class NotificationItem extends StatelessWidget {
     );
   }
 
+  /// Fallback shown when the account has no avatar — initials on a tinted
+  /// gradient, or a person glyph when the name is unavailable.
+  Widget _avatarFallback(String? name, Color color) {
+    final initials = _initials(name ?? '');
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [color, color.withValues(alpha: 0.7)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Center(
+        child: initials.isNotEmpty
+            ? Text(
+                initials,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+              )
+            : Icon(PhosphorIcons.user(), color: Colors.white, size: 22),
+      ),
+    );
+  }
+
+  String _initials(String name) {
+    final parts = name
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((p) => p.isNotEmpty)
+        .toList();
+    if (parts.length >= 2) return '${parts[0][0]}${parts[1][0]}';
+    if (parts.isNotEmpty) return parts[0][0];
+    return '';
+  }
+
   IconData _entryIcon(NotificationEntry entry) {
     switch (entry.type) {
       case 'alert':
         switch (entry.alertType) {
           case 'found':
-            return PhosphorIcons.checkCircle();
+            return PhosphorIcons.checkCircle().ltr;
           default:
             return PhosphorIcons.bell();
         }

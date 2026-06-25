@@ -238,9 +238,15 @@ class LoginPage extends GetView<AuthController> {
                                 : const Text(
                                     'تسجيل الدخول',
                                     key: ValueKey('text'),
+                                    textAlign: TextAlign.center,
+                                    // Cairo has tall descenders (ج/ل); give the
+                                    // line box room so they aren't clipped.
                                     style: TextStyle(
                                       fontSize: 16,
+                                      height: 1.4,
                                       fontWeight: FontWeight.w700,
+                                      leadingDistribution:
+                                          TextLeadingDistribution.even,
                                     ),
                                   ),
                           ),

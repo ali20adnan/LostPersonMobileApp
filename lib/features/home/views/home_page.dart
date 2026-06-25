@@ -32,13 +32,17 @@ class HomePage extends GetView<HomeController> {
           extendBody: true,
           body: Stack(
             children: [
-              // Main content with Material fade-through transition between tabs
+              // Main content with a directional shared-axis slide between tabs:
+              // moving to a higher-index tab slides one way, lower the other,
+              // which reads as physically moving across the tab bar.
               Obx(() => PageTransitionSwitcher(
-                    duration: const Duration(milliseconds: 300),
+                    duration: const Duration(milliseconds: 280),
+                    reverse: !controller.goingForward,
                     transitionBuilder: (child, primary, secondary) {
-                      return FadeThroughTransition(
+                      return SharedAxisTransition(
                         animation: primary,
                         secondaryAnimation: secondary,
+                        transitionType: SharedAxisTransitionType.horizontal,
                         fillColor: Colors.transparent,
                         child: child,
                       );
@@ -54,12 +58,17 @@ class HomePage extends GetView<HomeController> {
                   ? const NotificationDismissBarrier()
                   : const SizedBox.shrink()),
 
-              // Floating notification bell at top-left (hidden on profile)
+              // Floating notification bell at top-left (hidden on profile).
+              // Tabs 1 (missing) & 2 (reports) have a dark gradient header, so
+              // the button switches to its white-glass variant there.
               Obx(() => controller.currentIndex.value != 3
                   ? Positioned(
                       top: MediaQuery.of(context).padding.top + 8,
                       left: 12,
-                      child: const NotificationOverlay(),
+                      child: NotificationOverlay(
+                        onDark: controller.currentIndex.value == 1 ||
+                            controller.currentIndex.value == 2,
+                      ),
                     )
                   : const SizedBox.shrink()),
 
@@ -68,7 +77,10 @@ class HomePage extends GetView<HomeController> {
                   ? Positioned(
                       top: MediaQuery.of(context).padding.top + 8,
                       right: 12,
-                      child: const MessagingOverlay(),
+                      child: MessagingOverlay(
+                        onDark: controller.currentIndex.value == 1 ||
+                            controller.currentIndex.value == 2,
+                      ),
                     )
                   : const SizedBox.shrink()),
             ],

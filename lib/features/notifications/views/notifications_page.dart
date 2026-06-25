@@ -5,6 +5,7 @@ import 'package:gap/gap.dart';
 import 'package:get/get.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:speech_translator_app/core/utils/icon_direction.dart';
 
 import '../../../app/services/unread_count_service.dart';
 import '../../../app/themes/app_colors.dart';
@@ -180,7 +181,7 @@ class NotificationsPage extends GetView<NotificationsPageController> {
         IconButton(
           tooltip: 'قراءة الكل',
           onPressed: controller.markAllAsRead,
-          icon: Icon(PhosphorIcons.checkCircle(), color: Colors.white),
+          icon: Icon(PhosphorIcons.checkCircle().ltr, color: Colors.white),
         ),
       ],
     );

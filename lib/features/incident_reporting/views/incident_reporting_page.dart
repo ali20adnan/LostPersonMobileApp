@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:gap/gap.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:speech_translator_app/core/utils/icon_direction.dart';
 
 import '../../../app/themes/app_colors.dart';
 import '../../../core/widgets/shared/morph_submit_button.dart';
@@ -183,7 +184,7 @@ class IncidentReportingPage extends GetView<IncidentReportingController> {
                             ),
                             if (isSelected)
                               Icon(
-                                PhosphorIcons.checkCircle(),
+                                PhosphorIcons.checkCircle().ltr,
                                 color: Colors.white,
                                 size: 16,
                               ),
@@ -317,7 +318,7 @@ class IncidentReportingPage extends GetView<IncidentReportingController> {
                       ),
                     ),
                   ] else if (hasLocation) ...[
-                    Icon(PhosphorIcons.checkCircle(),
+                    Icon(PhosphorIcons.checkCircle().ltr,
                         color: Colors.green, size: 16),
                     const Gap(8),
                     const Text(

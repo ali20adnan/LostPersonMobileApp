@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:speech_translator_app/core/utils/icon_direction.dart';
 
 /// Report types matching the API
 enum ReportType {
@@ -176,7 +177,7 @@ enum AlertType {
   IconData get icon {
     switch (this) {
       case AlertType.found:
-        return PhosphorIcons.checkCircle();
+        return PhosphorIcons.checkCircle().ltr;
     }
   }
 

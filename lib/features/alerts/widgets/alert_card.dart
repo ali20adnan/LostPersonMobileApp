@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:speech_translator_app/core/utils/icon_direction.dart';
 
 import '../../../app/themes/app_colors.dart';
 import '../../../data/models/alert_model.dart';
@@ -199,7 +200,7 @@ class AlertCard extends StatelessWidget {
   IconData _typeIcon(String type) {
     switch (type) {
       case 'found':
-        return PhosphorIcons.checkCircle();
+        return PhosphorIcons.checkCircle().ltr;
       default:
         return PhosphorIcons.bell();
     }

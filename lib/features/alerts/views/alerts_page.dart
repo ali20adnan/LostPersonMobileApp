@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:speech_translator_app/core/utils/icon_direction.dart';
 
 import '../../../app/themes/app_colors.dart';
 import '../controllers/alerts_controller.dart';
@@ -45,7 +46,7 @@ class AlertsPage extends GetView<AlertsController> {
         Obx(() => controller.unreadCount.value > 0
             ? TextButton.icon(
                 onPressed: controller.markAllAsRead,
-                icon: Icon(PhosphorIcons.checkCircle(), size: 16),
+                icon: Icon(PhosphorIcons.checkCircle().ltr, size: 16),
                 label: const Text('قراءة الكل', style: TextStyle(fontSize: 12)),
               )
             : const SizedBox.shrink()),

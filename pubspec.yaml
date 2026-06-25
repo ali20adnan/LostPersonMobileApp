@@ -48,6 +48,9 @@ dependencies:
   # OCR & Text Recognition
   google_mlkit_text_recognition: ^0.14.0
 
+  # App / device info (OTA update gate reads the current build number)
+  package_info_plus: ^8.0.0
+
   # Network & WebSocket
   web_socket_channel: ^2.4.0
   http: ^1.1.0

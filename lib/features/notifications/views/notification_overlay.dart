@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:speech_translator_app/core/utils/icon_direction.dart';
 
 import '../../../app/themes/app_colors.dart';
 import '../controllers/notifications_controller.dart';
@@ -14,7 +15,11 @@ import 'notifications_page.dart';
 
 /// Floating notification bell button + glassmorphic dropdown overlay
 class NotificationOverlay extends StatelessWidget {
-  const NotificationOverlay({super.key});
+  /// When the button floats over the dark gradient header (missing/reports
+  /// tabs) it switches to a white-glass chip with a white icon so it reads
+  /// as part of the header. Over the light translator tab it stays light.
+  final bool onDark;
+  const NotificationOverlay({super.key, this.onDark = false});
 
   @override
   Widget build(BuildContext context) {
@@ -55,28 +60,38 @@ class NotificationOverlay extends StatelessWidget {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: isDark
-                        ? AppColors.surfaceDark.withValues(alpha: 0.8)
-                        : Colors.white.withValues(alpha: 0.85),
-                    borderRadius: BorderRadius.circular(14),
+                    color: onDark
+                        ? Colors.white.withValues(alpha: 0.18)
+                        : isDark
+                            ? AppColors.surfaceDark.withValues(alpha: 0.8)
+                            : Colors.white.withValues(alpha: 0.9),
+                    borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: isDark
-                          ? AppColors.glassBorderDark
-                          : AppColors.glassBorder,
+                      color: onDark
+                          ? Colors.white.withValues(alpha: 0.35)
+                          : isDark
+                              ? AppColors.glassBorderDark
+                              : AppColors.glassBorder,
                     ),
-                    boxShadow: AppColors.cardShadow,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: onDark ? 0.18 : 0.10),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(16),
                     child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                      filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
                       child: Stack(
                         clipBehavior: Clip.none,
                         alignment: Alignment.center,
                         children: [
                           Icon(
                             PhosphorIcons.bell(),
-                            color: AppColors.primary,
+                            color: onDark ? Colors.white : AppColors.primary,
                             size: 22,
                           ),
                           // Unread badge
@@ -211,7 +226,7 @@ class _NotificationDropdown extends StatelessWidget {
                     Obx(() => controller.unreadCount.value > 0
                         ? TextButton.icon(
                             onPressed: controller.markAllAsRead,
-                            icon: Icon(PhosphorIcons.checkCircle(), size: 14),
+                            icon: Icon(PhosphorIcons.checkCircle().ltr, size: 14),
                             label: const Text('قراءة الكل',
                                 style: TextStyle(fontSize: 11)),
                             style: TextButton.styleFrom(

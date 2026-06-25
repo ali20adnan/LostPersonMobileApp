@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:gap/gap.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:speech_translator_app/core/utils/icon_direction.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 import '../../../app/themes/app_colors.dart';
@@ -188,7 +189,7 @@ class MissingPersonDetailPage extends GetView<MissingPersonDetailController> {
     final isMissing = report.isMissing;
     final statusColor = isMissing ? AppColors.error : AppColors.teal;
     final statusText = isMissing ? 'مفقود' : 'تم العثور عليه';
-    final statusIcon = isMissing ? PhosphorIcons.magnifyingGlass() : PhosphorIcons.checkCircle();
+    final statusIcon = isMissing ? PhosphorIcons.magnifyingGlass() : PhosphorIcons.checkCircle().ltr;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -269,7 +270,7 @@ class MissingPersonDetailPage extends GetView<MissingPersonDetailController> {
                   color: AppColors.teal.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(PhosphorIcons.checkCircle(),
+                child: Icon(PhosphorIcons.checkCircle().ltr,
                     size: 18, color: AppColors.teal),
               ),
               const Gap(10),

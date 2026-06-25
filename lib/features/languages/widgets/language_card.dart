@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:gap/gap.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:speech_translator_app/core/utils/icon_direction.dart';
 
 import '../../../app/themes/app_colors.dart';
 import '../../../data/models/language_model.dart';
@@ -123,7 +124,7 @@ class LanguageCard extends StatelessWidget {
               ),
               child: isSelected
                   ? Icon(
-                      PhosphorIcons.checkCircle(),
+                      PhosphorIcons.checkCircle().ltr,
                       size: 18,
                       color: AppColors.primary,
                     )

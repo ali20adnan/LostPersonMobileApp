@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:speech_translator_app/core/utils/icon_direction.dart';
 
 import '../../../app/themes/app_colors.dart';
 
@@ -87,7 +88,7 @@ class _FoundInfoDialogState extends State<FoundInfoDialog> {
                     color: AppColors.teal.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: Icon(PhosphorIcons.checkCircle(),
+                  child: Icon(PhosphorIcons.checkCircle().ltr,
                       color: AppColors.teal, size: 32),
                 ),
                 const SizedBox(height: 12),
@@ -224,7 +225,7 @@ class _FoundInfoDialogState extends State<FoundInfoDialog> {
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(PhosphorIcons.checkCircle(),
+                                  Icon(PhosphorIcons.checkCircle().ltr,
                                       size: 18, color: Colors.white),
                                   SizedBox(width: 6),
                                   Text(

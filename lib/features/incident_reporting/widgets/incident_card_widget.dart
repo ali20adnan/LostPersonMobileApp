@@ -27,255 +27,145 @@ class IncidentCardWidget extends StatelessWidget {
     final severity = ReportSeverity.fromString(incident.severity ?? 'medium');
     final status = ReportStatus.fromApiString(incident.status);
 
+    final muted = isDark
+        ? AppColors.textOnDarkSecondary
+        : AppColors.textSecondary;
+    final hasDescription = (incident.description ?? '').trim().isNotEmpty;
+    final hasLocation = (incident.addressLine ?? '').trim().isNotEmpty;
+
     return TapScale(
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isDark ? AppColors.cardDark : AppColors.card,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: isDark ? AppColors.cardBorderDark : AppColors.cardBorder,
           ),
           boxShadow: AppColors.softShadow,
         ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Header: soft icon chip + title/type + status pill ──
+            Row(
               children: [
-                // Left severity accent bar with gradient fade
                 Container(
-                  width: 5,
+                  padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        severity.color,
-                        severity.color.withValues(alpha: 0.3),
-                      ],
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                    ),
+                    color: severity.color.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(14),
                   ),
+                  child: Icon(type.icon, color: severity.color, size: 22),
                 ),
-                // Card content
+                const Gap(12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Header: icon + title + status badge
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(9),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    severity.color,
-                                    severity.color.withValues(alpha: 0.7),
-                                  ],
-                                ),
-                                borderRadius: BorderRadius.circular(10),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: severity.color.withValues(alpha: 0.3),
-                                    blurRadius: 6,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: Icon(
-                                type.icon,
-                                color: Colors.white,
-                                size: 22,
-                              ),
-                            ),
-                            const Gap(10),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    incident.displayTitle,
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14,
-                                      color: isDark
-                                          ? AppColors.textOnDark
-                                          : AppColors.textPrimary,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  const Gap(2),
-                                  Text(
-                                    type.displayNameAr,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: isDark
-                                          ? AppColors.textOnDarkSecondary
-                                          : AppColors.textSecondary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const Gap(8),
-                            // Status badge
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 5),
-                              decoration: BoxDecoration(
-                                color: status.color.withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                  color: status.color.withValues(alpha: 0.5),
-                                ),
-                              ),
-                              child: Text(
-                                status.displayNameAr,
-                                style: TextStyle(
-                                  color: status.color,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ],
+                      Text(
+                        incident.displayTitle,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                          color: isDark
+                              ? AppColors.textOnDark
+                              : AppColors.textPrimary,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-
-                      // Divider
-                      Divider(
-                        height: 1,
-                        thickness: 1,
-                        color: isDark
-                            ? AppColors.dividerDark
-                            : AppColors.divider,
-                        indent: 14,
-                        endIndent: 14,
-                      ),
-
-                      // Body: description + location + severity + time
-                      Padding(
-                        padding: const EdgeInsets.all(14),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Description
-                            Text(
-                              incident.description ?? '',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: isDark
-                                    ? AppColors.textOnDark.withValues(alpha: 0.75)
-                                    : AppColors.textPrimary.withValues(alpha: 0.75),
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const Gap(10),
-
-                            // Location + severity row
-                            Row(
-                              children: [
-                                Icon(
-                                  PhosphorIcons.mapPin(),
-                                  size: 14,
-                                  color: isDark
-                                      ? AppColors.textOnDarkSecondary
-                                      : AppColors.textSecondary,
-                                ),
-                                const Gap(4),
-                                Expanded(
-                                  child: Text(
-                                    incident.addressLine ?? '',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: isDark
-                                          ? AppColors.textOnDarkSecondary
-                                          : AppColors.textSecondary,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                const Gap(8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 3),
-                                  decoration: BoxDecoration(
-                                    color: severity.color.withValues(alpha: 0.12),
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Text(
-                                    severity.displayNameAr,
-                                    style: TextStyle(
-                                      color: severity.color,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                                if (incident.latitude != null &&
-                                    incident.longitude != null) ...[
-                                  const Gap(6),
-                                  GestureDetector(
-                                    onTap: () => openMapsDirections(
-                                      lat: incident.latitude,
-                                      lng: incident.longitude,
-                                    ),
-                                    child: Icon(
-                                      PhosphorIcons.navigationArrow(),
-                                      size: 18,
-                                      color: AppColors.primary,
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
-
-                            const Gap(8),
-
-                            // Footer: time
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  children: [
-                                    Icon(
-                                      PhosphorIcons.clock(),
-                                      size: 13,
-                                      color: isDark
-                                          ? AppColors.textOnDarkSecondary
-                                          : AppColors.textLight,
-                                    ),
-                                    const Gap(4),
-                                    Text(
-                                      _formatTimestamp(incident.createdAt),
-                                      style: TextStyle(
-                                        color: isDark
-                                            ? AppColors.textOnDarkSecondary
-                                            : AppColors.textLight,
-                                        fontSize: 11,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
+                      const Gap(3),
+                      Text(
+                        type.displayNameAr,
+                        style: TextStyle(fontSize: 12, color: muted),
                       ),
                     ],
                   ),
                 ),
+                const Gap(8),
+                _SoftPill(
+                  label: status.displayNameAr,
+                  color: status.color,
+                  bold: true,
+                ),
               ],
             ),
-          ),
+
+            // ── Description ──
+            if (hasDescription) ...[
+              const Gap(12),
+              Text(
+                incident.description!.trim(),
+                style: TextStyle(
+                  fontSize: 13,
+                  height: 1.4,
+                  color: isDark
+                      ? AppColors.textOnDark.withValues(alpha: 0.72)
+                      : AppColors.textPrimary.withValues(alpha: 0.72),
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+
+            const Gap(14),
+
+            // ── Meta row: location + severity + time + directions ──
+            Row(
+              children: [
+                Icon(PhosphorIcons.clock(), size: 14, color: muted),
+                const Gap(4),
+                Text(
+                  _formatTimestamp(incident.createdAt),
+                  style: TextStyle(fontSize: 12, color: muted),
+                ),
+                if (hasLocation) ...[
+                  const Gap(12),
+                  Icon(PhosphorIcons.mapPin(), size: 14, color: muted),
+                  const Gap(4),
+                  Expanded(
+                    child: Text(
+                      incident.addressLine!.trim(),
+                      style: TextStyle(fontSize: 12, color: muted),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ] else
+                  const Spacer(),
+                const Gap(8),
+                _SoftPill(
+                  label: severity.displayNameAr,
+                  color: severity.color,
+                ),
+                if (incident.latitude != null &&
+                    incident.longitude != null) ...[
+                  const Gap(6),
+                  GestureDetector(
+                    onTap: () => openMapsDirections(
+                      lat: incident.latitude,
+                      lng: incident.longitude,
+                    ),
+                    child: Container(
+                      padding: const EdgeInsets.all(7),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.10),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(
+                        PhosphorIcons.navigationArrow(),
+                        size: 15,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ],
         ),
       ),
     );
@@ -297,5 +187,38 @@ class IncidentCardWidget extends StatelessWidget {
     } else {
       return DateFormat('yyyy-MM-dd').format(timestamp);
     }
+  }
+}
+
+/// Small soft-tinted pill used for status & severity labels — matches the
+/// website's Badge style (soft background, colored text, compact).
+class _SoftPill extends StatelessWidget {
+  final String label;
+  final Color color;
+  final bool bold;
+
+  const _SoftPill({
+    required this.label,
+    required this.color,
+    this.bold = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 11,
+          fontWeight: bold ? FontWeight.w700 : FontWeight.w600,
+        ),
+      ),
+    );
   }
 }

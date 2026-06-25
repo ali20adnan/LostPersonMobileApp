@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:speech_translator_app/core/utils/icon_direction.dart';
 
 import '../../../app/themes/app_colors.dart';
 import '../../../app/routes/app_routes.dart';
@@ -31,6 +32,12 @@ class MissingPersonCard extends StatelessWidget {
     final accentColor = isFound ? AppColors.teal : AppColors.primary;
     final urgentColor = isFound ? AppColors.teal : AppColors.accent;
 
+    final muted = isDark
+        ? AppColors.textOnDarkSecondary
+        : AppColors.textSecondary;
+    final hasDescription = (person.description ?? '').trim().isNotEmpty;
+    final hasLocation = (person.lastSeenAddress ?? '').trim().isNotEmpty;
+
     return TapScale(
       onTap: onTap ?? () => Get.toNamed(
         AppRoutes.missingPersonDetail,
@@ -38,168 +45,149 @@ class MissingPersonCard extends StatelessWidget {
       ),
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.cardDark : AppColors.card,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: isDark ? AppColors.cardBorderDark : AppColors.cardBorder,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.cardDark : AppColors.card,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: isDark ? AppColors.cardBorderDark : AppColors.cardBorder,
+          ),
+          boxShadow: isDark ? null : AppColors.softShadow,
         ),
-        boxShadow: isDark ? null : AppColors.cardShadow,
-      ),
-      child: IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Right accent bar
-            Container(
-              width: 4,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [urgentColor, urgentColor.withValues(alpha: 0.4)],
-                ),
-                borderRadius: const BorderRadius.only(
-                  topRight: Radius.circular(18),
-                  bottomRight: Radius.circular(18),
-                ),
-              ),
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(14),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildAvatar(accentColor),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                person.fullName ?? 'غير معروف',
-                                style: theme.textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: isDark ? AppColors.textOnDark : AppColors.textPrimary,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  Icon(PhosphorIcons.cake(), size: 13, color: AppColors.textLight),
-                                  const SizedBox(width: 3),
-                                  Text(
-                                    '${person.age ?? '?'} سنة',
-                                    style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Icon(PhosphorIcons.user(), size: 13, color: AppColors.textLight),
-                                  const SizedBox(width: 3),
-                                  Expanded(
-                                    child: Text(
-                                      person.gender ?? '',
-                                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildAvatar(accentColor),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        person.fullName ?? 'غير معروف',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                          color: isDark
+                              ? AppColors.textOnDark
+                              : AppColors.textPrimary,
                         ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: urgentColor.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: urgentColor.withValues(alpha: 0.3)),
-                          ),
-                          child: Text(
-                            _relativeTime(person.createdAt),
-                            style: TextStyle(fontSize: 11, color: urgentColor, fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 10),
-
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(PhosphorIcons.fileText(), size: 14, color: AppColors.primary),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            person.description ?? '',
-                            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 6),
-
-                    Row(
-                      children: [
-                        Icon(PhosphorIcons.mapPin(), size: 14, color: AppColors.primary),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            person.lastSeenAddress ?? '',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: isDark ? AppColors.textOnDarkSecondary : AppColors.textSecondary,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        if (person.coordinates != null) ...[
-                          const SizedBox(width: 6),
-                          GestureDetector(
-                            onTap: () => openMapsDirections(
-                              lat: person.coordinates!['latitude'],
-                              lng: person.coordinates!['longitude'],
-                            ),
-                            child: Icon(
-                              PhosphorIcons.navigationArrow(),
-                              size: 18,
-                              color: AppColors.primary,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-
-                    if (isFound) ...[
-                      const SizedBox(height: 6),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
                       Row(
                         children: [
-                          Icon(PhosphorIcons.checkCircle(), size: 14, color: AppColors.teal),
-                          const SizedBox(width: 6),
+                          Icon(PhosphorIcons.cake(), size: 13, color: muted),
+                          const SizedBox(width: 3),
                           Text(
-                            'تم العثور عليه ${_relativeTime(person.updatedAt)}',
-                            style: const TextStyle(
-                              color: AppColors.teal,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 12,
+                            '${person.age ?? '?'} سنة',
+                            style: TextStyle(fontSize: 12, color: muted),
+                          ),
+                          const SizedBox(width: 8),
+                          Icon(PhosphorIcons.user(), size: 13, color: muted),
+                          const SizedBox(width: 3),
+                          Expanded(
+                            child: Text(
+                              person.gender ?? '',
+                              style: TextStyle(fontSize: 12, color: muted),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],
                       ),
                     ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                _SoftPill(
+                  label: _relativeTime(person.createdAt),
+                  color: urgentColor,
+                ),
+              ],
+            ),
 
-                    if (!isFound) ...[
-                      const SizedBox(height: 10),
+            if (hasDescription) ...[
+              const SizedBox(height: 12),
+              Text(
+                person.description!.trim(),
+                style: TextStyle(fontSize: 13, height: 1.4, color: muted),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+
+            const SizedBox(height: 12),
+
+            Row(
+              children: [
+                Icon(PhosphorIcons.mapPin(), size: 14, color: muted),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    hasLocation ? person.lastSeenAddress!.trim() : 'غير محدد',
+                    style: TextStyle(fontSize: 12, color: muted),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                if (person.coordinates != null) ...[
+                  const SizedBox(width: 6),
+                  GestureDetector(
+                    onTap: () => openMapsDirections(
+                      lat: person.coordinates!['latitude'],
+                      lng: person.coordinates!['longitude'],
+                    ),
+                    child: Container(
+                      padding: const EdgeInsets.all(7),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.10),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(
+                        PhosphorIcons.navigationArrow(),
+                        size: 15,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+
+            if (isFound) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                decoration: BoxDecoration(
+                  color: AppColors.teal.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(PhosphorIcons.checkCircle().ltr,
+                        size: 14, color: AppColors.teal),
+                    const SizedBox(width: 6),
+                    Text(
+                      'تم العثور عليه ${_relativeTime(person.updatedAt)}',
+                      style: const TextStyle(
+                        color: AppColors.teal,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+
+            if (!isFound) ...[
+              const SizedBox(height: 12),
                       // Mark as Found button — shows "قيد المراجعة" (disabled)
                       // while a volunteer's request awaits CENTER/ADMIN approval.
                       SizedBox(
@@ -278,12 +266,7 @@ class MissingPersonCard extends StatelessWidget {
                   ],
                 ),
               ),
-            ),
-          ],
-        ),
-      ),
-      ),
-    );
+            );
   }
 
   Widget _buildAvatar(Color color) {
@@ -347,5 +330,32 @@ class MissingPersonCard extends StatelessWidget {
     if (diff.inHours < 24) return 'منذ ${diff.inHours} س';
     if (diff.inDays < 7) return 'منذ ${diff.inDays} يوم';
     return '${time.day}/${time.month}/${time.year}';
+  }
+}
+
+/// Small soft-tinted pill — matches the website's compact Badge style.
+class _SoftPill extends StatelessWidget {
+  final String label;
+  final Color color;
+
+  const _SoftPill({required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
   }
 }

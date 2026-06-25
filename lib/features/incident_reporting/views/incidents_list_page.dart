@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:gap/gap.dart';
@@ -21,130 +22,97 @@ class IncidentsListPage extends GetView<IncidentsListController> {
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.backgroundDark : AppColors.background,
-      appBar: AppBar(
-        title: const Text('قائمة الإبلاغات'),
-        centerTitle: true,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(color: AppColors.primary),
-        ),
-        foregroundColor: Colors.white,
-      ),
+      appBar: _buildAppBar(),
       body: Column(
         children: [
           // Search + filter section
-          Container(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.surfaceDark : AppColors.surface,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Column(
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+            child: Row(
               children: [
-                // Search bar + filter button row
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        onChanged: controller.updateSearch,
-                        textDirection: TextDirection.rtl,
-                        style: TextStyle(
-                          color: isDark
-                              ? AppColors.textOnDark
-                              : AppColors.textPrimary,
+                Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: isDark ? AppColors.cardDark : AppColors.surface,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isDark
+                            ? AppColors.cardBorderDark
+                            : AppColors.cardBorder,
+                      ),
+                      boxShadow: AppColors.cardShadow,
+                    ),
+                    child: TextField(
+                      onChanged: controller.updateSearch,
+                      textDirection: TextDirection.rtl,
+                      style: TextStyle(
+                        color: isDark
+                            ? AppColors.textOnDark
+                            : AppColors.textPrimary,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: 'ابحث بالعنوان أو الوصف أو الموقع...',
+                        hintTextDirection: TextDirection.rtl,
+                        prefixIcon: Icon(
+                          PhosphorIcons.magnifyingGlass(),
+                          size: 20,
+                          color: AppColors.primary,
                         ),
-                        decoration: InputDecoration(
-                          hintText: 'ابحث بالعنوان أو الوصف أو الموقع...',
-                          hintTextDirection: TextDirection.rtl,
-                          prefixIcon: Icon(PhosphorIcons.magnifyingGlass(),
-                              size: 20, color: AppColors.primary),
-                          filled: true,
-                          fillColor: isDark
-                              ? AppColors.surfaceElevatedDark
-                              : AppColors.surfaceSunken,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: BorderSide.none,
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: BorderSide(
-                              color: isDark
-                                  ? AppColors.cardBorderDark
-                                  : AppColors.cardBorder,
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: const BorderSide(
-                              color: AppColors.primary,
-                              width: 1.5,
-                            ),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            vertical: 11,
-                            horizontal: 16,
-                          ),
-                          isDense: true,
-                          hintStyle: TextStyle(
-                            color: isDark
-                                ? AppColors.textSecondaryDark
-                                : AppColors.textLight,
-                          ),
+                        filled: false,
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
+                        hintStyle: TextStyle(
+                          color: isDark
+                              ? AppColors.textSecondaryDark
+                              : AppColors.textLight,
                         ),
                       ),
                     ),
-                    const Gap(8),
-                    Obx(() {
-                      final hasFilter =
-                          controller.selectedStatusFilter.value != null ||
-                              controller.selectedTypeFilter.value != null;
-                      return GestureDetector(
-                        onTap: () => _showFilterSheet(context, isDark),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          padding: const EdgeInsets.all(11),
-                          decoration: BoxDecoration(
-                            gradient:
-                                hasFilter ? AppColors.heroGradient : null,
-                            color: hasFilter
-                                ? null
-                                : isDark
-                                    ? AppColors.surfaceElevatedDark
-                                    : AppColors.surfaceSunken,
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                              color: hasFilter
-                                  ? Colors.transparent
-                                  : isDark
-                                      ? AppColors.cardBorderDark
-                                      : AppColors.cardBorder,
-                            ),
-                          ),
-                          child: Badge(
-                            isLabelVisible: hasFilter,
-                            backgroundColor: Colors.white,
-                            smallSize: 8,
-                            child: Icon(
-                              PhosphorIcons.funnelSimple(),
-                              size: 20,
-                              color: hasFilter
-                                  ? Colors.white
-                                  : AppColors.primary,
-                            ),
-                          ),
-                        ),
-                      );
-                    }),
-                  ],
+                  ),
                 ),
+                const Gap(8),
+                Obx(() {
+                  final hasFilter =
+                      controller.selectedStatusFilter.value != null ||
+                          controller.selectedTypeFilter.value != null;
+                  return GestureDetector(
+                    onTap: () => _showFilterSheet(context, isDark),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.all(13),
+                      decoration: BoxDecoration(
+                        gradient: hasFilter ? AppColors.heroGradient : null,
+                        color: hasFilter
+                            ? null
+                            : isDark
+                                ? AppColors.cardDark
+                                : AppColors.surface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: hasFilter
+                              ? Colors.transparent
+                              : isDark
+                                  ? AppColors.cardBorderDark
+                                  : AppColors.cardBorder,
+                        ),
+                        boxShadow: hasFilter ? null : AppColors.cardShadow,
+                      ),
+                      child: Badge(
+                        isLabelVisible: hasFilter,
+                        backgroundColor: AppColors.accent,
+                        smallSize: 8,
+                        child: Icon(
+                          PhosphorIcons.funnelSimple(),
+                          size: 20,
+                          color: hasFilter ? Colors.white : AppColors.primary,
+                        ),
+                      ),
+                    ),
+                  );
+                }),
               ],
             ),
           ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.1),
@@ -247,6 +215,65 @@ class IncidentsListPage extends GetView<IncidentsListController> {
           ),
         ],
       ),
+    );
+  }
+
+  PreferredSizeWidget _buildAppBar() {
+    return AppBar(
+      toolbarHeight: 72,
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      backgroundColor: Colors.transparent,
+      surfaceTintColor: Colors.transparent,
+      systemOverlayStyle: SystemUiOverlayStyle.light,
+      automaticallyImplyLeading: false,
+      centerTitle: true,
+      // Reserve space for HomePage floating notification / messaging buttons.
+      leading: const SizedBox(width: 56),
+      actions: const [SizedBox(width: 56)],
+      flexibleSpace: Container(
+        decoration: const BoxDecoration(
+          gradient: AppColors.heroGradient,
+          borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
+          boxShadow: [
+            BoxShadow(
+              color: Color(0x33000000),
+              blurRadius: 12,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+      ),
+      iconTheme: const IconThemeData(color: Colors.white),
+      title: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text(
+            'قائمة الإبلاغات',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+              color: Colors.white,
+              letterSpacing: 0.2,
+            ),
+          ),
+          const Gap(2),
+          Text(
+            'متابعة بلاغات الحوادث والطوارئ',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w500,
+              color: Colors.white.withValues(alpha: 0.8),
+            ),
+          ),
+        ],
+      ).animate().fadeIn(duration: 400.ms).slideY(
+            begin: -0.15,
+            curve: Curves.easeOutCubic,
+          ),
     );
   }
 

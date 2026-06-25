@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:speech_translator_app/core/utils/icon_direction.dart';
 
 import '../../../app/themes/app_colors.dart';
 import '../../../data/models/missing_person_report_model.dart';
@@ -41,17 +43,71 @@ class MissingPersonsPage extends GetView<MissingPersonsController> {
   Widget _buildSliverAppBar(bool isDark) {
     return SliverAppBar(
       pinned: true,
-      flexibleSpace: FlexibleSpaceBar(
-        background: Container(
-          decoration: const BoxDecoration(color: AppColors.primary),
+      toolbarHeight: 72,
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      backgroundColor: Colors.transparent,
+      surfaceTintColor: Colors.transparent,
+      systemOverlayStyle: SystemUiOverlayStyle.light,
+      automaticallyImplyLeading: false,
+      centerTitle: true,
+      // Reserve space for HomePage floating notification / messaging buttons.
+      leading: const SizedBox(width: 56),
+      actions: const [SizedBox(width: 56)],
+      iconTheme: const IconThemeData(color: Colors.white),
+      flexibleSpace: Container(
+        decoration: const BoxDecoration(
+          gradient: AppColors.heroGradient,
+          borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
+          boxShadow: [
+            BoxShadow(
+              color: Color(0x33000000),
+              blurRadius: 12,
+              offset: Offset(0, 4),
+            ),
+          ],
         ),
       ),
-      title: const Text(
-        'الأشخاص المفقودون',
-        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+      title: _buildHeaderTitle(
+        title: 'الأشخاص المفقودون',
+        subtitle: 'إدارة ومتابعة بلاغات المفقودين',
       ),
-      centerTitle: true,
     );
+  }
+
+  /// Shared header content: icon chip + bold title + description subtitle.
+  /// Mirrors the website's PageHeader and keeps the app's section headers
+  /// visually consistent across screens.
+  Widget _buildHeaderTitle({
+    required String title,
+    required String subtitle,
+  }) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+            color: Colors.white,
+            letterSpacing: 0.2,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          subtitle,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontSize: 11.5,
+            fontWeight: FontWeight.w500,
+            color: Colors.white.withValues(alpha: 0.8),
+          ),
+        ),
+      ],
+    ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.15, curve: Curves.easeOutCubic);
   }
 
 
@@ -107,7 +163,7 @@ class MissingPersonsPage extends GetView<MissingPersonsController> {
           children: [
             _buildTab(isDark, 'المبلغ عنهم', PhosphorIcons.magnifyingGlass(), 0,
                 controller.reportedPersons.length),
-            _buildTab(isDark, 'تم العثور', PhosphorIcons.checkCircle(), 1,
+            _buildTab(isDark, 'تم العثور', PhosphorIcons.checkCircle().ltr, 1,
                 controller.foundPersons.length),
           ],
         ),
@@ -194,7 +250,7 @@ class MissingPersonsPage extends GetView<MissingPersonsController> {
         isDark,
         hasSearch
             ? PhosphorIcons.magnifyingGlass()
-            : (isFound ? PhosphorIcons.checkCircle() : PhosphorIcons.magnifyingGlass()),
+            : (isFound ? PhosphorIcons.checkCircle().ltr : PhosphorIcons.magnifyingGlass()),
         hasSearch
             ? 'لا توجد نتائج'
             : (isFound ? 'لا يوجد أشخاص تم العثور عليهم' : 'لا توجد بلاغات حالياً'),
