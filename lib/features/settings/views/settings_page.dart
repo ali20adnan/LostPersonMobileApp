@@ -155,7 +155,7 @@ class SettingsPage extends GetView<SettingsController> {
                   icon: PhosphorIcons.deviceMobile(),
                   iconGradient: AppColors.heroGradient,
                   title: 'إصدار التطبيق',
-                  subtitle: '1.0.0',
+                  subtitle: controller.appVersion.value,
                 ),
                 _buildDivider(isDark),
                 _buildSettingTile(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../app/services/storage_service.dart';
@@ -18,10 +19,24 @@ class SettingsController extends GetxController {
   final isAutoSpeakEnabled = false.obs;
   final isAutoSaveConversations = true.obs;
 
+  /// Installed app version, read from the platform package metadata
+  /// (pubspec `version: x.y.z+build`). Shown read-only in Settings.
+  final appVersion = '...'.obs;
+
   @override
   void onInit() {
     super.onInit();
     _loadSettings();
+    _loadAppVersion();
+  }
+
+  Future<void> _loadAppVersion() async {
+    try {
+      final info = await PackageInfo.fromPlatform();
+      appVersion.value = '${info.version} (${info.buildNumber})';
+    } catch (_) {
+      // Leave the placeholder if metadata is unavailable.
+    }
   }
 
   Future<void> _loadSettings() async {
