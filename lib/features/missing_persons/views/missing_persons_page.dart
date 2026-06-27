@@ -7,8 +7,6 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:speech_translator_app/core/utils/icon_direction.dart';
 
 import '../../../app/themes/app_colors.dart';
-import '../../../core/widgets/islamic/dome_silhouette.dart';
-import '../../../core/widgets/islamic/islamic_pattern_painter.dart';
 import '../../../data/models/missing_person_report_model.dart';
 import '../controllers/missing_persons_controller.dart';
 import '../widgets/missing_person_card.dart';
@@ -58,63 +56,14 @@ class MissingPersonsPage extends GetView<MissingPersonsController> {
       actions: const [SizedBox(width: 56)],
       iconTheme: const IconThemeData(color: Colors.white),
       flexibleSpace: Container(
-        clipBehavior: Clip.antiAlias,
         decoration: const BoxDecoration(
-          borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
+          gradient: AppColors.heroGradient,
+          borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
           boxShadow: [
             BoxShadow(
-              color: Color(0x40000000),
-              blurRadius: 16,
-              offset: Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            // Deeper "sacred" navy — richer than the flat heroGradient.
-            const DecoratedBox(
-              decoration: BoxDecoration(gradient: AppColors.sacredGradient),
-            ),
-            // The login's signature star pattern, washed faintly over the navy.
-            IslamicPatternOverlay(
-              color: Colors.white.withValues(alpha: 0.04),
-              cellSize: 46,
-            ),
-            // Faint golden shrine dome rising behind the title — a direct echo
-            // of the login screen's hero motif.
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: -46,
-              child: Center(
-                child: Opacity(
-                  opacity: 0.10,
-                  child: DomeSilhouette(
-                    width: 250,
-                    height: 170,
-                    domeColor: AppColors.accentLight,
-                    minaretColor: AppColors.accentLight,
-                    showGlow: false,
-                  ),
-                ),
-              ),
-            ),
-            // Soft gold base glow — gentler than a solid hairline.
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: Container(
-                height: 2,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      AppColors.accent.withValues(alpha: 0),
-                      AppColors.accent.withValues(alpha: 0.75),
-                      AppColors.accent.withValues(alpha: 0),
-                    ],
-                  ),
-                ),
-              ),
+              color: Color(0x33000000),
+              blurRadius: 12,
+              offset: Offset(0, 4),
             ),
           ],
         ),

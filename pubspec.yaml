@@ -2,7 +2,7 @@ name: speech_translator_app
 description: Real-time multilingual speech translator for holy shrine visitors
 publish_to: 'none'
 
-version: 1.0.5+5
+version: 1.0.6+6
 
 environment:
   sdk: ^3.10.4
@@ -113,3 +113,4 @@ flutter:
     - assets/icons/
     - assets/lottie/
     - .env
+    - shorebird.yaml

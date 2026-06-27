@@ -50,8 +50,13 @@ post_install do |installer|
       # stub, so the system permission dialog never appears and the status is
       # always "denied". These flags enable exactly the permissions this app
       # uses; the `=0` entries keep unused permissions out for App Store review.
-      config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= [
-        '$(inherited)',
+      #
+      # NOTE: we MERGE into any existing value (CocoaPods/Flutter may already
+      # have set GCC_PREPROCESSOR_DEFINITIONS) instead of using `||=`, which
+      # would silently skip our macros when the key is already present.
+      existing = config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] || ['$(inherited)']
+      existing = [existing] if existing.is_a?(String)
+      config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] = existing + [
         'PERMISSION_MICROPHONE=1',
         'PERMISSION_CAMERA=1',
         'PERMISSION_PHOTOS=1',
