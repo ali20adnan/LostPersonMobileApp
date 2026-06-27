@@ -7,6 +7,7 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:speech_translator_app/core/utils/icon_direction.dart';
 
 import '../../../app/themes/app_colors.dart';
+import '../../../core/widgets/islamic/dome_silhouette.dart';
 import '../../../core/widgets/islamic/islamic_pattern_painter.dart';
 import '../../../data/models/missing_person_report_model.dart';
 import '../controllers/missing_persons_controller.dart';
@@ -77,22 +78,41 @@ class MissingPersonsPage extends GetView<MissingPersonsController> {
             ),
             // The login's signature star pattern, washed faintly over the navy.
             IslamicPatternOverlay(
-              color: Colors.white.withValues(alpha: 0.05),
+              color: Colors.white.withValues(alpha: 0.04),
               cellSize: 46,
             ),
-            // Glowing gold hairline along the bottom — the sacred-gold accent.
+            // Faint golden shrine dome rising behind the title — a direct echo
+            // of the login screen's hero motif.
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: -46,
+              child: Center(
+                child: Opacity(
+                  opacity: 0.10,
+                  child: DomeSilhouette(
+                    width: 250,
+                    height: 170,
+                    domeColor: AppColors.accentLight,
+                    minaretColor: AppColors.accentLight,
+                    showGlow: false,
+                  ),
+                ),
+              ),
+            ),
+            // Soft gold base glow — gentler than a solid hairline.
             Align(
               alignment: Alignment.bottomCenter,
               child: Container(
-                height: 3,
-                decoration: const BoxDecoration(
-                  gradient: AppColors.accentGradient,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Color(0x66C49B00),
-                      blurRadius: 12,
-                    ),
-                  ],
+                height: 2,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.accent.withValues(alpha: 0),
+                      AppColors.accent.withValues(alpha: 0.75),
+                      AppColors.accent.withValues(alpha: 0),
+                    ],
+                  ),
                 ),
               ),
             ),
