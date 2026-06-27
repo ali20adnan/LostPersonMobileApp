@@ -11,7 +11,11 @@ import 'api_service.dart';
 /// Service for authentication and token management
 class AuthService extends GetxService {
   final ApiService _api = Get.find<ApiService>();
-  final _storage = const FlutterSecureStorage();
+  // Match ApiService: first_unlock keeps the saved user readable at launch so
+  // the session persists on iOS instead of dropping back to the login screen.
+  final _storage = const FlutterSecureStorage(
+    iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
+  );
   static const _userKey = 'current_user';
 
   final currentUser = Rx<User?>(null);

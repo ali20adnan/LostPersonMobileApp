@@ -94,7 +94,7 @@ class IncidentReportingPage extends GetView<IncidentReportingController> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.backgroundDark : AppColors.background,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: const Text('إبلاغ عن حادثة'),
         centerTitle: true,

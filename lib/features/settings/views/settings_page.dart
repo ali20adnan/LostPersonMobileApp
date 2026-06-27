@@ -19,8 +19,7 @@ class SettingsPage extends GetView<SettingsController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor:
-            isDark ? AppColors.backgroundDark : AppColors.background,
+        backgroundColor: Colors.transparent,
         appBar: AppBar(
           title: const Text(
             'الإعدادات',
@@ -58,6 +57,7 @@ class SettingsPage extends GetView<SettingsController> {
                       ? 'مفعل — Soniox يكتشف اللغة من بين اللغتين'
                       : 'معطل — التزام صارم بلغة المصدر والهدف',
                   trailing: _buildSwitch(
+                    isDark,
                     controller.isAutoDetectLanguage.value,
                     onChanged: (v) {
                       HapticFeedback.lightImpact();
@@ -69,12 +69,13 @@ class SettingsPage extends GetView<SettingsController> {
                 _buildSettingTile(
                   isDark,
                   icon: PhosphorIcons.speakerHigh(),
-                  iconGradient: AppColors.successGradient,
+                  iconGradient: AppColors.heroGradient,
                   title: 'نطق الترجمة تلقائياً',
                   subtitle: controller.isAutoSpeakEnabled.value
                       ? 'مفعل — تنطق الترجمة بعد اكتمالها'
                       : 'معطل — اضغط زر السمّاعة للنطق',
                   trailing: _buildSwitch(
+                    isDark,
                     controller.isAutoSpeakEnabled.value,
                     onChanged: (v) {
                       HapticFeedback.lightImpact();
@@ -92,6 +93,7 @@ class SettingsPage extends GetView<SettingsController> {
                       ? 'مفعل — يُحفظ سجل الترجمة'
                       : 'معطل — لن يُحفظ السجل',
                   trailing: _buildSwitch(
+                    isDark,
                     controller.isAutoSaveConversations.value,
                     onChanged: (v) {
                       HapticFeedback.lightImpact();
@@ -116,10 +118,10 @@ class SettingsPage extends GetView<SettingsController> {
                 _buildSettingTile(
                   isDark,
                   icon: PhosphorIcons.moon(),
-                  iconGradient: AppColors.darkGradient,
+                  iconGradient: AppColors.heroGradient,
                   title: 'الوضع الداكن',
                   subtitle: isDark ? 'مفعل' : 'معطل',
-                  trailing: _buildSwitch(isDark, onChanged: (v) {
+                  trailing: _buildSwitch(isDark, isDark, onChanged: (v) {
                     HapticFeedback.lightImpact();
                     controller.toggleDarkMode(v);
                   }),
@@ -128,10 +130,10 @@ class SettingsPage extends GetView<SettingsController> {
                 _buildSettingTile(
                   isDark,
                   icon: PhosphorIcons.bell(),
-                  iconGradient: AppColors.warmGradient,
+                  iconGradient: AppColors.heroGradient,
                   title: 'الإشعارات',
                   subtitle: controller.isNotificationsEnabled.value ? 'مفعل' : 'معطل',
-                  trailing: _buildSwitch(controller.isNotificationsEnabled.value, onChanged: (v) {
+                  trailing: _buildSwitch(isDark, controller.isNotificationsEnabled.value, onChanged: (v) {
                     HapticFeedback.lightImpact();
                     controller.toggleNotifications(v);
                   }),
@@ -161,7 +163,7 @@ class SettingsPage extends GetView<SettingsController> {
                 _buildSettingTile(
                   isDark,
                   icon: PhosphorIcons.code(),
-                  iconGradient: AppColors.accentGradient,
+                  iconGradient: AppColors.heroGradient,
                   title: 'عن المطور',
                   subtitle: 'معلومات عن فريق التطوير',
                   trailing: Icon(PhosphorIcons.arrowLeft(),
@@ -208,7 +210,9 @@ class SettingsPage extends GetView<SettingsController> {
                     'مترجم صوتي فوري',
                     style: TextStyle(
                       fontSize: 13,
-                      color: AppColors.textSecondary,
+                      color: isDark
+                          ? AppColors.textSecondaryDark
+                          : AppColors.textSecondary,
                     ),
                   ),
                 ],
@@ -225,7 +229,9 @@ class SettingsPage extends GetView<SettingsController> {
   Widget _buildSectionTitle(String title, IconData icon, bool isDark) {
     return Row(
       children: [
-        Icon(icon, size: 18, color: AppColors.primary),
+        Icon(icon,
+            size: 18,
+            color: isDark ? AppColors.accentLight : AppColors.primary),
         const Gap(8),
         Text(
           title,
@@ -306,7 +312,12 @@ class SettingsPage extends GetView<SettingsController> {
                       subtitle,
                       style: TextStyle(
                         fontSize: 12,
-                        color: AppColors.textSecondary,
+                        height: 1.4,
+                        // Dark-aware so the "مفعل/معطل" status stays legible on
+                        // the dark navy cards (was hardcoded to the light gray).
+                        color: isDark
+                            ? AppColors.textSecondaryDark
+                            : AppColors.textSecondary,
                       ),
                     ),
                   ],
@@ -320,14 +331,22 @@ class SettingsPage extends GetView<SettingsController> {
     );
   }
 
-  Widget _buildSwitch(bool value, {ValueChanged<bool>? onChanged}) {
+  Widget _buildSwitch(bool isDark, bool value, {ValueChanged<bool>? onChanged}) {
+    // Gold "on" state echoes the login's sacred-gold accent and pops against
+    // the navy cards in both themes.
     return Switch(
       value: value,
       onChanged: onChanged ?? (_) {},
-      activeColor: AppColors.primary,
-      activeTrackColor: AppColors.primarySoft,
-      inactiveThumbColor: AppColors.textLight,
-      inactiveTrackColor: AppColors.surfaceSunken,
+      activeColor: Colors.white,
+      activeTrackColor: AppColors.accent,
+      inactiveThumbColor:
+          isDark ? AppColors.textOnDarkSecondary : AppColors.textLight,
+      inactiveTrackColor:
+          isDark ? AppColors.surfaceSunkenDark : AppColors.surfaceSunken,
+      trackOutlineColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) return AppColors.accent;
+        return isDark ? AppColors.borderDark : AppColors.border;
+      }),
     );
   }
 

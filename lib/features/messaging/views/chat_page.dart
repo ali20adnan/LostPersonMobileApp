@@ -20,7 +20,7 @@ class ChatPage extends GetView<ChatController> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.backgroundDark : AppColors.background,
+      backgroundColor: Colors.transparent,
       appBar: _buildAppBar(context, isDark),
       body: Column(
         children: [

@@ -29,6 +29,9 @@ class HomePage extends GetView<HomeController> {
     return Stack(
       children: [
         Scaffold(
+          // Transparent so the app-wide SacredBackground (mounted in main.dart)
+          // shows through beneath all four tabs.
+          backgroundColor: Colors.transparent,
           extendBody: true,
           body: Stack(
             children: [

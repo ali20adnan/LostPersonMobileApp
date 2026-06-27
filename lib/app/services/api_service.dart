@@ -12,7 +12,11 @@ import '../../core/constants/api_constants.dart';
 /// HTTP API client service for communicating with the backend
 class ApiService extends GetxService {
   static const _tokenKey = 'jwt_access_token';
-  final _storage = const FlutterSecureStorage();
+  // first_unlock keeps the token readable at app launch (incl. right after a
+  // reboot, before the first manual unlock) so the saved session survives.
+  final _storage = const FlutterSecureStorage(
+    iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
+  );
   final _client = http.Client();
 
   String get _baseUrl => ApiConstants.apiBaseUrl;

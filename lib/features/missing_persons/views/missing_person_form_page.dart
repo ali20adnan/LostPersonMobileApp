@@ -20,7 +20,7 @@ class MissingPersonFormPage extends GetView<MissingPersonFormController> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.backgroundDark : AppColors.background,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: const Text('إبلاغ عن مفقود'),
         centerTitle: true,

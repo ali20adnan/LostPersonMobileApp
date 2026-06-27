@@ -23,7 +23,7 @@ class IncidentDetailPage extends GetView<IncidentDetailController> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.backgroundDark : AppColors.background,
+      backgroundColor: Colors.transparent,
       body: Obx(() {
         if (controller.isLoading.value) {
           return _buildLoading();

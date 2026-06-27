@@ -205,16 +205,20 @@ class _SoftPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    // On the navy dark cards, Material status colors (grey/deepOrange/…) read
+    // too dim, so lift the label toward white and strengthen the soft tint.
+    final textColor = isDark ? Color.lerp(color, Colors.white, 0.45)! : color;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
+        color: color.withValues(alpha: isDark ? 0.24 : 0.12),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
         label,
         style: TextStyle(
-          color: color,
+          color: textColor,
           fontSize: 11,
           fontWeight: bold ? FontWeight.w700 : FontWeight.w600,
         ),

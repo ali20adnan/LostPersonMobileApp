@@ -16,6 +16,7 @@ import 'app/services/socket_service.dart';
 import 'app/services/storage_service.dart';
 import 'app/services/unread_count_service.dart';
 import 'core/widgets/app_error_widget.dart';
+import 'core/widgets/islamic/sacred_background.dart';
 import 'features/missing_persons/services/pending_found_requests_service.dart';
 import 'features/notifications/bindings/app_notifications_bootstrap.dart';
 import 'features/notifications/services/app_notifications_service.dart';
@@ -120,11 +121,13 @@ class SpeechTranslatorApp extends StatelessWidget {
       initialRoute: AppRoutes.splash,
       getPages: AppPages.routes,
 
-      // RTL text direction
+      // RTL text direction + the app-wide "sacred" backdrop (login identity).
+      // The gradient + star pattern sits statically behind every route, so any
+      // screen with a transparent Scaffold inherits the same surface as login.
       builder: (context, child) {
         return Directionality(
           textDirection: TextDirection.rtl,
-          child: child!,
+          child: SacredBackground(child: child!),
         );
       },
     );

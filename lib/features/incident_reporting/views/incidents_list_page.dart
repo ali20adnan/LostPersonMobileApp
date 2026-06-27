@@ -21,7 +21,7 @@ class IncidentsListPage extends GetView<IncidentsListController> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.backgroundDark : AppColors.background,
+      backgroundColor: Colors.transparent,
       appBar: _buildAppBar(),
       body: Column(
         children: [
@@ -56,7 +56,7 @@ class IncidentsListPage extends GetView<IncidentsListController> {
                         prefixIcon: Icon(
                           PhosphorIcons.magnifyingGlass(),
                           size: 20,
-                          color: AppColors.primary,
+                          color: isDark ? AppColors.accentLight : AppColors.primary,
                         ),
                         filled: false,
                         border: InputBorder.none,
@@ -107,7 +107,11 @@ class IncidentsListPage extends GetView<IncidentsListController> {
                         child: Icon(
                           PhosphorIcons.funnelSimple(),
                           size: 20,
-                          color: hasFilter ? Colors.white : AppColors.primary,
+                          color: hasFilter
+                              ? Colors.white
+                              : isDark
+                                  ? AppColors.accentLight
+                                  : AppColors.primary,
                         ),
                       ),
                     ),

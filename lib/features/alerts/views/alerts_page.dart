@@ -19,7 +19,7 @@ class AlertsPage extends GetView<AlertsController> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.backgroundDark : AppColors.background,
+      backgroundColor: Colors.transparent,
       body: CustomScrollView(
         slivers: [
           _buildSliverAppBar(isDark),

@@ -22,7 +22,7 @@ class ProfilePage extends GetView<ProfileController> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: isDark ? AppColors.backgroundDark : AppColors.background,
+        backgroundColor: Colors.transparent,
         body: Obx(() {
           final user = controller.user.value;
           if (user == null) {
@@ -330,10 +330,13 @@ class ProfilePage extends GetView<ProfileController> {
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: AppColors.primary.withValues(alpha: 0.1),
+            color: (isDark ? AppColors.accentLight : AppColors.primary)
+                .withValues(alpha: isDark ? 0.18 : 0.1),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: Icon(icon, size: 18, color: AppColors.primary),
+          child: Icon(icon,
+              size: 18,
+              color: isDark ? AppColors.accentLight : AppColors.primary),
         ),
         const Gap(12),
         Expanded(

@@ -21,7 +21,7 @@ class ConversationsPage extends GetView<ConversationsController> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.backgroundDark : AppColors.background,
+      backgroundColor: Colors.transparent,
       appBar: _buildAppBar(isDark),
       body: Column(
         children: [

@@ -7,6 +7,7 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:speech_translator_app/core/utils/icon_direction.dart';
 
 import '../../../app/themes/app_colors.dart';
+import '../../../core/widgets/islamic/islamic_pattern_painter.dart';
 import '../../../data/models/missing_person_report_model.dart';
 import '../controllers/missing_persons_controller.dart';
 import '../widgets/missing_person_card.dart';
@@ -20,7 +21,7 @@ class MissingPersonsPage extends GetView<MissingPersonsController> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.backgroundDark : AppColors.background,
+      backgroundColor: Colors.transparent,
       body: CustomScrollView(
         slivers: [
           _buildSliverAppBar(isDark),
@@ -56,14 +57,44 @@ class MissingPersonsPage extends GetView<MissingPersonsController> {
       actions: const [SizedBox(width: 56)],
       iconTheme: const IconThemeData(color: Colors.white),
       flexibleSpace: Container(
+        clipBehavior: Clip.antiAlias,
         decoration: const BoxDecoration(
-          gradient: AppColors.heroGradient,
-          borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
+          borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
           boxShadow: [
             BoxShadow(
-              color: Color(0x33000000),
-              blurRadius: 12,
-              offset: Offset(0, 4),
+              color: Color(0x40000000),
+              blurRadius: 16,
+              offset: Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            // Deeper "sacred" navy — richer than the flat heroGradient.
+            const DecoratedBox(
+              decoration: BoxDecoration(gradient: AppColors.sacredGradient),
+            ),
+            // The login's signature star pattern, washed faintly over the navy.
+            IslamicPatternOverlay(
+              color: Colors.white.withValues(alpha: 0.05),
+              cellSize: 46,
+            ),
+            // Glowing gold hairline along the bottom — the sacred-gold accent.
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: Container(
+                height: 3,
+                decoration: const BoxDecoration(
+                  gradient: AppColors.accentGradient,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color(0x66C49B00),
+                      blurRadius: 12,
+                    ),
+                  ],
+                ),
+              ),
             ),
           ],
         ),
@@ -298,14 +329,23 @@ class MissingPersonsPage extends GetView<MissingPersonsController> {
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
+                // Gold-tinted in dark mode so the icon doesn't vanish into the
+                // navy backdrop (navy-on-navy was invisible before).
                 gradient: LinearGradient(
-                  colors: [
-                    AppColors.primary.withValues(alpha: 0.15),
-                    AppColors.secondary.withValues(alpha: 0.08),
-                  ],
+                  colors: isDark
+                      ? [
+                          AppColors.accent.withValues(alpha: 0.22),
+                          AppColors.accent.withValues(alpha: 0.08),
+                        ]
+                      : [
+                          AppColors.primary.withValues(alpha: 0.15),
+                          AppColors.secondary.withValues(alpha: 0.08),
+                        ],
                 ),
               ),
-              child: Icon(icon, size: 56, color: AppColors.primary),
+              child: Icon(icon,
+                  size: 56,
+                  color: isDark ? AppColors.accentLight : AppColors.primary),
             ).animate().scale(duration: 500.ms, curve: Curves.elasticOut),
             const SizedBox(height: 20),
             Text(
