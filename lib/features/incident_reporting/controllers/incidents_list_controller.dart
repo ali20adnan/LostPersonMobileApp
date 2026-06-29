@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:speech_translator_app/core/utils/app_snackbar.dart';
 
 import '../../../app/services/unread_count_service.dart';
 import '../../../data/repositories/incident_repository.dart';
@@ -77,8 +78,8 @@ class IncidentsListController extends GetxController {
     } catch (e) {
       debugPrint('IncidentsListController: Error loading reports - $e');
       isLoading.value = false;
-      Get.snackbar('خطأ', 'فشل تحميل البلاغات',
-          snackPosition: SnackPosition.BOTTOM,
+      AppSnackbar.glass('خطأ', 'فشل تحميل البلاغات',
+          snackPosition: SnackPosition.TOP,
           backgroundColor: Colors.red.withValues(alpha: 0.8),
           colorText: Colors.white);
     }

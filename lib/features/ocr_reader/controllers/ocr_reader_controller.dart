@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:speech_translator_app/core/utils/app_snackbar.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -157,10 +158,10 @@ class OcrReaderController extends GetxController {
 
         if (recognizedText.text.trim().isEmpty) {
           isScanning.value = false;
-          Get.snackbar(
+          AppSnackbar.glass(
             'لم يتم العثور على نص',
             'حاول التقاط صورة أوضح أو أقرب للنص',
-            snackPosition: SnackPosition.BOTTOM,
+            snackPosition: SnackPosition.TOP,
             backgroundColor: Colors.orange.withValues(alpha: 0.9),
             colorText: Colors.white,
             margin: const EdgeInsets.all(16),
@@ -183,10 +184,10 @@ class OcrReaderController extends GetxController {
 
         isTranslating.value = false;
 
-        Get.snackbar(
+        AppSnackbar.glass(
           'تم بنجاح',
           'تم استخراج النص وترجمته',
-          snackPosition: SnackPosition.BOTTOM,
+          snackPosition: SnackPosition.TOP,
           backgroundColor: Colors.green.withValues(alpha: 0.9),
           colorText: Colors.white,
           margin: const EdgeInsets.all(16),
@@ -200,10 +201,10 @@ class OcrReaderController extends GetxController {
       debugPrint('OcrReaderController: Error - $e');
       isScanning.value = false;
       isTranslating.value = false;
-      Get.snackbar(
+      AppSnackbar.glass(
         'خطأ',
         'حدث خطأ أثناء المعالجة',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.red.withValues(alpha: 0.9),
         colorText: Colors.white,
         margin: const EdgeInsets.all(16),
@@ -245,10 +246,10 @@ class OcrReaderController extends GetxController {
 
         if (recognizedText.text.trim().isEmpty) {
           isScanning.value = false;
-          Get.snackbar(
+          AppSnackbar.glass(
             'لم يتم العثور على نص',
             'حاول اختيار صورة أوضح',
-            snackPosition: SnackPosition.BOTTOM,
+            snackPosition: SnackPosition.TOP,
             backgroundColor: Colors.orange.withValues(alpha: 0.9),
             colorText: Colors.white,
             margin: const EdgeInsets.all(16),
@@ -275,10 +276,10 @@ class OcrReaderController extends GetxController {
       debugPrint('OcrReaderController: Error - $e');
       isScanning.value = false;
       isTranslating.value = false;
-      Get.snackbar(
+      AppSnackbar.glass(
         'خطأ',
         'حدث خطأ أثناء المعالجة',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.red.withValues(alpha: 0.9),
         colorText: Colors.white,
         margin: const EdgeInsets.all(16),

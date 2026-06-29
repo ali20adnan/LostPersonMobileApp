@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:speech_translator_app/core/utils/app_snackbar.dart';
 
 import '../../../app/services/socket_service.dart';
 import '../../../app/services/unread_count_service.dart';
@@ -215,19 +216,19 @@ class NotificationsController extends GetxController {
     _rebuildEntries();
 
     if (allOk) {
-      Get.snackbar(
+      AppSnackbar.glass(
         'تم',
         'تم تحديد كل الإشعارات كمقروءة',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         duration: const Duration(seconds: 2),
       );
     } else {
       // Roll back the badge so the user knows it didn't really stick.
       unreadCount.value = previousCount;
-      Get.snackbar(
+      AppSnackbar.glass(
         'تنبيه',
         'تعذّر تحديث جميع الإشعارات على الخادم',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.orange.withValues(alpha: 0.9),
         colorText: Colors.white,
         duration: const Duration(seconds: 2),

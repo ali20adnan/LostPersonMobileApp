@@ -13,8 +13,21 @@ class SplashController extends GetxController {
     await Future.delayed(const Duration(seconds: 3));
 
     final authService = Get.find<AuthService>();
-    final route = authService.isLoggedIn ? AppRoutes.home : AppRoutes.login;
 
-    Get.offAllNamed(route);
+    if (!authService.isLoggedIn) {
+      Get.offAllNamed(AppRoutes.login);
+      return;
+    }
+
+    // A restored session still carrying a temporary password must change it
+    // before entering the app, just like a fresh login. The current password
+    // isn't in memory here, so the force-change screen falls back to the
+    // account's default password.
+    if (authService.currentUser.value?.isTempPass == true) {
+      Get.offAllNamed(AppRoutes.forcePasswordChange);
+      return;
+    }
+
+    Get.offAllNamed(AppRoutes.home);
   }
 }

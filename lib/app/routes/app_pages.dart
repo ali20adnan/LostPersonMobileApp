@@ -6,6 +6,7 @@ import '../../features/splash/views/splash_page.dart';
 import '../../bindings/home_binding.dart';
 import '../../bindings/settings_binding.dart';
 import '../../bindings/auth_binding.dart';
+import '../../bindings/force_password_change_binding.dart';
 import '../../bindings/incident_reporting_binding.dart';
 import '../../bindings/missing_person_form_binding.dart';
 import '../../bindings/messaging_binding.dart';
@@ -16,6 +17,7 @@ import '../../bindings/incident_detail_binding.dart';
 import '../../features/home/views/home_page.dart';
 import '../../features/settings/views/settings_page.dart';
 import '../../features/auth/views/login_page.dart';
+import '../../features/auth/views/force_password_change_page.dart';
 import '../../features/incident_reporting/views/incident_reporting_page.dart';
 import '../../features/incident_reporting/views/incidents_list_page.dart';
 import '../../features/missing_persons/views/missing_person_form_page.dart';
@@ -41,6 +43,12 @@ class AppPages {
       name: AppRoutes.login,
       page: () => const LoginPage(),
       binding: AuthBinding(),
+      customTransition:_fadeThrough,
+    ),
+    GetPage(
+      name: AppRoutes.forcePasswordChange,
+      page: () => const ForcePasswordChangePage(),
+      binding: ForcePasswordChangeBinding(),
       customTransition:_fadeThrough,
     ),
     GetPage(

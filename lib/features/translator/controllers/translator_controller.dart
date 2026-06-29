@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:speech_translator_app/core/utils/app_snackbar.dart';
 
 import '../../../app/services/audio_service.dart';
 import '../../../app/services/audio_storage_service.dart';
@@ -179,10 +180,10 @@ class TranslatorController extends GetxController {
     final text = currentTranslation.value.trim();
     if (text.isEmpty) return;
     await Clipboard.setData(ClipboardData(text: text));
-    Get.snackbar(
+    AppSnackbar.glass(
       'تم النسخ',
       'تم نسخ الترجمة إلى الحافظة',
-      snackPosition: SnackPosition.BOTTOM,
+      snackPosition: SnackPosition.TOP,
       duration: const Duration(seconds: 1),
     );
   }
@@ -191,10 +192,10 @@ class TranslatorController extends GetxController {
     final text = inputController.text.trim();
     if (text.isEmpty) return;
     await Clipboard.setData(ClipboardData(text: text));
-    Get.snackbar(
+    AppSnackbar.glass(
       'تم النسخ',
       'تم نسخ النص إلى الحافظة',
-      snackPosition: SnackPosition.BOTTOM,
+      snackPosition: SnackPosition.TOP,
       duration: const Duration(seconds: 1),
     );
   }
@@ -274,10 +275,10 @@ class TranslatorController extends GetxController {
       );
 
       if (!started) {
-        Get.snackbar(
+        AppSnackbar.glass(
           'خطأ في الاتصال',
           'فشل الاتصال بخدمة الترجمة. يرجى المحاولة مرة أخرى.',
-          snackPosition: SnackPosition.BOTTOM,
+          snackPosition: SnackPosition.TOP,
           backgroundColor: Colors.red.withValues(alpha: 0.8),
           colorText: Colors.white,
         );
@@ -329,10 +330,10 @@ class TranslatorController extends GetxController {
     } catch (e) {
       debugPrint('TranslatorController: error starting recording - $e');
       isInitializing.value = false;
-      Get.snackbar(
+      AppSnackbar.glass(
         'خطأ',
         'حدث خطأ أثناء بدء التسجيل',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.red.withValues(alpha: 0.8),
         colorText: Colors.white,
       );
@@ -408,7 +409,7 @@ class TranslatorController extends GetxController {
       if (_sessionStartTime != null) {
         final duration = DateTime.now().difference(_sessionStartTime!);
         if (duration.inMinutes >= 30) {
-          Get.snackbar(
+          AppSnackbar.glass(
             'انتهى الوقت',
             'توقف التسجيل تلقائياً بعد 30 دقيقة',
             snackPosition: SnackPosition.TOP,
@@ -425,10 +426,10 @@ class TranslatorController extends GetxController {
 
   Future<void> speakTranslation() async {
     if (currentTranslation.value.isEmpty) {
-      Get.snackbar(
+      AppSnackbar.glass(
         'لا يوجد نص',
         'لا يوجد ترجمة للنطق بها',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
       );
       return;
     }
@@ -468,10 +469,10 @@ class TranslatorController extends GetxController {
 
   Future<void> openLanguagePicker({required bool isSource}) async {
     if (isRecording.value) {
-      Get.snackbar(
+      AppSnackbar.glass(
         'تنبيه',
         'يجب إيقاف التسجيل قبل تغيير اللغات',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.orange.withValues(alpha: 0.8),
         colorText: Colors.white,
       );
@@ -488,10 +489,10 @@ class TranslatorController extends GetxController {
 
     if (ocrCtrl.recognizedBlocks.isEmpty) {
       if (ocrCtrl.capturedImagePath.value.isEmpty) return;
-      Get.snackbar(
+      AppSnackbar.glass(
         'لا يوجد نص',
         'لم يتم اكتشاف نص في الصورة',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
       );
       return;
     }

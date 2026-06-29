@@ -77,6 +77,10 @@ class AppColors {
   static const recordProcessing = Color(0xFF2C3E6B);
   static const recordPulse = Color(0x30C49B00);
 
+  // ── Floating Overlay Chips ───────────────────────────────────
+  /// Solid blue fill for the bell/chat chips on the light translator tab.
+  static const overlayChipLight = Color(0xFF30457E);
+
   // ── Glassmorphism ────────────────────────────────────────────
   static const glassWhite = Color(0x80FFFFFF);
   static const glassDark = Color(0x40000000);

@@ -12,7 +12,11 @@ import '../controllers/missing_persons_controller.dart';
 import '../widgets/missing_person_card.dart';
 
 class MissingPersonsPage extends GetView<MissingPersonsController> {
-  const MissingPersonsPage({super.key});
+  /// When true the page omits its own hero header — used inside the merged
+  /// "البلاغات" hub, which provides a single shared header.
+  final bool embedded;
+
+  const MissingPersonsPage({super.key, this.embedded = false});
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +27,7 @@ class MissingPersonsPage extends GetView<MissingPersonsController> {
       backgroundColor: Colors.transparent,
       body: CustomScrollView(
         slivers: [
-          _buildSliverAppBar(isDark),
+          if (!embedded) _buildSliverAppBar(isDark),
           SliverToBoxAdapter(child: _buildSearchBar(theme, isDark)),
           SliverToBoxAdapter(
             child: Padding(
@@ -70,17 +74,15 @@ class MissingPersonsPage extends GetView<MissingPersonsController> {
       ),
       title: _buildHeaderTitle(
         title: 'الأشخاص المفقودون',
-        subtitle: 'إدارة ومتابعة بلاغات المفقودين',
       ),
     );
   }
 
-  /// Shared header content: icon chip + bold title + description subtitle.
+  /// Shared header content: bold title only.
   /// Mirrors the website's PageHeader and keeps the app's section headers
   /// visually consistent across screens.
   Widget _buildHeaderTitle({
     required String title,
-    required String subtitle,
   }) {
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -93,17 +95,6 @@ class MissingPersonsPage extends GetView<MissingPersonsController> {
             fontSize: 18,
             color: Colors.white,
             letterSpacing: 0.2,
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          subtitle,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            fontSize: 11.5,
-            fontWeight: FontWeight.w500,
-            color: Colors.white.withValues(alpha: 0.8),
           ),
         ),
       ],

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:speech_translator_app/core/utils/app_snackbar.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
 
@@ -148,8 +149,8 @@ class MissingPersonFormController extends GetxController {
       final hasPermission =
           await _permissionService.requestPhotoLibraryPermission();
       if (!hasPermission) {
-        Get.snackbar('إذن مطلوب', 'يتطلب الوصول إلى مكتبة الصور',
-            snackPosition: SnackPosition.BOTTOM,
+        AppSnackbar.glass('إذن مطلوب', 'يتطلب الوصول إلى مكتبة الصور',
+            snackPosition: SnackPosition.TOP,
             backgroundColor: Colors.orange.withValues(alpha: 0.8),
             colorText: Colors.white);
         return;
@@ -168,8 +169,8 @@ class MissingPersonFormController extends GetxController {
     try {
       final hasPermission = await _permissionService.requestCameraPermission();
       if (!hasPermission) {
-        Get.snackbar('إذن مطلوب', 'يتطلب الوصول إلى الكاميرا',
-            snackPosition: SnackPosition.BOTTOM,
+        AppSnackbar.glass('إذن مطلوب', 'يتطلب الوصول إلى الكاميرا',
+            snackPosition: SnackPosition.TOP,
             backgroundColor: Colors.orange.withValues(alpha: 0.8),
             colorText: Colors.white);
         return;
@@ -200,8 +201,8 @@ class MissingPersonFormController extends GetxController {
   // Everything else — including the photo — is optional.
   bool _validate() {
     void showError(String message) {
-      Get.snackbar('خطأ', message,
-          snackPosition: SnackPosition.BOTTOM,
+      AppSnackbar.glass('خطأ', message,
+          snackPosition: SnackPosition.TOP,
           backgroundColor: Colors.red.withValues(alpha: 0.8),
           colorText: Colors.white);
     }
@@ -326,25 +327,26 @@ class MissingPersonFormController extends GetxController {
         if (Get.isRegistered<MissingPersonsController>()) {
           await Get.find<MissingPersonsController>().refreshReports();
         }
-        Get.snackbar('تم', 'تم إرسال البلاغ بنجاح',
-            snackPosition: SnackPosition.BOTTOM,
+        AppSnackbar.glass('تم', 'تم إرسال البلاغ بنجاح',
+            snackPosition: SnackPosition.TOP,
             backgroundColor: Colors.green.withValues(alpha: 0.8),
             colorText: Colors.white);
         Get.back();
         if (Get.isRegistered<HomeController>()) {
-          Get.find<HomeController>().changePage(1);
+          // Reports hub (missing + incidents) is now tab index 2.
+          Get.find<HomeController>().changePage(2);
         }
       } else {
-        Get.snackbar('خطأ', response.errorMessage ?? 'فشل إرسال البلاغ',
-            snackPosition: SnackPosition.BOTTOM,
+        AppSnackbar.glass('خطأ', response.errorMessage ?? 'فشل إرسال البلاغ',
+            snackPosition: SnackPosition.TOP,
             backgroundColor: Colors.red.withValues(alpha: 0.8),
             colorText: Colors.white);
       }
     } catch (e) {
       isSubmitting.value = false;
       debugPrint('MissingPersonFormController: Error submitting - $e');
-      Get.snackbar('خطأ', 'حدث خطأ غير متوقع',
-          snackPosition: SnackPosition.BOTTOM,
+      AppSnackbar.glass('خطأ', 'حدث خطأ غير متوقع',
+          snackPosition: SnackPosition.TOP,
           backgroundColor: Colors.red.withValues(alpha: 0.8),
           colorText: Colors.white);
     }

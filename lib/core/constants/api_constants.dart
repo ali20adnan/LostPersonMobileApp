@@ -39,6 +39,12 @@ class ApiConstants {
   // Reports (emergency / other)
   static const String reports = '/reports';
 
+  // Assembly points (نقاط التجمّع)
+  static const String assemblyPoints = '/assembly-points';
+
+  // Users (used by the assembly-point volunteer picker: /users?role=VOLUNTEER)
+  static const String users = '/users';
+
   // Governorates
   static const String governorates = '/governorates';
 

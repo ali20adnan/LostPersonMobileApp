@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../app/routes/app_routes.dart';
+import '../../../app/themes/app_colors.dart';
+import '../../../core/utils/app_snackbar.dart';
 import '../../../app/services/socket_service.dart';
 import '../../../app/services/storage_service.dart';
 import '../../missing_persons/controllers/missing_person_detail_controller.dart';
@@ -129,22 +131,15 @@ class AppNotificationsBootstrap {
     }
 
     if (!showBanner) return;
-    Get.snackbar(
+    AppSnackbar.glass(
       approved ? 'تمت الموافقة على تأكيد العثور' : 'تم رفض طلب تأكيد العثور',
       approved
           ? 'تم تأكيد العثور على الشخص وتحديث حالته.'
           : 'لم تتم الموافقة على طلب تأكيد العثور.',
-      snackPosition: SnackPosition.TOP,
       duration: const Duration(seconds: 5),
-      backgroundColor: approved
-          ? Colors.green.withValues(alpha: 0.9)
-          : Colors.redAccent.withValues(alpha: 0.9),
-      colorText: Colors.white,
-      margin: const EdgeInsets.all(12),
-      borderRadius: 12,
       icon: Icon(
         approved ? Icons.check_circle : Icons.cancel,
-        color: Colors.white,
+        color: approved ? AppColors.success : AppColors.error,
       ),
       onTap: (_) => Get.toNamed(
         AppRoutes.missingPersonDetail,
@@ -162,53 +157,63 @@ class AppNotificationsBootstrap {
   }) {
     final hasThumb = thumbnailUrl != null && thumbnailUrl.isNotEmpty;
     final isReport = entityType == 'Report';
-    Get.snackbar(
-      title,
-      body,
-      snackPosition: SnackPosition.TOP,
-      duration: const Duration(seconds: 5),
-      backgroundColor: Colors.white,
-      colorText: Colors.black87,
-      margin: const EdgeInsets.all(12),
-      borderRadius: 12,
-      icon: hasThumb
-          ? Padding(
-              padding: const EdgeInsets.all(8),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.network(
-                  thumbnailUrl,
-                  width: 44,
-                  height: 44,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, _, _) => Icon(
-                    isReport ? Icons.warning_amber_rounded : Icons.notifications,
-                    color: Colors.redAccent,
-                  ),
+
+    // Emergency reports = fiery red; new missing-person = brand color. Both are
+    // solid (not glass) so they stand out from the routine glass toasts.
+    final Widget iconWidget = hasThumb
+        ? Padding(
+            padding: const EdgeInsets.all(8),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.network(
+                thumbnailUrl,
+                width: 44,
+                height: 44,
+                fit: BoxFit.cover,
+                errorBuilder: (_, _, _) => Icon(
+                  isReport ? Icons.warning_amber_rounded : Icons.notifications,
+                  color: Colors.white,
                 ),
               ),
-            )
-          : Padding(
-              padding: const EdgeInsets.all(8),
-              child: Icon(
-                isReport ? Icons.warning_amber_rounded : Icons.notifications,
-                color: Colors.redAccent,
-              ),
             ),
-      onTap: (_) {
-        if (entityId == null) return;
-        if (isReport) {
-          Get.toNamed(
-            AppRoutes.incidentDetail,
-            arguments: {'reportId': entityId},
+          )
+        : Padding(
+            padding: const EdgeInsets.all(8),
+            child: Icon(
+              isReport ? Icons.warning_amber_rounded : Icons.notifications,
+              color: Colors.white,
+            ),
           );
-        } else {
-          Get.toNamed(
-            AppRoutes.missingPersonDetail,
-            arguments: {'reportId': entityId},
-          );
-        }
-      },
-    );
+
+    void handleTap(GetSnackBar _) {
+      if (entityId == null) return;
+      if (isReport) {
+        Get.toNamed(
+          AppRoutes.incidentDetail,
+          arguments: {'reportId': entityId},
+        );
+      } else {
+        Get.toNamed(
+          AppRoutes.missingPersonDetail,
+          arguments: {'reportId': entityId},
+        );
+      }
+    }
+
+    if (isReport) {
+      AppSnackbar.emergency(
+        title: title,
+        message: body,
+        icon: iconWidget,
+        onTap: handleTap,
+      );
+    } else {
+      AppSnackbar.missingNew(
+        title: title,
+        message: body,
+        icon: iconWidget,
+        onTap: handleTap,
+      );
+    }
   }
 }

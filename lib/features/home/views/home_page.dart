@@ -62,15 +62,18 @@ class HomePage extends GetView<HomeController> {
                   : const SizedBox.shrink()),
 
               // Floating notification bell at top-left (hidden on profile).
-              // Tabs 1 (missing) & 2 (reports) have a dark gradient header, so
-              // the button switches to its white-glass variant there.
+              // White-glass variant everywhere EXCEPT the light-theme translator
+              // tab (index 0), where the button uses the dark-theme navy fill so
+              // it reads as a solid blue chip. Dark theme stays white-glass.
               Obx(() => controller.currentIndex.value != 3
                   ? Positioned(
                       top: MediaQuery.of(context).padding.top + 8,
                       left: 12,
                       child: NotificationOverlay(
-                        onDark: controller.currentIndex.value == 1 ||
-                            controller.currentIndex.value == 2,
+                        // Solid style on the light-background map (0) and on
+                        // the light-theme translator (1); white-glass elsewhere.
+                        onDark: !(controller.currentIndex.value == 0 ||
+                            (controller.currentIndex.value == 1 && !isDark)),
                       ),
                     )
                   : const SizedBox.shrink()),
@@ -81,8 +84,10 @@ class HomePage extends GetView<HomeController> {
                       top: MediaQuery.of(context).padding.top + 8,
                       right: 12,
                       child: MessagingOverlay(
-                        onDark: controller.currentIndex.value == 1 ||
-                            controller.currentIndex.value == 2,
+                        // Solid style on the light-background map (0) and on
+                        // the light-theme translator (1); white-glass elsewhere.
+                        onDark: !(controller.currentIndex.value == 0 ||
+                            (controller.currentIndex.value == 1 && !isDark)),
                       ),
                     )
                   : const SizedBox.shrink()),
@@ -116,18 +121,18 @@ class HomePage extends GetView<HomeController> {
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         _NavItem(
-                          icon: PhosphorIcons.translate(),
-                          activeIcon: PhosphorIcons.translate(),
-                          label: 'الترجمة',
+                          icon: PhosphorIcons.mapTrifold(),
+                          activeIcon:
+                              PhosphorIcons.mapTrifold(PhosphorIconsStyle.fill),
+                          label: 'الخريطة',
                           isSelected: controller.currentIndex.value == 0,
                           onTap: () => _onTabTap(0),
                         ),
                         _NavItem(
-                          icon: PhosphorIcons.users(),
-                          activeIcon: PhosphorIcons.users(),
-                          label: 'المفقودون',
+                          icon: PhosphorIcons.translate(),
+                          activeIcon: PhosphorIcons.translate(),
+                          label: 'الترجمة',
                           isSelected: controller.currentIndex.value == 1,
-                          badgeCount: _getAlertsBadge(),
                           onTap: () => _onTabTap(1),
                         ),
                         // Center FAB
@@ -144,7 +149,7 @@ class HomePage extends GetView<HomeController> {
                           activeIcon: PhosphorIcons.fileText(),
                           label: 'البلاغات',
                           isSelected: controller.currentIndex.value == 2,
-                          badgeCount: _getReportsBadge(),
+                          badgeCount: _getAlertsBadge() + _getReportsBadge(),
                           onTap: () => _onTabTap(2),
                         ),
                         _NavItem(
@@ -218,17 +223,6 @@ class HomePage extends GetView<HomeController> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: isDark
-                    ? AppColors.textOnDarkSecondary.withValues(alpha: 0.4)
-                    : AppColors.textLight.withValues(alpha: 0.4),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const Gap(20),
             Text(
               'نوع الإبلاغ',
               style: TextStyle(

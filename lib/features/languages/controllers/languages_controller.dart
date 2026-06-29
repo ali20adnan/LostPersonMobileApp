@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:speech_translator_app/core/utils/app_snackbar.dart';
 
 import '../../../app/services/storage_service.dart';
 import '../../../core/constants/language_constants.dart';
@@ -44,10 +45,10 @@ class LanguagesController extends GetxController {
   void selectSourceLanguage(Language language) {
     // Don't allow selecting the same language as target
     if (language.code == selectedTargetLanguage.value.code) {
-      Get.snackbar(
+      AppSnackbar.glass(
         'تنبيه',
         'لا يمكن اختيار نفس اللغة للمصدر والهدف',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.orange.withValues(alpha: 0.8),
         colorText: Colors.white,
         margin: const EdgeInsets.all(16),
@@ -65,10 +66,10 @@ class LanguagesController extends GetxController {
   void selectTargetLanguage(Language language) {
     // Don't allow selecting the same language as source
     if (language.code == selectedSourceLanguage.value.code) {
-      Get.snackbar(
+      AppSnackbar.glass(
         'تنبيه',
         'لا يمكن اختيار نفس اللغة للمصدر والهدف',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.orange.withValues(alpha: 0.8),
         colorText: Colors.white,
         margin: const EdgeInsets.all(16),
@@ -101,10 +102,10 @@ class LanguagesController extends GetxController {
       debugPrint(
           'LanguagesController: Languages saved ${selectedSourceLanguage.value.code} → ${selectedTargetLanguage.value.code}');
 
-      Get.snackbar(
+      AppSnackbar.glass(
         'تم الحفظ',
         'تم حفظ اللغات بنجاح',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.green.withValues(alpha: 0.8),
         colorText: Colors.white,
         margin: const EdgeInsets.all(16),
@@ -116,10 +117,10 @@ class LanguagesController extends GetxController {
       Get.back();
     } catch (e) {
       debugPrint('LanguagesController: Error saving languages - $e');
-      Get.snackbar(
+      AppSnackbar.glass(
         'خطأ',
         'حدث خطأ أثناء حفظ اللغات',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.red.withValues(alpha: 0.8),
         colorText: Colors.white,
         margin: const EdgeInsets.all(16),

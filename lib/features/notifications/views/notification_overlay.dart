@@ -13,6 +13,17 @@ import '../controllers/notifications_page_controller.dart';
 import '../widgets/notification_item.dart';
 import 'notifications_page.dart';
 
+/// Wraps [child] in a backdrop blur for the glass variants. The light-theme
+/// solid-blue chip skips the blur — otherwise the filter samples the lighter
+/// page background at the rounded edges and produces a gradient sheen.
+Widget _chipSurface({required bool solid, required Widget child}) {
+  if (solid) return child;
+  return BackdropFilter(
+    filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+    child: child,
+  );
+}
+
 /// Floating notification bell button + glassmorphic dropdown overlay
 class NotificationOverlay extends StatelessWidget {
   /// When the button floats over the dark gradient header (missing/reports
@@ -60,38 +71,27 @@ class NotificationOverlay extends StatelessWidget {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: onDark
-                        ? Colors.white.withValues(alpha: 0.18)
-                        : isDark
-                            ? AppColors.surfaceDark.withValues(alpha: 0.8)
-                            : Colors.white.withValues(alpha: 0.9),
+                    // Solid dark-navy fill (no transparency/blur) so the light
+                    // map never bleeds through as a white tint.
+                    color: AppColors.surfaceDark,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: onDark
-                          ? Colors.white.withValues(alpha: 0.35)
-                          : isDark
-                              ? AppColors.glassBorderDark
-                              : AppColors.glassBorder,
+                      color: AppColors.accent.withValues(alpha: 0.3),
+                      width: 1.5,
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: onDark ? 0.18 : 0.10),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
+                    boxShadow: AppColors.bottomNavShadow,
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(16),
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                    child: _chipSurface(
+                      solid: true,
                       child: Stack(
                         clipBehavior: Clip.none,
                         alignment: Alignment.center,
                         children: [
                           Icon(
                             PhosphorIcons.bell(),
-                            color: onDark ? Colors.white : AppColors.primary,
+                            color: AppColors.accent,
                             size: 22,
                           ),
                           // Unread badge
@@ -103,7 +103,7 @@ class NotificationOverlay extends StatelessWidget {
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 4, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: AppColors.accent,
+                                  color: const Color(0xFFEF4444),
                                   borderRadius: BorderRadius.circular(8),
                                   border: Border.all(
                                     color: isDark

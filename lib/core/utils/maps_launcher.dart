@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:speech_translator_app/core/utils/app_snackbar.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// Opens Google Maps directions from the user's current location to [lat]/[lng]
@@ -25,10 +26,10 @@ Future<void> openMapsDirections({
 
   final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
   if (!launched) {
-    Get.snackbar(
+    AppSnackbar.glass(
       'خطأ',
       'تعذّر فتح خرائط Google',
-      snackPosition: SnackPosition.BOTTOM,
+      snackPosition: SnackPosition.TOP,
     );
   }
 }

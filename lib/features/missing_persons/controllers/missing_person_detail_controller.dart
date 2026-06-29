@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:speech_translator_app/core/utils/app_snackbar.dart';
 
 import '../../../app/services/auth_service.dart';
 import '../../../app/services/socket_service.dart';
@@ -37,8 +38,8 @@ class MissingPersonDetailController extends GetxController {
       report.value = result;
     } catch (e) {
       debugPrint('MissingPersonDetailController: Error - $e');
-      Get.snackbar('خطأ', 'فشل تحميل بيانات المفقود',
-          snackPosition: SnackPosition.BOTTOM,
+      AppSnackbar.glass('خطأ', 'فشل تحميل بيانات المفقود',
+          snackPosition: SnackPosition.TOP,
           backgroundColor: Colors.red.withValues(alpha: 0.8),
           colorText: Colors.white);
     } finally {
@@ -67,21 +68,21 @@ class MissingPersonDetailController extends GetxController {
       // Volunteer requests are pending until CENTER/ADMIN approve — reflect
       // that locally so the button shows "قيد المراجعة".
       if (!canDirectlyUpdate) _pending.markPending(reportId);
-      Get.snackbar(
+      AppSnackbar.glass(
         'تم',
         canDirectlyUpdate
             ? 'تم تحديث حالة الشخص إلى تم العثور عليه'
             : 'تم إرسال طلب تأكيد العثور. في انتظار موافقة المركز.',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.green.withValues(alpha: 0.8),
         colorText: Colors.white,
       );
       await loadReport();
     } else {
-      Get.snackbar(
+      AppSnackbar.glass(
         'خطأ',
         response.errorMessage ?? 'فشل تحديث الحالة',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.red.withValues(alpha: 0.8),
         colorText: Colors.white,
       );

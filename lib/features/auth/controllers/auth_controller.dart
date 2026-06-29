@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../app/routes/app_routes.dart';
 import '../../../app/services/auth_service.dart';
-import '../../../app/services/socket_service.dart';
-import '../../../app/services/unread_count_service.dart';
-import '../../notifications/bindings/app_notifications_bootstrap.dart';
-import '../../notifications/services/app_notifications_service.dart';
+import '../services/session_bootstrap.dart';
 
 class AuthController extends GetxController {
   final AuthService _authService = Get.find<AuthService>();
@@ -34,31 +32,27 @@ class AuthController extends GetxController {
 
     final response = await _authService.login(userName, password);
 
-    isLoading.value = false;
-
-    if (response.isSuccess) {
-      // Bring up real-time services now that we have a fresh token.
-      try {
-        if (!Get.isRegistered<SocketService>()) {
-          await Get.putAsync<SocketService>(() => SocketService().init());
-        }
-        if (!Get.isRegistered<UnreadCountService>()) {
-          await Get.putAsync<UnreadCountService>(
-              () => UnreadCountService().init());
-        }
-        if (!Get.isRegistered<AppNotificationsService>()) {
-          await Get.putAsync<AppNotificationsService>(
-              () => AppNotificationsService().init());
-        }
-        await AppNotificationsBootstrap.setup();
-      } catch (e) {
-        debugPrint('AuthController: post-login init failed - $e');
-      }
-      Get.offAllNamed('/home');
-    } else {
+    if (!response.isSuccess) {
+      isLoading.value = false;
       errorMessage.value =
           response.errorMessage ?? 'فشل تسجيل الدخول، تحقق من البيانات';
+      return;
     }
+
+    // Signed in with a temporary (default) password: gate the app behind the
+    // forced password-change screen, exactly like the web. Pass the password
+    // just entered so it can be used as the current password there. Real-time
+    // services come up only after the password is replaced.
+    if (_authService.currentUser.value?.isTempPass == true) {
+      isLoading.value = false;
+      Get.offAllNamed(AppRoutes.forcePasswordChange, arguments: password);
+      return;
+    }
+
+    // Bring up real-time services now that we have a fresh, permanent session.
+    await bootstrapRealtimeServices();
+    isLoading.value = false;
+    Get.offAllNamed(AppRoutes.home);
   }
 
   @override

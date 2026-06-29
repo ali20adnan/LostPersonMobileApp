@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart' hide MultipartFile;
 import 'package:image_picker/image_picker.dart';
+import 'package:speech_translator_app/core/utils/app_snackbar.dart';
 
 import '../../../app/services/auth_service.dart';
 import '../../../app/services/api_service.dart';
@@ -87,29 +88,29 @@ class ProfileController extends GetxController {
       if (response.isSuccess) {
         await _authService.fetchProfile();
         user.refresh();
-        Get.snackbar(
+        AppSnackbar.glass(
           'تم التحديث',
           'تم تغيير الصورة الشخصية بنجاح',
-          snackPosition: SnackPosition.BOTTOM,
+          snackPosition: SnackPosition.TOP,
           backgroundColor: Colors.green.withValues(alpha: 0.8),
           colorText: Colors.white,
           margin: const EdgeInsets.all(16),
         );
       } else {
-        Get.snackbar(
+        AppSnackbar.glass(
           'خطأ',
           response.errorMessage ?? 'فشل رفع الصورة',
-          snackPosition: SnackPosition.BOTTOM,
+          snackPosition: SnackPosition.TOP,
           backgroundColor: Colors.red.withValues(alpha: 0.8),
           colorText: Colors.white,
           margin: const EdgeInsets.all(16),
         );
       }
     } catch (e) {
-      Get.snackbar(
+      AppSnackbar.glass(
         'خطأ',
         'حدث خطأ أثناء رفع الصورة',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.red.withValues(alpha: 0.8),
         colorText: Colors.white,
         margin: const EdgeInsets.all(16),
@@ -144,17 +145,17 @@ class ProfileController extends GetxController {
 
     isChangingPassword.value = true;
     try {
-      final response = await _api.patch('/auth/change-password', body: {
-        'currentPassword': current,
-        'newPassword': newPass,
-      });
+      final response = await _authService.changePassword(
+        currentPassword: current,
+        newPassword: newPass,
+      );
 
       if (response.isSuccess) {
         _clearPasswordFields();
-        Get.snackbar(
+        AppSnackbar.glass(
           'تم التغيير',
           'تم تغيير كلمة المرور بنجاح',
-          snackPosition: SnackPosition.BOTTOM,
+          snackPosition: SnackPosition.TOP,
           backgroundColor: Colors.green.withValues(alpha: 0.8),
           colorText: Colors.white,
           margin: const EdgeInsets.all(16),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:get/get.dart';
+import 'package:speech_translator_app/core/utils/app_snackbar.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
@@ -48,8 +49,8 @@ class _MapPickerPageState extends State<MapPickerPage> {
       }
       if (permission == LocationPermission.denied ||
           permission == LocationPermission.deniedForever) {
-        Get.snackbar('إذن مطلوب', 'يتطلب الوصول إلى الموقع',
-            snackPosition: SnackPosition.BOTTOM);
+        AppSnackbar.glass('إذن مطلوب', 'يتطلب الوصول إلى الموقع',
+            snackPosition: SnackPosition.TOP);
         return;
       }
       final position = await Geolocator.getCurrentPosition(
@@ -58,8 +59,8 @@ class _MapPickerPageState extends State<MapPickerPage> {
       _mapController.move(latLng, 15.0);
       setState(() => _selected = latLng);
     } catch (e) {
-      Get.snackbar('خطأ', 'فشل تحديد الموقع',
-          snackPosition: SnackPosition.BOTTOM);
+      AppSnackbar.glass('خطأ', 'فشل تحديد الموقع',
+          snackPosition: SnackPosition.TOP);
     } finally {
       setState(() => _loadingGps = false);
     }

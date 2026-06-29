@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:speech_translator_app/core/utils/app_snackbar.dart';
 
 import '../../../app/services/auth_service.dart';
 import '../../../app/services/socket_service.dart';
@@ -132,21 +133,21 @@ class MissingPersonsController extends GetxController {
       // Volunteer requests are pending until CENTER/ADMIN approve — reflect
       // that locally so the card button shows "قيد المراجعة".
       if (!canDirectlyUpdate) _pending.markPending(person.id);
-      Get.snackbar(
+      AppSnackbar.glass(
         'تم',
         canDirectlyUpdate
             ? 'تم تحديث حالة الشخص إلى تم العثور عليه'
             : 'تم إرسال طلب تأكيد العثور. في انتظار موافقة المركز.',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.green.withValues(alpha: 0.8),
         colorText: Colors.white,
       );
       await loadReports();
     } else {
-      Get.snackbar(
+      AppSnackbar.glass(
         'خطأ',
         response.errorMessage ?? 'فشل تحديث الحالة',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.red.withValues(alpha: 0.8),
         colorText: Colors.white,
       );

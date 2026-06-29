@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:speech_translator_app/core/utils/app_snackbar.dart';
 
 import '../../../app/services/auth_service.dart';
 import '../../../app/services/socket_service.dart';
@@ -41,8 +42,8 @@ class IncidentDetailController extends GetxController {
       report.value = result;
     } catch (e) {
       debugPrint('IncidentDetailController: Error - $e');
-      Get.snackbar('خطأ', 'فشل تحميل بيانات البلاغ',
-          snackPosition: SnackPosition.BOTTOM,
+      AppSnackbar.glass('خطأ', 'فشل تحميل بيانات البلاغ',
+          snackPosition: SnackPosition.TOP,
           backgroundColor: Colors.red.withValues(alpha: 0.8),
           colorText: Colors.white);
     } finally {
@@ -63,13 +64,13 @@ class IncidentDetailController extends GetxController {
       final ok = await _repository.acceptReport(id);
       if (ok) {
         await refreshReport();
-        Get.snackbar('تم', 'تم قبول البلاغ',
-            snackPosition: SnackPosition.BOTTOM,
+        AppSnackbar.glass('تم', 'تم قبول البلاغ',
+            snackPosition: SnackPosition.TOP,
             backgroundColor: Colors.green.withValues(alpha: 0.9),
             colorText: Colors.white);
       } else {
-        Get.snackbar('خطأ', 'فشل قبول البلاغ',
-            snackPosition: SnackPosition.BOTTOM,
+        AppSnackbar.glass('خطأ', 'فشل قبول البلاغ',
+            snackPosition: SnackPosition.TOP,
             backgroundColor: Colors.red.withValues(alpha: 0.9),
             colorText: Colors.white);
       }
@@ -87,13 +88,13 @@ class IncidentDetailController extends GetxController {
       final ok = await _repository.completeReport(id);
       if (ok) {
         await refreshReport();
-        Get.snackbar('تم', 'تم إنجاز المهمة',
-            snackPosition: SnackPosition.BOTTOM,
+        AppSnackbar.glass('تم', 'تم إنجاز المهمة',
+            snackPosition: SnackPosition.TOP,
             backgroundColor: Colors.green.withValues(alpha: 0.9),
             colorText: Colors.white);
       } else {
-        Get.snackbar('خطأ', 'فشل تحديث الحالة',
-            snackPosition: SnackPosition.BOTTOM,
+        AppSnackbar.glass('خطأ', 'فشل تحديث الحالة',
+            snackPosition: SnackPosition.TOP,
             backgroundColor: Colors.red.withValues(alpha: 0.9),
             colorText: Colors.white);
       }
@@ -125,13 +126,13 @@ class IncidentDetailController extends GetxController {
           final ok = await _repository.rejectReport(id);
           if (ok) {
             await refreshReport();
-            Get.snackbar('تم', 'تم رفض البلاغ',
-                snackPosition: SnackPosition.BOTTOM,
+            AppSnackbar.glass('تم', 'تم رفض البلاغ',
+                snackPosition: SnackPosition.TOP,
                 backgroundColor: Colors.red.withValues(alpha: 0.9),
                 colorText: Colors.white);
           } else {
-            Get.snackbar('خطأ', 'فشل رفض البلاغ',
-                snackPosition: SnackPosition.BOTTOM,
+            AppSnackbar.glass('خطأ', 'فشل رفض البلاغ',
+                snackPosition: SnackPosition.TOP,
                 backgroundColor: Colors.red.withValues(alpha: 0.9),
                 colorText: Colors.white);
           }

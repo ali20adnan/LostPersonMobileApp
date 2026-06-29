@@ -21,7 +21,7 @@ class SacredSnackbar {
     Get.snackbar(
       title,
       message,
-      snackPosition: SnackPosition.BOTTOM,
+      snackPosition: SnackPosition.TOP,
       backgroundColor:
           background ?? AppColors.surfaceDark.withValues(alpha: 0.95),
       colorText: Colors.white,

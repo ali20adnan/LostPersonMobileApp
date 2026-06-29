@@ -14,7 +14,11 @@ import '../../../core/constants/incident_constants.dart';
 
 /// Page displaying list of reports with filtering
 class IncidentsListPage extends GetView<IncidentsListController> {
-  const IncidentsListPage({super.key});
+  /// When true the page omits its own AppBar — used inside the merged
+  /// "البلاغات" hub, which provides a single shared header.
+  final bool embedded;
+
+  const IncidentsListPage({super.key, this.embedded = false});
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +26,7 @@ class IncidentsListPage extends GetView<IncidentsListController> {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      appBar: _buildAppBar(),
+      appBar: embedded ? null : _buildAppBar(),
       body: Column(
         children: [
           // Search + filter section
@@ -262,17 +266,6 @@ class IncidentsListPage extends GetView<IncidentsListController> {
               letterSpacing: 0.2,
             ),
           ),
-          const Gap(2),
-          Text(
-            'متابعة بلاغات الحوادث والطوارئ',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 11.5,
-              fontWeight: FontWeight.w500,
-              color: Colors.white.withValues(alpha: 0.8),
-            ),
-          ),
         ],
       ).animate().fadeIn(duration: 400.ms).slideY(
             begin: -0.15,
@@ -294,19 +287,6 @@ class IncidentsListPage extends GetView<IncidentsListController> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.textOnDarkSecondary
-                      : AppColors.textLight,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const Gap(16),
             Text(
               'تصفية البلاغات',
               style: TextStyle(

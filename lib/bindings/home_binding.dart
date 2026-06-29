@@ -4,7 +4,9 @@ import '../app/services/libre_translate_service.dart';
 import '../app/services/storage_service.dart';
 import '../data/repositories/incident_repository.dart';
 import '../data/repositories/missing_persons_repository.dart';
+import '../data/repositories/assembly_points_repository.dart';
 import '../features/home/controllers/home_controller.dart';
+import '../features/assembly_points/controllers/assembly_points_controller.dart';
 import '../features/translator/controllers/translator_controller.dart';
 import '../features/ocr_reader/controllers/ocr_reader_controller.dart';
 import '../features/missing_persons/controllers/missing_persons_controller.dart';
@@ -32,8 +34,15 @@ class HomeBinding extends Bindings {
       Get.put(MissingPersonsRepository());
     }
 
+    if (!Get.isRegistered<AssemblyPointsRepository>()) {
+      Get.put(AssemblyPointsRepository());
+    }
+
     // Put HomeController
     Get.put(HomeController());
+
+    // Assembly-points map controller (home tab 0)
+    Get.put(AssemblyPointsController());
 
     // Register LibreTranslateService before OCR controller (which depends on it)
     if (!Get.isRegistered<LibreTranslateService>()) {

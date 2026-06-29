@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../app/services/update_service.dart';
+import '../../assembly_points/views/assembly_points_page.dart';
 import '../../translator/views/translator_hub_page.dart';
-import '../../missing_persons/views/missing_persons_page.dart';
 import '../../incident_reporting/controllers/incidents_list_controller.dart';
-import '../../incident_reporting/views/incidents_list_page.dart';
+import '../views/reports_hub_page.dart';
 import '../../profile/views/profile_page.dart';
 
 
@@ -25,11 +25,15 @@ class HomeController extends GetxController {
     UpdateService().checkForUpdate();
   }
 
-  // Pages for bottom navigation (4 tabs: ترجمة, مفقودون, بلاغات, حسابي)
+  // Pages for bottom navigation (4 tabs):
+  //   0 الخريطة (نقاط التجمّع) — الشاشة الرئيسية
+  //   1 الترجمة
+  //   2 البلاغات (المفقودون + الحوادث مدمجان)
+  //   3 حسابي
   final List<Widget> pages = const [
+    AssemblyPointsPage(),
     TranslatorHubPage(),
-    MissingPersonsPage(),
-    IncidentsListPage(),
+    ReportsHubPage(),
     ProfilePage(),
   ];
 
@@ -45,8 +49,8 @@ class HomeController extends GetxController {
   }
 
   /// Navigate to specific page
-  void navigateToTranslator() => changePage(0);
-  void navigateToMissingPersons() => changePage(1);
-  void navigateToIncidents() => changePage(2);
+  void navigateToMap() => changePage(0);
+  void navigateToTranslator() => changePage(1);
+  void navigateToReports() => changePage(2);
   void navigateToProfile() => changePage(3);
 }

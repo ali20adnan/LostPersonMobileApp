@@ -69,6 +69,46 @@ class AuthService extends GetxService {
     return response;
   }
 
+  /// Change the signed-in user's password.
+  ///
+  /// On success the API rotates the JWT and returns the updated user with
+  /// `isTempPass: false`. We persist the new token and user so the
+  /// temporary-password gate clears. Mirrors the web change-password flow.
+  Future<ApiResponse> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final response = await _api.patch('/auth/change-password', body: {
+      'currentPassword': currentPassword,
+      'newPassword': newPassword,
+    });
+
+    if (response.isSuccess) {
+      final data = response.data;
+      String? newToken;
+      User? updated;
+      if (data is Map<String, dynamic>) {
+        newToken = data['access_token'] as String?;
+        final userJson = data['user'];
+        if (userJson is Map<String, dynamic>) {
+          updated = User.fromJson(userJson);
+        }
+      }
+      // Fall back to clearing the temp flag locally when the API doesn't
+      // echo the user object back.
+      updated ??= currentUser.value?.copyWith(isTempPass: false);
+
+      if (newToken != null && newToken.isNotEmpty) {
+        await _api.saveToken(newToken);
+      }
+      if (updated != null) {
+        await _storage.write(key: _userKey, value: jsonEncode(updated.toJson()));
+        currentUser.value = updated;
+      }
+    }
+    return response;
+  }
+
   /// Logout
   Future<void> logout() async {
     try {

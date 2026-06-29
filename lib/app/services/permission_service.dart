@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:speech_translator_app/core/utils/app_snackbar.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class PermissionService {
@@ -130,10 +131,10 @@ class PermissionService {
 
   /// Show error message for permission denial
   void showPermissionDeniedMessage() {
-    Get.snackbar(
+    AppSnackbar.glass(
       'الإذن مرفوض',
       'يتطلب التطبيق إذن الميكروفون للعمل بشكل صحيح',
-      snackPosition: SnackPosition.BOTTOM,
+      snackPosition: SnackPosition.TOP,
       backgroundColor: Colors.red.withValues(alpha: 0.8),
       colorText: Colors.white,
       duration: const Duration(seconds: 3),

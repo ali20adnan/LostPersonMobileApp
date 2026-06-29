@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:speech_translator_app/core/utils/app_snackbar.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:geolocator/geolocator.dart';
 
@@ -59,8 +60,8 @@ class IncidentReportingController extends GetxController {
 
   bool _canAddMoreMediaFiles() {
     if (selectedMediaFiles.length >= _maxMediaFiles) {
-      Get.snackbar('الحد الأقصى', 'يمكن إرفاق 5 ملفات كحد أقصى',
-          snackPosition: SnackPosition.BOTTOM,
+      AppSnackbar.glass('الحد الأقصى', 'يمكن إرفاق 5 ملفات كحد أقصى',
+          snackPosition: SnackPosition.TOP,
           backgroundColor: Colors.orange.withValues(alpha: 0.8),
           colorText: Colors.white);
       return false;
@@ -77,8 +78,8 @@ class IncidentReportingController extends GetxController {
       final hasPermission =
           await _permissionService.requestPhotoLibraryPermission();
       if (!hasPermission) {
-        Get.snackbar('إذن مطلوب', 'يتطلب الوصول إلى مكتبة الصور',
-            snackPosition: SnackPosition.BOTTOM,
+        AppSnackbar.glass('إذن مطلوب', 'يتطلب الوصول إلى مكتبة الصور',
+            snackPosition: SnackPosition.TOP,
             backgroundColor: Colors.orange.withValues(alpha: 0.8),
             colorText: Colors.white);
         return;
@@ -94,8 +95,8 @@ class IncidentReportingController extends GetxController {
       }
     } catch (e) {
       debugPrint('IncidentReportingController: Error picking image - $e');
-      Get.snackbar('خطأ', 'فشل اختيار الصورة',
-          snackPosition: SnackPosition.BOTTOM,
+      AppSnackbar.glass('خطأ', 'فشل اختيار الصورة',
+          snackPosition: SnackPosition.TOP,
           backgroundColor: Colors.red.withValues(alpha: 0.8),
           colorText: Colors.white);
     }
@@ -108,8 +109,8 @@ class IncidentReportingController extends GetxController {
     try {
       final hasPermission = await _permissionService.requestCameraPermission();
       if (!hasPermission) {
-        Get.snackbar('إذن مطلوب', 'يتطلب الوصول إلى الكاميرا',
-            snackPosition: SnackPosition.BOTTOM,
+        AppSnackbar.glass('إذن مطلوب', 'يتطلب الوصول إلى الكاميرا',
+            snackPosition: SnackPosition.TOP,
             backgroundColor: Colors.orange.withValues(alpha: 0.8),
             colorText: Colors.white);
         return;
@@ -125,8 +126,8 @@ class IncidentReportingController extends GetxController {
       }
     } catch (e) {
       debugPrint('IncidentReportingController: Error taking photo - $e');
-      Get.snackbar('خطأ', 'فشل التقاط الصورة',
-          snackPosition: SnackPosition.BOTTOM,
+      AppSnackbar.glass('خطأ', 'فشل التقاط الصورة',
+          snackPosition: SnackPosition.TOP,
           backgroundColor: Colors.red.withValues(alpha: 0.8),
           colorText: Colors.white);
     }
@@ -140,8 +141,8 @@ class IncidentReportingController extends GetxController {
       final hasPermission =
           await _permissionService.requestPhotoLibraryPermission();
       if (!hasPermission) {
-        Get.snackbar('إذن مطلوب', 'يتطلب الوصول إلى مكتبة الملفات',
-            snackPosition: SnackPosition.BOTTOM,
+        AppSnackbar.glass('إذن مطلوب', 'يتطلب الوصول إلى مكتبة الملفات',
+            snackPosition: SnackPosition.TOP,
             backgroundColor: Colors.orange.withValues(alpha: 0.8),
             colorText: Colors.white);
         return;
@@ -157,8 +158,8 @@ class IncidentReportingController extends GetxController {
       }
     } catch (e) {
       debugPrint('IncidentReportingController: Error picking video - $e');
-      Get.snackbar('خطأ', 'فشل اختيار الفيديو',
-          snackPosition: SnackPosition.BOTTOM,
+      AppSnackbar.glass('خطأ', 'فشل اختيار الفيديو',
+          snackPosition: SnackPosition.TOP,
           backgroundColor: Colors.red.withValues(alpha: 0.8),
           colorText: Colors.white);
     }
@@ -206,8 +207,8 @@ class IncidentReportingController extends GetxController {
       final hasPermission =
           await _permissionService.requestLocationPermission();
       if (!hasPermission) {
-        Get.snackbar('إذن مطلوب', 'يتطلب الوصول إلى الموقع',
-            snackPosition: SnackPosition.BOTTOM,
+        AppSnackbar.glass('إذن مطلوب', 'يتطلب الوصول إلى الموقع',
+            snackPosition: SnackPosition.TOP,
             backgroundColor: Colors.orange.withValues(alpha: 0.8),
             colorText: Colors.white);
         isLoadingLocation.value = false;
@@ -222,8 +223,8 @@ class IncidentReportingController extends GetxController {
       locationController.text =
           '${position.latitude.toStringAsFixed(6)}, ${position.longitude.toStringAsFixed(6)}';
 
-      Get.snackbar('تم', 'تم تحديد الموقع بنجاح',
-          snackPosition: SnackPosition.BOTTOM,
+      AppSnackbar.glass('تم', 'تم تحديد الموقع بنجاح',
+          snackPosition: SnackPosition.TOP,
           backgroundColor: Colors.green.withValues(alpha: 0.8),
           colorText: Colors.white,
           duration: const Duration(seconds: 2));
@@ -232,8 +233,8 @@ class IncidentReportingController extends GetxController {
     } catch (e) {
       debugPrint('IncidentReportingController: Error getting location - $e');
       isLoadingLocation.value = false;
-      Get.snackbar('خطأ', 'فشل تحديد الموقع',
-          snackPosition: SnackPosition.BOTTOM,
+      AppSnackbar.glass('خطأ', 'فشل تحديد الموقع',
+          snackPosition: SnackPosition.TOP,
           backgroundColor: Colors.red.withValues(alpha: 0.8),
           colorText: Colors.white);
     }
@@ -242,8 +243,8 @@ class IncidentReportingController extends GetxController {
   bool _validateForm() {
     // Category (nature of the case) is required for every report.
     if (selectedCategory.value == null) {
-      Get.snackbar('خطأ في النموذج', 'يرجى تحديد نوع الحالة',
-          snackPosition: SnackPosition.BOTTOM,
+      AppSnackbar.glass('خطأ في النموذج', 'يرجى تحديد نوع الحالة',
+          snackPosition: SnackPosition.TOP,
           backgroundColor: Colors.red.withValues(alpha: 0.8),
           colorText: Colors.white);
       return false;
@@ -253,16 +254,16 @@ class IncidentReportingController extends GetxController {
     if (selectedType.value == ReportType.emergency) return true;
 
     if (titleController.text.trim().isEmpty) {
-      Get.snackbar('خطأ في النموذج', 'يرجى إدخال عنوان البلاغ',
-          snackPosition: SnackPosition.BOTTOM,
+      AppSnackbar.glass('خطأ في النموذج', 'يرجى إدخال عنوان البلاغ',
+          snackPosition: SnackPosition.TOP,
           backgroundColor: Colors.red.withValues(alpha: 0.8),
           colorText: Colors.white);
       return false;
     }
 
     if (descriptionController.text.trim().isEmpty) {
-      Get.snackbar('خطأ في النموذج', 'يرجى إدخال وصف البلاغ',
-          snackPosition: SnackPosition.BOTTOM,
+      AppSnackbar.glass('خطأ في النموذج', 'يرجى إدخال وصف البلاغ',
+          snackPosition: SnackPosition.TOP,
           backgroundColor: Colors.red.withValues(alpha: 0.8),
           colorText: Colors.white);
       return false;
@@ -332,8 +333,8 @@ class IncidentReportingController extends GetxController {
       isSubmitting.value = false;
 
       if (response.isSuccess) {
-        Get.snackbar('نجح', 'تم إرسال البلاغ بنجاح',
-            snackPosition: SnackPosition.BOTTOM,
+        AppSnackbar.glass('نجح', 'تم إرسال البلاغ بنجاح',
+            snackPosition: SnackPosition.TOP,
             backgroundColor: Colors.green.withValues(alpha: 0.8),
             colorText: Colors.white,
             duration: const Duration(seconds: 3));
@@ -341,16 +342,16 @@ class IncidentReportingController extends GetxController {
         _clearForm();
         Get.offNamed(AppRoutes.incidentsList);
       } else {
-        Get.snackbar('خطأ', 'فشل إرسال البلاغ، يرجى المحاولة مرة أخرى',
-            snackPosition: SnackPosition.BOTTOM,
+        AppSnackbar.glass('خطأ', 'فشل إرسال البلاغ، يرجى المحاولة مرة أخرى',
+            snackPosition: SnackPosition.TOP,
             backgroundColor: Colors.red.withValues(alpha: 0.8),
             colorText: Colors.white);
       }
     } catch (e) {
       debugPrint('IncidentReportingController: Error submitting report - $e');
       isSubmitting.value = false;
-      Get.snackbar('خطأ', 'حدث خطأ أثناء إرسال البلاغ',
-          snackPosition: SnackPosition.BOTTOM,
+      AppSnackbar.glass('خطأ', 'حدث خطأ أثناء إرسال البلاغ',
+          snackPosition: SnackPosition.TOP,
           backgroundColor: Colors.red.withValues(alpha: 0.8),
           colorText: Colors.white);
     }

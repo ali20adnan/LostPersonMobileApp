@@ -1,3 +1,5 @@
+import 'assembly_point_model.dart';
+
 /// User model matching the LostPersonsWebAPI auth response
 class User {
   final int id;
@@ -8,6 +10,11 @@ class User {
   final DateTime? accountExpiresAt;
   final String? avatarUrl;
 
+  /// The volunteer's assigned assembly point ("نقطتي"), returned by `/auth/me`.
+  /// Null for non-volunteers or unassigned volunteers.
+  final int? assemblyPointId;
+  final AssemblyPointRef? assignedPoint;
+
   const User({
     required this.id,
     required this.userName,
@@ -16,6 +23,8 @@ class User {
     this.isTempPass = false,
     this.accountExpiresAt,
     this.avatarUrl,
+    this.assemblyPointId,
+    this.assignedPoint,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -28,11 +37,16 @@ class User {
       accountExpiresAt: json['accountExpiresAt'] != null
           ? DateTime.tryParse(json['accountExpiresAt'].toString())
           : null,
-      avatarUrl: (json['avatarUrl'] ?? 
-                  json['avatarPath'] ?? 
-                  json['avatar'] ?? 
-                  json['photo'] ?? 
+      avatarUrl: (json['avatarUrl'] ??
+                  json['avatarPath'] ??
+                  json['avatar'] ??
+                  json['photo'] ??
                   json['image'])?.toString(),
+      assemblyPointId: json['assemblyPointId'] as int?,
+      assignedPoint: json['assemblyPoint'] is Map<String, dynamic>
+          ? AssemblyPointRef.fromJson(
+              json['assemblyPoint'] as Map<String, dynamic>)
+          : null,
     );
   }
 
@@ -44,7 +58,41 @@ class User {
         'isTempPass': isTempPass,
         'accountExpiresAt': accountExpiresAt?.toIso8601String(),
         'avatarUrl': avatarUrl,
+        // Persist only the id for the assigned point; the full object is
+        // refreshed from `/auth/me` on each profile fetch.
+        'assemblyPointId': assemblyPointId,
       };
+
+  User copyWith({
+    int? id,
+    String? userName,
+    String? fullName,
+    String? role,
+    bool? isTempPass,
+    DateTime? accountExpiresAt,
+    String? avatarUrl,
+    int? assemblyPointId,
+    AssemblyPointRef? assignedPoint,
+  }) {
+    return User(
+      id: id ?? this.id,
+      userName: userName ?? this.userName,
+      fullName: fullName ?? this.fullName,
+      role: role ?? this.role,
+      isTempPass: isTempPass ?? this.isTempPass,
+      accountExpiresAt: accountExpiresAt ?? this.accountExpiresAt,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      assemblyPointId: assemblyPointId ?? this.assemblyPointId,
+      assignedPoint: assignedPoint ?? this.assignedPoint,
+    );
+  }
+
+  /// True for users who may manage (create/edit/delete) assembly points.
+  /// Mirrors the backend write roles for `/assembly-points`.
+  bool get canManageAssemblyPoints {
+    final r = role.trim().toUpperCase();
+    return r == 'ADMIN' || r == 'OFFICIAL' || r == 'CENTER' || r == 'OPS_CENTER';
+  }
 
   String get roleDisplayAr => roleDisplayArOf(role);
 }
