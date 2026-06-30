@@ -25,6 +25,8 @@ import 'features/settings/controllers/settings_controller.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  debugPrint('🚀 SHOREBIRD PATCH #4: assembly_points + force_password_change features');
+
   // Replace the default red error screen with a user-friendly Arabic widget
   ErrorWidget.builder = (FlutterErrorDetails details) {
     debugPrint('ErrorWidget: ${details.exception}');

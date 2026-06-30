@@ -66,7 +66,7 @@ class _ReportsHubPageState extends State<ReportsHubPage> {
           BoxShadow(color: Color(0x33000000), blurRadius: 12, offset: Offset(0, 4)),
         ],
       ),
-      padding: EdgeInsets.fromLTRB(16, topPad + 12, 16, 14),
+      padding: EdgeInsets.fromLTRB(16, topPad + 20, 16, 14),
       child: Row(
         children: [
           // Reserve space for HomePage's floating notification / messaging icons.
