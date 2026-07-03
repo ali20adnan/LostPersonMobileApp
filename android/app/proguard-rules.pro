@@ -10,6 +10,10 @@
 # Google Play Core (deferred components)
 -keep class com.google.android.play.core.** { *; }
 
+# Agora RTC engine (voice calls) — R8 must not strip the native SDK classes.
+-keep class io.agora.**{*;}
+-dontwarn io.agora.**
+
 # Keep native methods
 -keepclasseswithmembernames class * {
     native <methods>;
