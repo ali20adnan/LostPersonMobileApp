@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
+import '../../../app/services/call_service.dart';
 import '../../../app/services/socket_service.dart';
 import '../../../app/services/unread_count_service.dart';
 import '../../notifications/bindings/app_notifications_bootstrap.dart';
@@ -25,6 +26,9 @@ Future<void> bootstrapRealtimeServices() async {
     if (!Get.isRegistered<AppNotificationsService>()) {
       await Get.putAsync<AppNotificationsService>(
           () => AppNotificationsService().init());
+    }
+    if (!Get.isRegistered<CallService>()) {
+      await Get.putAsync<CallService>(() => CallService().init());
     }
     await AppNotificationsBootstrap.setup();
   } catch (e) {

@@ -16,6 +16,7 @@ abstract class AppRoutes {
   static const missingPersonDetail = '/missing-person-detail';
   static const conversations = '/conversations';
   static const chat = '/chat';
+  static const call = '/call';
   static const alerts = '/alerts';
   static const notifications = '/notifications';
 }

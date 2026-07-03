@@ -7,6 +7,7 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
+import '../../../app/services/call_service.dart';
 import '../../../app/themes/app_colors.dart';
 import '../../../core/constants/api_constants.dart';
 import '../controllers/chat_controller.dart';
@@ -198,8 +199,44 @@ class ChatPage extends GetView<ChatController> {
         icon: Icon(PhosphorIcons.arrowRight(), color: Colors.white),
         onPressed: () => Get.back(),
       ),
+      actions: [_buildCallAction()],
       iconTheme: const IconThemeData(color: Colors.white),
     );
+  }
+
+  /// Voice-call button — shown for 1:1 conversations only (v1). Disabled while
+  /// another call is in progress.
+  Widget _buildCallAction() {
+    return Obx(() {
+      // Rebuild once the conversation finishes loading.
+      final _ = controller.isLoading.value;
+      final conv = controller.conversation;
+      if (conv == null || conv.isGroup) return const SizedBox.shrink();
+      if (!Get.isRegistered<CallService>()) return const SizedBox.shrink();
+
+      final others =
+          conv.participants.where((p) => p.userId != controller.currentUserId);
+      if (others.isEmpty) return const SizedBox.shrink();
+      final other = others.first;
+
+      final call = Get.find<CallService>();
+      final busy = call.inCall;
+      return IconButton(
+        tooltip: 'مكالمة صوتية',
+        icon: Icon(PhosphorIcons.phone(), color: Colors.white),
+        onPressed: busy
+            ? null
+            : () => call.startCall(
+                  conversationId: conv.id,
+                  toUserId: other.userId,
+                  callee: CallPeer(
+                    id: other.userId,
+                    fullName: other.fullName,
+                    avatarUrl: other.avatarUrl,
+                  ),
+                ),
+      );
+    });
   }
 
   Widget _buildEmptyState(bool isDark) {

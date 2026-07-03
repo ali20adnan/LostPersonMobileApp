@@ -22,6 +22,7 @@ import '../../features/incident_reporting/views/incident_reporting_page.dart';
 import '../../features/incident_reporting/views/incidents_list_page.dart';
 import '../../features/missing_persons/views/missing_person_form_page.dart';
 import '../../features/messaging/views/chat_page.dart';
+import '../../features/calls/views/call_page.dart';
 import '../../features/alerts/views/alerts_page.dart';
 import '../../features/notifications/views/notifications_page.dart';
 import '../../features/missing_persons/views/missing_person_detail_page.dart';
@@ -86,6 +87,11 @@ class AppPages {
       page: () => const ChatPage(),
       binding: MessagingBinding(),
       customTransition:_sharedAxisX,
+    ),
+    GetPage(
+      name: AppRoutes.call,
+      page: () => const CallPage(),
+      customTransition:_fadeThrough,
     ),
     GetPage(
       name: AppRoutes.alerts,

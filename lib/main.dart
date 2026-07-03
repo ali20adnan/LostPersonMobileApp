@@ -12,6 +12,7 @@ import 'app/routes/app_routes.dart';
 import 'app/themes/app_theme.dart';
 import 'app/services/api_service.dart';
 import 'app/services/auth_service.dart';
+import 'app/services/call_service.dart';
 import 'app/services/socket_service.dart';
 import 'app/services/storage_service.dart';
 import 'app/services/unread_count_service.dart';
@@ -76,6 +77,9 @@ void main() async {
     await Get.putAsync<UnreadCountService>(() => UnreadCountService().init());
     await Get.putAsync<AppNotificationsService>(
         () => AppNotificationsService().init());
+    // CallService must come up after SocketService — it registers the `call:*`
+    // signaling listeners so incoming calls ring from any screen.
+    await Get.putAsync<CallService>(() => CallService().init());
     await AppNotificationsBootstrap.setup();
   }
 
