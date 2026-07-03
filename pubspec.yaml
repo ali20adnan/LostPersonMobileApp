@@ -77,7 +77,8 @@ dependencies:
   flutter_dotenv: ^5.1.0
   # Opens the downloaded APK to trigger the Android installer (OTA updates)
   open_filex: ^4.5.0
-  flutter_webrtc: ^1.5.2
+  # Real-time 1:1 voice calls (replaces the old flutter_webrtc + Metered TURN).
+  agora_rtc_engine: ^6.5.2
 
 dev_dependencies:
   flutter_test:

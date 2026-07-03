@@ -1,10 +1,8 @@
 import 'dart:async';
 
+import 'package:agora_rtc_engine/agora_rtc_engine.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_webrtc/flutter_webrtc.dart';
-// `navigator` is exported by both flutter_webrtc (MediaDevices) and GetX; we use
-// the WebRTC one for getUserMedia, so hide GetX's.
-import 'package:get/get.dart' hide navigator;
+import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import '../routes/app_routes.dart';
@@ -22,18 +20,17 @@ class CallPeer {
   const CallPeer({required this.id, required this.fullName, this.avatarUrl});
 }
 
-/// 1:1 audio call service (WebRTC over the shared Socket.IO signaling channel).
+/// 1:1 audio call service (Agora RTC + Socket.IO ring signaling).
 ///
-/// Signaling rides [SocketService] (`call:*` events); the audio itself is a
-/// peer-to-peer [RTCPeerConnection] relayed through TURN when direct fails.
+/// Ring/presence signaling rides [SocketService] (`call:*` events); the audio
+/// itself flows over Agora's network (SD-RTN). Both peers join the channel
+/// `call_<callId>` with a short-lived token from POST /agora-token and publish
+/// their mic. There is no SDP/ICE negotiation — Agora handles the media.
 ///
 /// Scope (v1): audio only, 1:1 only, foreground only.
 class CallService extends GetxService {
   static const _listenerId = 'call_service';
   static const _ringTimeout = Duration(seconds: 30);
-  static const _fallbackIce = [
-    {'urls': 'stun:stun.l.google.com:19302'},
-  ];
 
   // ── reactive state ────────────────────────────────────────────
   final status = CallStatus.idle.obs;
@@ -47,18 +44,11 @@ class CallService extends GetxService {
   int? _peerUserId;
   bool _isCaller = false;
 
-  // ── WebRTC objects ────────────────────────────────────────────
-  RTCPeerConnection? _pc;
-  MediaStream? _localStream;
-  MediaStream? _remoteStream;
-  final _pendingCandidates = <RTCIceCandidate>[];
+  // ── Agora objects ─────────────────────────────────────────────
+  RtcEngine? _engine;
   Timer? _ringTimer;
 
   bool get inCall => status.value != CallStatus.idle && status.value != CallStatus.ended;
-
-  /// The remote party's audio stream (retained so the track isn't GC'd; audio
-  /// plays automatically on mobile once received).
-  MediaStream? get remoteStream => _remoteStream;
 
   Future<CallService> init() async {
     _registerSocketListeners();
@@ -78,7 +68,7 @@ class CallService extends GetxService {
     if (inCall) return;
     if (!Get.isRegistered<SocketService>()) return;
 
-    _callId = _generateCallId();
+    _callId = _generateCallId(toUserId);
     _peerUserId = toUserId;
     _isCaller = true;
     peer.value = callee;
@@ -117,18 +107,17 @@ class CallService extends GetxService {
       return;
     }
 
-    try {
-      // Build the peer connection BEFORE accepting so we're ready for the offer.
-      await _buildPeer();
-    } catch (e) {
-      debugPrint('CallService: buildPeer failed - $e');
-      _emit('call:reject', {'toUserId': _peerUserId, 'callId': _callId, 'reason': 'mic'});
-      _endWith('mic-denied');
-      return;
-    }
-
     status.value = CallStatus.connecting;
+    // Tell the caller we accepted so they join too.
     _emit('call:accept', {'toUserId': _peerUserId, 'callId': _callId});
+
+    try {
+      await _joinAgora();
+    } catch (e) {
+      debugPrint('CallService: joinAgora failed - $e');
+      _emit('call:end', {'toUserId': _peerUserId, 'callId': _callId});
+      _endWith('failed');
+    }
   }
 
   /// Reject the ringing incoming call.
@@ -168,13 +157,11 @@ class CallService extends GetxService {
   }
 
   void toggleMute() {
-    final tracks = _localStream?.getAudioTracks() ?? [];
-    if (tracks.isEmpty) return;
-    final enabled = tracks.any((t) => t.enabled);
-    for (final t in tracks) {
-      t.enabled = !enabled;
-    }
-    isMuted.value = enabled; // muted == tracks now disabled
+    final engine = _engine;
+    if (engine == null) return;
+    final next = !isMuted.value;
+    engine.muteLocalAudioStream(next);
+    isMuted.value = next;
   }
 
   // ─────────────────────────────────────────────────────────────
@@ -187,9 +174,6 @@ class CallService extends GetxService {
 
     socket.on('call:incoming', _listenerId, (data) => _onIncoming(_asMap(data)));
     socket.on('call:accepted', _listenerId, (data) => _onAccepted(_asMap(data)));
-    socket.on('call:offer', _listenerId, (data) => _onOffer(_asMap(data)));
-    socket.on('call:answer', _listenerId, (data) => _onAnswer(_asMap(data)));
-    socket.on('call:ice', _listenerId, (data) => _onRemoteIce(_asMap(data)));
     socket.on('call:rejected', _listenerId, (data) => _onRemoteEnd(_asMap(data), 'rejected'));
     socket.on('call:canceled', _listenerId, (data) => _onRemoteEnd(_asMap(data), 'canceled'));
     socket.on('call:busy', _listenerId, (data) => _onRemoteEnd(_asMap(data), 'busy'));
@@ -228,7 +212,7 @@ class CallService extends GetxService {
     });
   }
 
-  // Caller: callee accepted → create & send the offer.
+  // Caller: callee accepted → join the Agora channel.
   Future<void> _onAccepted(Map<String, dynamic> data) async {
     if (data['callId'] != _callId || !_isCaller) return;
     _ringTimer?.cancel();
@@ -242,73 +226,11 @@ class CallService extends GetxService {
 
     status.value = CallStatus.connecting;
     try {
-      await _buildPeer();
-      final offer = await _pc!.createOffer({});
-      await _pc!.setLocalDescription(offer);
-      _emit('call:offer', {
-        'toUserId': _peerUserId,
-        'callId': _callId,
-        'sdp': offer.toMap(),
-      });
+      await _joinAgora();
     } catch (e) {
-      debugPrint('CallService: offer failed - $e');
+      debugPrint('CallService: joinAgora failed - $e');
       _emit('call:end', {'toUserId': _peerUserId, 'callId': _callId});
       _endWith('failed');
-    }
-  }
-
-  // Callee: received the offer → answer.
-  Future<void> _onOffer(Map<String, dynamic> data) async {
-    if (data['callId'] != _callId || _isCaller || _pc == null) return;
-    try {
-      final sdp = _asMap(data['sdp']);
-      await _pc!.setRemoteDescription(
-        RTCSessionDescription(sdp['sdp'] as String?, sdp['type'] as String?),
-      );
-      await _flushPendingCandidates();
-      final answer = await _pc!.createAnswer({});
-      await _pc!.setLocalDescription(answer);
-      _emit('call:answer', {
-        'toUserId': _peerUserId,
-        'callId': _callId,
-        'sdp': answer.toMap(),
-      });
-    } catch (e) {
-      debugPrint('CallService: answer failed - $e');
-      _endWith('failed');
-    }
-  }
-
-  // Caller: received the answer.
-  Future<void> _onAnswer(Map<String, dynamic> data) async {
-    if (data['callId'] != _callId || !_isCaller || _pc == null) return;
-    try {
-      final sdp = _asMap(data['sdp']);
-      await _pc!.setRemoteDescription(
-        RTCSessionDescription(sdp['sdp'] as String?, sdp['type'] as String?),
-      );
-      await _flushPendingCandidates();
-    } catch (e) {
-      debugPrint('CallService: setRemote(answer) failed - $e');
-      _endWith('failed');
-    }
-  }
-
-  // Both: trickle ICE.
-  Future<void> _onRemoteIce(Map<String, dynamic> data) async {
-    if (data['callId'] != _callId) return;
-    final c = _asMap(data['candidate']);
-    final candidate = RTCIceCandidate(
-      c['candidate'] as String?,
-      c['sdpMid'] as String?,
-      c['sdpMLineIndex'] as int?,
-    );
-    if (_pc != null && await _hasRemoteDescription()) {
-      try {
-        await _pc!.addCandidate(candidate);
-      } catch (_) {/* ignore bad candidate */}
-    } else {
-      _pendingCandidates.add(candidate);
     }
   }
 
@@ -320,96 +242,80 @@ class CallService extends GetxService {
   }
 
   // ─────────────────────────────────────────────────────────────
-  //  WebRTC plumbing
+  //  Agora plumbing
   // ─────────────────────────────────────────────────────────────
 
-  Future<void> _buildPeer() async {
-    final config = {
-      'iceServers': await _fetchIceServers(),
-      'sdpSemantics': 'unified-plan',
-    };
-    final pc = await createPeerConnection(config);
-
-    pc.onIceCandidate = (candidate) {
-      _emit('call:ice', {
-        'toUserId': _peerUserId,
-        'callId': _callId,
-        'candidate': candidate.toMap(),
-      });
-    };
-    pc.onTrack = (event) {
-      if (event.streams.isNotEmpty) {
-        _remoteStream = event.streams[0];
-      }
-    };
-    pc.onConnectionState = (state) {
-      switch (state) {
-        case RTCPeerConnectionState.RTCPeerConnectionStateConnected:
-          if (status.value != CallStatus.active) {
-            status.value = CallStatus.active;
-            startedAt.value ??= DateTime.now();
-          }
-          break;
-        case RTCPeerConnectionState.RTCPeerConnectionStateFailed:
-          _endWith('failed');
-          break;
-        case RTCPeerConnectionState.RTCPeerConnectionStateDisconnected:
-        case RTCPeerConnectionState.RTCPeerConnectionStateClosed:
-          if (status.value == CallStatus.active) _endWith('ended');
-          break;
-        default:
-          break;
-      }
-    };
-
-    final stream = await navigator.mediaDevices.getUserMedia({
-      'audio': true,
-      'video': false,
-    });
-    _localStream = stream;
-    for (final track in stream.getTracks()) {
-      await pc.addTrack(track, stream);
+  /// Join the call channel and publish the mic. The call goes "active" once the
+  /// OTHER peer joins (see [onUserJoined]). May throw if the token fetch or
+  /// engine init fails.
+  Future<void> _joinAgora() async {
+    final creds = await _fetchAgoraToken();
+    if (creds == null) {
+      throw StateError('agora token unavailable');
+    }
+    final appId = creds['appId'] as String?;
+    final channel = creds['channel'] as String?;
+    final token = creds['token'] as String?;
+    final uid = (creds['uid'] as num?)?.toInt() ?? 0;
+    if (appId == null || channel == null || token == null) {
+      throw StateError('agora token malformed');
     }
 
-    _pc = pc;
-  }
+    final engine = createAgoraRtcEngine();
+    _engine = engine;
+    await engine.initialize(RtcEngineContext(
+      appId: appId,
+      channelProfile: ChannelProfileType.channelProfileCommunication,
+    ));
+    await engine.enableAudio();
 
-  Future<bool> _hasRemoteDescription() async {
-    try {
-      final desc = await _pc!.getRemoteDescription();
-      return desc != null;
-    } catch (_) {
-      return false;
-    }
-  }
-
-  Future<void> _flushPendingCandidates() async {
-    if (_pc == null) return;
-    final pending = List<RTCIceCandidate>.from(_pendingCandidates);
-    _pendingCandidates.clear();
-    for (final c in pending) {
-      try {
-        await _pc!.addCandidate(c);
-      } catch (_) {/* ignore */}
-    }
-  }
-
-  Future<List<Map<String, dynamic>>> _fetchIceServers() async {
-    try {
-      final res = await Get.find<ApiService>().get('/turn-credentials');
-      if (res.isSuccess && res.data is Map<String, dynamic>) {
-        final list = (res.data as Map<String, dynamic>)['iceServers'];
-        if (list is List) {
-          return list
-              .whereType<Map>()
-              .map((e) => Map<String, dynamic>.from(e))
-              .toList();
+    engine.registerEventHandler(RtcEngineEventHandler(
+      onUserJoined: (connection, remoteUid, elapsed) {
+        // The other party joined and is publishing → media is flowing.
+        if (status.value != CallStatus.active) {
+          status.value = CallStatus.active;
+          startedAt.value ??= DateTime.now();
         }
-      }
-    } catch (e) {
-      debugPrint('CallService: fetchIceServers failed - $e');
+      },
+      onUserOffline: (connection, remoteUid, reason) {
+        if (status.value == CallStatus.active) _endWith('ended');
+      },
+      onError: (err, msg) {
+        debugPrint('CallService: Agora error $err - $msg');
+      },
+    ));
+
+    await engine.joinChannel(
+      token: token,
+      channelId: channel,
+      uid: uid,
+      options: const ChannelMediaOptions(
+        clientRoleType: ClientRoleType.clientRoleBroadcaster,
+        channelProfile: ChannelProfileType.channelProfileCommunication,
+        publishMicrophoneTrack: true,
+        autoSubscribeAudio: true,
+      ),
+    );
+
+    // Apply any mute intent chosen before the engine existed (default: off).
+    if (isMuted.value) {
+      await engine.muteLocalAudioStream(true);
     }
-    return List<Map<String, dynamic>>.from(_fallbackIce);
+  }
+
+  /// Fetch a short-lived Agora token for the current call from the backend.
+  Future<Map<String, dynamic>?> _fetchAgoraToken() async {
+    try {
+      final res = await Get.find<ApiService>()
+          .post('/agora-token', body: {'callId': _callId});
+      if (res.isSuccess && res.data is Map) {
+        return Map<String, dynamic>.from(res.data as Map);
+      }
+      debugPrint('CallService: agora-token error - ${res.errorMessage}');
+    } catch (e) {
+      debugPrint('CallService: fetchAgoraToken failed - $e');
+    }
+    return null;
   }
 
   Future<bool> _ensureMicPermission() async {
@@ -425,16 +331,15 @@ class CallService extends GetxService {
     _ringTimer?.cancel();
     _ringTimer = null;
 
-    _localStream?.getTracks().forEach((t) => t.stop());
-    await _localStream?.dispose();
-    _localStream = null;
-    _remoteStream = null;
-    _pendingCandidates.clear();
-    if (_pc != null) {
+    final engine = _engine;
+    _engine = null;
+    if (engine != null) {
       try {
-        await _pc!.close();
+        await engine.leaveChannel();
       } catch (_) {}
-      _pc = null;
+      try {
+        await engine.release();
+      } catch (_) {}
     }
 
     _callId = null;
@@ -473,8 +378,8 @@ class CallService extends GetxService {
     Get.find<SocketService>().emit(event, data);
   }
 
-  String _generateCallId() =>
-      '${DateTime.now().microsecondsSinceEpoch}-${_peerUserId ?? 0}';
+  String _generateCallId(int peerId) =>
+      '${DateTime.now().microsecondsSinceEpoch}-$peerId';
 
   Map<String, dynamic> _asMap(dynamic data) {
     if (data is Map<String, dynamic>) return data;
@@ -489,9 +394,6 @@ class CallService extends GetxService {
       for (final event in [
         'call:incoming',
         'call:accepted',
-        'call:offer',
-        'call:answer',
-        'call:ice',
         'call:rejected',
         'call:canceled',
         'call:busy',
