@@ -337,7 +337,7 @@ class SettingsPage extends GetView<SettingsController> {
     return Switch(
       value: value,
       onChanged: onChanged ?? (_) {},
-      activeColor: Colors.white,
+      activeThumbColor: Colors.white,
       activeTrackColor: AppColors.accent,
       inactiveThumbColor:
           isDark ? AppColors.textOnDarkSecondary : AppColors.textLight,

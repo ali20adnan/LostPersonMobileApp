@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../app/services/update_service.dart';
 import '../../assembly_points/views/assembly_points_page.dart';
 import '../../translator/views/translator_hub_page.dart';
 import '../../incident_reporting/controllers/incidents_list_controller.dart';
@@ -16,14 +15,6 @@ class HomeController extends GetxController {
   // Direction of the last tab change — drives the directional slide in the
   // page transition (forward = moving to a higher-index tab).
   bool goingForward = true;
-
-  @override
-  void onReady() {
-    super.onReady();
-    // OTA version gate — runs once after the home screen is shown. Safe to
-    // fire-and-forget: UpdateService swallows any failure.
-    UpdateService().checkForUpdate();
-  }
 
   // Pages for bottom navigation (4 tabs):
   //   0 الخريطة (نقاط التجمّع) — الشاشة الرئيسية

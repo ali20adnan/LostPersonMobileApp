@@ -3,8 +3,6 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
-import '../../../app/themes/app_colors.dart';
-
 /// A consistent custom app bar with optional glassmorphic background,
 /// gradient title, and action buttons.
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {

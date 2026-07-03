@@ -67,7 +67,7 @@ class HomePage extends GetView<HomeController> {
               // it reads as a solid blue chip. Dark theme stays white-glass.
               Obx(() => controller.currentIndex.value != 3
                   ? Positioned(
-                      top: MediaQuery.of(context).padding.top + 8,
+                      top: MediaQuery.of(context).padding.top + 16,
                       left: 12,
                       child: NotificationOverlay(
                         // Solid style on the light-background map (0) and on
@@ -81,7 +81,7 @@ class HomePage extends GetView<HomeController> {
               // Floating messaging icon at top-right (hidden on profile)
               Obx(() => controller.currentIndex.value != 3
                   ? Positioned(
-                      top: MediaQuery.of(context).padding.top + 8,
+                      top: MediaQuery.of(context).padding.top + 16,
                       right: 12,
                       child: MessagingOverlay(
                         // Solid style on the light-background map (0) and on

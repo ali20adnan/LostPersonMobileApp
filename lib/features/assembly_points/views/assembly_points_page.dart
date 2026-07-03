@@ -272,6 +272,10 @@ class _AssemblyPointsPageState extends State<AssemblyPointsPage> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final topPad = MediaQuery.of(context).padding.top;
+    final bottomPad = MediaQuery.of(context).padding.bottom;
+    // Bottom controls must clear the floating nav bar (height 72 + 12 margin
+    // + bottom safe-area) — keep them above the home indicator on iOS.
+    final controlsBottom = 110 + bottomPad;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -364,7 +368,7 @@ class _AssemblyPointsPageState extends State<AssemblyPointsPage> {
           // ── Zoom controls (right) ──
           Positioned(
             right: 16,
-            bottom: 110,
+            bottom: controlsBottom,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -388,7 +392,7 @@ class _AssemblyPointsPageState extends State<AssemblyPointsPage> {
           // ── Bottom-left action FABs ──
           Positioned(
             left: 16,
-            bottom: 110,
+            bottom: controlsBottom,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -417,7 +421,7 @@ class _AssemblyPointsPageState extends State<AssemblyPointsPage> {
             Positioned(
               left: 0,
               right: 0,
-              bottom: 110,
+              bottom: controlsBottom,
               child: Center(child: Obx(() => _listPill(isDark))),
             ),
 
