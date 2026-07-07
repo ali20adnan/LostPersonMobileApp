@@ -38,6 +38,7 @@ dependencies:
   record: ^6.0.0
   flutter_tts: ^4.0.2
   permission_handler: ^11.0.1
+  audioplayers: ^6.1.0 # call ringtones / SFX (in/out ring, connect, end, busy)
 
   # Media & Location
   image_picker: ^1.0.0
@@ -116,5 +117,6 @@ flutter:
     - assets/images/flags/
     - assets/icons/
     - assets/lottie/
+    - assets/sounds/
     - .env
     - shorebird.yaml

@@ -7,6 +7,7 @@ import 'package:permission_handler/permission_handler.dart';
 
 import '../routes/app_routes.dart';
 import 'api_service.dart';
+import 'call_sound_service.dart';
 import 'socket_service.dart';
 
 /// Call lifecycle states (mirrors the web `CallStatus`).
@@ -55,10 +56,14 @@ class CallService extends GetxService {
   RtcEngine? _engine;
   Timer? _ringTimer;
 
+  // ── ringtones / SFX ───────────────────────────────────────────
+  final CallSoundService _sound = CallSoundService();
+
   bool get inCall => status.value != CallStatus.idle && status.value != CallStatus.ended;
 
   Future<CallService> init() async {
     _registerSocketListeners();
+    await _sound.init();
     return this;
   }
 
@@ -92,6 +97,7 @@ class CallService extends GetxService {
       'callId': _callId,
     });
 
+    _sound.startOutgoingRing(); // caller ringback while waiting for an answer
     _openCallUi();
 
     _ringTimer = Timer(_ringTimeout, () {
@@ -116,6 +122,7 @@ class CallService extends GetxService {
       return;
     }
 
+    _sound.stopRinging(); // stop the incoming ring the moment we answer
     status.value = CallStatus.connecting;
     // Tell the caller we accepted so they join too.
     _emit('call:accept', {'toUserId': _peerUserId, 'callId': _callId});
@@ -184,8 +191,14 @@ class CallService extends GetxService {
     final engine = _engine;
     if (engine == null) return;
     final next = !isSpeakerOn.value;
-    await engine.setEnableSpeakerphone(next);
-    isSpeakerOn.value = next;
+    // Only reflect the new state if the routing call actually succeeded, and
+    // never let a failure bubble up and disrupt the ongoing call.
+    try {
+      await engine.setEnableSpeakerphone(next);
+      isSpeakerOn.value = next;
+    } catch (e) {
+      debugPrint('CallService: toggleSpeaker failed - $e');
+    }
   }
 
   // ─────────────────────────────────────────────────────────────
@@ -228,6 +241,7 @@ class CallService extends GetxService {
     isSpeakerOn.value = false;
     status.value = CallStatus.ringing;
 
+    _sound.startIncomingRing(); // ring the callee until they answer/reject
     _openCallUi();
 
     _ringTimer = Timer(_ringTimeout, () {
@@ -242,6 +256,7 @@ class CallService extends GetxService {
   Future<void> _onAccepted(Map<String, dynamic> data) async {
     if (data['callId'] != _callId || !_isCaller) return;
     _ringTimer?.cancel();
+    _sound.stopRinging(); // callee answered → stop the outgoing ringback
 
     final granted = await _ensureMicPermission();
     if (!granted) {
@@ -304,6 +319,8 @@ class CallService extends GetxService {
         if (status.value != CallStatus.active) {
           status.value = CallStatus.active;
           startedAt.value ??= DateTime.now();
+          _sound.stopRinging(); // safety: ensure no ring lingers
+          _sound.playConnect(); // both parties hear the "connected" tone
         }
       },
       onUserOffline: (connection, remoteUid, reason) {
@@ -330,12 +347,19 @@ class CallService extends GetxService {
       ),
     );
 
-    // Apply any mute intent chosen before the engine existed (default: off).
-    if (isMuted.value) {
-      await engine.muteLocalAudioStream(true);
+    // Apply mute + speaker-routing intent. These are NON-FATAL: a routing hiccup
+    // (some devices/Agora builds return an error from setEnableSpeakerphone) must
+    // never fail the whole call — the join already succeeded above.
+    try {
+      if (isMuted.value) await engine.muteLocalAudioStream(true);
+    } catch (e) {
+      debugPrint('CallService: muteLocalAudioStream failed - $e');
     }
-    // Apply the speaker-routing intent (default: earpiece for a phone call).
-    await engine.setEnableSpeakerphone(isSpeakerOn.value);
+    try {
+      await engine.setEnableSpeakerphone(isSpeakerOn.value);
+    } catch (e) {
+      debugPrint('CallService: setEnableSpeakerphone failed - $e');
+    }
   }
 
   /// Fetch a short-lived Agora token for the current call from the backend.
@@ -363,8 +387,24 @@ class CallService extends GetxService {
   // ─────────────────────────────────────────────────────────────
 
   Future<void> _endWith(String reason) async {
+    // Capture call-scoped facts BEFORE the fields below are reset, so the right
+    // teardown tone can be chosen.
+    final wasActive = status.value == CallStatus.active;
+    final wasCaller = _isCaller;
+
     _ringTimer?.cancel();
     _ringTimer = null;
+
+    // Tones: stop any ring loop, then play the appropriate one-shot.
+    //  • a call that was OPEN → the shared connect/end tone (both parties)
+    //  • caller whose callee pressed busy/reject → the busy tone
+    //  • cancel / no-answer / unavailable / failed → silence
+    _sound.stopRinging();
+    if (wasActive) {
+      _sound.playEnd();
+    } else if (wasCaller && (reason == 'busy' || reason == 'rejected')) {
+      _sound.playBusy();
+    }
 
     final engine = _engine;
     _engine = null;
@@ -447,6 +487,7 @@ class CallService extends GetxService {
       }
     }
     _endWith('ended');
+    _sound.disposeAll();
     super.onClose();
   }
 }

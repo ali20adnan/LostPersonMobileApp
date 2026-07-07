@@ -24,7 +24,14 @@ class CallPage extends StatelessWidget {
       // mode, and — being opaque — it lets the route's fade-through cross-fade
       // a solid surface on hang-up instead of revealing the horizontally
       // sliding chat page underneath (the old "everything shifts left" bug).
+      // Explicit full-screen size so the opaque backdrop ALWAYS fills the screen
+      // — otherwise, in the ended/idle states the Column has no full-width child
+      // and this Container would shrink-wrap to the avatar width, leaving half
+      // the screen empty (the "call UI on the left half" bug). Filling also
+      // forces full-width constraints down, so the content stays centered.
       body: Container(
+        width: double.infinity,
+        height: double.infinity,
         decoration: const BoxDecoration(gradient: AppColors.sacredGradient),
         child: SafeArea(
           child: Obx(() {
@@ -34,17 +41,11 @@ class CallPage extends StatelessWidget {
             final avatarUrl = ApiConstants.resolveAvatarUrl(peer?.avatarUrl);
             final initial = name.isNotEmpty ? name[0] : '؟';
 
-            // Fade the whole call surface out the moment the call ends, so the
-            // teardown reads as a smooth dissolve rather than an abrupt pop.
-            return AnimatedOpacity(
-              duration: const Duration(milliseconds: 350),
-              curve: Curves.easeOut,
-              opacity: status == CallStatus.idle ? 0 : 1,
-              child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Column(
-              children: [
-                const Spacer(flex: 2),
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                children: [
+                  const Spacer(flex: 2),
 
                 // Avatar
                 Container(
@@ -97,8 +98,7 @@ class CallPage extends StatelessWidget {
                 _Controls(call: call, status: status),
 
                 const Spacer(flex: 1),
-                  ],
-                ),
+                ],
               ),
             );
           }),

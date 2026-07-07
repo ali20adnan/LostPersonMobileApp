@@ -91,7 +91,11 @@ class AppPages {
     GetPage(
       name: AppRoutes.call,
       page: () => const CallPage(),
-      customTransition:_fadeThrough,
+      // Pure opacity fade (no scale/slide). A uniform opacity transition cannot
+      // produce the "half-screen"/leftward-shift artifact, and gives the smooth
+      // dissolve on hang-up. The opaque full-screen backdrop in CallPage handles
+      // the rest.
+      transition: Transition.fadeIn,
     ),
     GetPage(
       name: AppRoutes.alerts,
