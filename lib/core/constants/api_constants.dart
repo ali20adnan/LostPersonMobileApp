@@ -61,6 +61,7 @@ class ApiConstants {
   static const String conversations = '/conversations';
   static const String conversationUsers = '/conversations/users';
   static const String messagesUnreadCount = '/messages/unread-count';
+  static const String messagesCalls = '/messages/calls';
 
   // Alert notification endpoints
   static const String alertsUnreadCount = '/alerts/unread/count';

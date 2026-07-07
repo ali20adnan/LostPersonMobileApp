@@ -19,15 +19,28 @@ class CallPage extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: SafeArea(
-        child: Obx(() {
-          final status = call.status.value;
-          final peer = call.peer.value;
-          final name = peer?.fullName ?? 'مكالمة';
-          final avatarUrl = ApiConstants.resolveAvatarUrl(peer?.avatarUrl);
-          final initial = name.isNotEmpty ? name[0] : '؟';
+      // Own opaque immersive backdrop (navy) in BOTH light and dark themes.
+      // This is what makes the white text/controls read correctly in light
+      // mode, and — being opaque — it lets the route's fade-through cross-fade
+      // a solid surface on hang-up instead of revealing the horizontally
+      // sliding chat page underneath (the old "everything shifts left" bug).
+      body: Container(
+        decoration: const BoxDecoration(gradient: AppColors.sacredGradient),
+        child: SafeArea(
+          child: Obx(() {
+            final status = call.status.value;
+            final peer = call.peer.value;
+            final name = peer?.fullName ?? 'مكالمة';
+            final avatarUrl = ApiConstants.resolveAvatarUrl(peer?.avatarUrl);
+            final initial = name.isNotEmpty ? name[0] : '؟';
 
-          return Padding(
+            // Fade the whole call surface out the moment the call ends, so the
+            // teardown reads as a smooth dissolve rather than an abrupt pop.
+            return AnimatedOpacity(
+              duration: const Duration(milliseconds: 350),
+              curve: Curves.easeOut,
+              opacity: status == CallStatus.idle ? 0 : 1,
+              child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Column(
               children: [
@@ -84,10 +97,12 @@ class CallPage extends StatelessWidget {
                 _Controls(call: call, status: status),
 
                 const Spacer(flex: 1),
-              ],
-            ),
-          );
-        }),
+                  ],
+                ),
+              ),
+            );
+          }),
+        ),
       ),
     );
   }
@@ -224,7 +239,7 @@ class _Controls extends StatelessWidget {
       );
     }
 
-    // Calling / connecting / active: mute + hang up
+    // Calling / connecting / active: mute + speaker + hang up
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
@@ -237,6 +252,19 @@ class _Controls extends StatelessWidget {
                 : PhosphorIcons.microphone(PhosphorIconsStyle.fill),
             label: muted ? 'مكتوم' : 'كتم',
             onTap: status == CallStatus.active ? call.toggleMute : null,
+          );
+        }),
+        // Speaker: filled/gold when audio is on the loudspeaker, neutral on
+        // earpiece — the colour + icon signal where the sound is coming out.
+        Obx(() {
+          final on = call.isSpeakerOn.value;
+          return _RoundButton(
+            color: on ? AppColors.accentDark : Colors.white24,
+            icon: on
+                ? PhosphorIcons.speakerHigh(PhosphorIconsStyle.fill)
+                : PhosphorIcons.speakerSimpleHigh(PhosphorIconsStyle.fill),
+            label: 'مكبر الصوت',
+            onTap: status == CallStatus.active ? call.toggleSpeaker : null,
           );
         }),
         _RoundButton(

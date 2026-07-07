@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 import '../../../app/services/auth_service.dart';
+import '../../../app/services/call_service.dart';
 import '../../../app/services/socket_service.dart';
 import '../../../app/services/unread_count_service.dart';
 import '../../../data/models/chat_models.dart';
@@ -40,6 +41,28 @@ class ChatController extends GetxController {
   int get unreadBoundary => messages.length - initialUnreadCount;
 
   int get currentUserId => Get.find<AuthService>().currentUser.value?.id ?? 0;
+
+  /// Re-dial the other party from a tapped in-chat call-log card. Mirrors the
+  /// header call button: 1:1 only, no-op if already in a call or unregistered.
+  void redialFromCallLog() {
+    final conv = conversation;
+    if (conv == null || conv.isGroup) return;
+    if (!Get.isRegistered<CallService>()) return;
+    final others = conv.participants.where((p) => p.userId != currentUserId);
+    if (others.isEmpty) return;
+    final other = others.first;
+    final call = Get.find<CallService>();
+    if (call.inCall) return;
+    call.startCall(
+      conversationId: conv.id,
+      toUserId: other.userId,
+      callee: CallPeer(
+        id: other.userId,
+        fullName: other.fullName,
+        avatarUrl: other.avatarUrl,
+      ),
+    );
+  }
 
   @override
   void onInit() {

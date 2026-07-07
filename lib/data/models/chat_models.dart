@@ -137,8 +137,15 @@ class ChatMessage {
   final int id;
   final int conversationId;
   final int senderId;
+
+  /// Message kind: `text` | `image` | `call`. Only `call` changes rendering
+  /// (a call-log card instead of a bubble); text/image branch on the fields.
+  final String type;
   final String? content;
   final String? imageUrl;
+
+  /// Call-log payload when [type] == `call`: `{ callId, outcome, durationSeconds }`.
+  final Map<String, dynamic>? callData;
   final DateTime sentAt;
   final String? senderName;
 
@@ -146,22 +153,42 @@ class ChatMessage {
     required this.id,
     required this.conversationId,
     required this.senderId,
+    this.type = 'text',
     this.content,
     this.imageUrl,
+    this.callData,
     required this.sentAt,
     this.senderName,
   });
 
+  bool get isCall => type == 'call';
+
+  /// Call outcome: `completed` | `missed` | `rejected` (null when not a call).
+  String? get callOutcome => callData?['outcome'] as String?;
+
+  /// Talk time in seconds for a completed call (0 / null otherwise).
+  int? get callDurationSeconds {
+    final d = callData?['durationSeconds'];
+    if (d is int) return d;
+    if (d is num) return d.toInt();
+    return null;
+  }
+
   factory ChatMessage.fromJson(Map<String, dynamic> json) {
     final sender = json['sender'] as Map<String, dynamic>?;
+    final rawCall = json['callData'] ?? json['call_data'];
     return ChatMessage(
       id: json['id'] as int,
       conversationId:
           (json['conversationId'] ?? json['conversation_id']) as int,
       senderId:
           (json['senderId'] ?? json['sender_id'] ?? sender?['id']) as int,
+      type: json['type'] as String? ?? 'text',
       content: json['content'] as String?,
       imageUrl: json['imageUrl'] as String?,
+      callData: rawCall is Map
+          ? Map<String, dynamic>.from(rawCall)
+          : null,
       sentAt: DateTime.parse(
           json['sentAt'] as String? ?? DateTime.now().toIso8601String()),
       senderName: sender?['fullName'] as String?,

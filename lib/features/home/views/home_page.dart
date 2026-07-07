@@ -14,6 +14,7 @@ import '../../../app/services/unread_count_service.dart';
 import '../controllers/home_controller.dart';
 import '../../notifications/views/notification_overlay.dart';
 import '../../notifications/controllers/notifications_controller.dart';
+import '../../calls/views/call_history_overlay.dart';
 import '../../messaging/controllers/conversations_controller.dart';
 import '../../messaging/views/messaging_overlay.dart';
 
@@ -61,6 +62,11 @@ class HomePage extends GetView<HomeController> {
                   ? const NotificationDismissBarrier()
                   : const SizedBox.shrink()),
 
+              // Tap barrier to close the call-history overlay (hidden on profile)
+              Obx(() => controller.currentIndex.value != 3
+                  ? const CallHistoryDismissBarrier()
+                  : const SizedBox.shrink()),
+
               // Floating notification bell at top-left (hidden on profile).
               // White-glass variant everywhere EXCEPT the light-theme translator
               // tab (index 0), where the button uses the dark-theme navy fill so
@@ -75,6 +81,27 @@ class HomePage extends GetView<HomeController> {
                         onDark: !(controller.currentIndex.value == 0 ||
                             (controller.currentIndex.value == 1 && !isDark)),
                       ),
+                    )
+                  : const SizedBox.shrink()),
+
+              // Call-history bell — sits just to the right of the notification
+              // bell; its dropdown ([CallHistoryPanel]) is rendered below so it
+              // spans the screen width.
+              Obx(() => controller.currentIndex.value != 3
+                  ? Positioned(
+                      top: MediaQuery.of(context).padding.top + 16,
+                      left: 64,
+                      child: const CallHistoryButton(),
+                    )
+                  : const SizedBox.shrink()),
+
+              // Call-history dropdown panel (screen-wide, below the bells).
+              Obx(() => controller.currentIndex.value != 3
+                  ? Positioned(
+                      top: MediaQuery.of(context).padding.top + 16 + 52,
+                      left: 12,
+                      right: 12,
+                      child: const CallHistoryPanel(),
                     )
                   : const SizedBox.shrink()),
 

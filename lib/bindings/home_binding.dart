@@ -14,6 +14,7 @@ import '../features/incident_reporting/controllers/incidents_list_controller.dar
 import '../features/messaging/controllers/conversations_controller.dart';
 import '../data/repositories/conversation_repository.dart';
 import '../features/notifications/controllers/notifications_controller.dart';
+import '../features/calls/controllers/call_history_controller.dart';
 import '../features/profile/controllers/profile_controller.dart';
 
 
@@ -60,6 +61,7 @@ class HomeBinding extends Bindings {
     }
     Get.put(ConversationsController());
     Get.put(NotificationsController());
+    Get.put(CallHistoryController());
     Get.put(ProfileController());
   }
 }

@@ -27,8 +27,10 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlin {
-        jvmToolchain(17)
+    // Target JVM 17 bytecode using whichever JDK runs Gradle (JDK 21 here),
+    // instead of requiring a separately-installed JDK 17 toolchain.
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_17.toString()
     }
 
     defaultConfig {

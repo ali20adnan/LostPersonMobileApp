@@ -36,8 +36,15 @@ class CallService extends GetxService {
   final status = CallStatus.idle.obs;
   final Rxn<CallPeer> peer = Rxn<CallPeer>();
   final isMuted = false.obs;
+  /// Whether audio is routed to the loudspeaker (true) vs. the earpiece (false).
+  /// Communication profile defaults to the earpiece, so this starts false.
+  final isSpeakerOn = false.obs;
   final startedAt = Rxn<DateTime>();
   final endReason = RxnString();
+
+  /// Last Agora error (`code: message`) captured during a call — surfaced for
+  /// diagnostics so token/join failures are visible instead of silently printed.
+  final lastError = RxnString();
 
   // ── call bookkeeping ──────────────────────────────────────────
   String? _callId;
@@ -73,8 +80,10 @@ class CallService extends GetxService {
     _isCaller = true;
     peer.value = callee;
     endReason.value = null;
+    lastError.value = null;
     startedAt.value = null;
     isMuted.value = false;
+    isSpeakerOn.value = false;
     status.value = CallStatus.calling;
 
     _emit('call:invite', {
@@ -114,7 +123,11 @@ class CallService extends GetxService {
     try {
       await _joinAgora();
     } catch (e) {
-      debugPrint('CallService: joinAgora failed - $e');
+      // A join failure here (bad/absent Agora token, engine init failure) means
+      // the callee can't participate — tell the caller so it doesn't hang, and
+      // record why so the "failed" state is diagnosable.
+      debugPrint('CallService: joinAgora failed (callee) - $e');
+      lastError.value ??= '$e';
       _emit('call:end', {'toUserId': _peerUserId, 'callId': _callId});
       _endWith('failed');
     }
@@ -164,6 +177,17 @@ class CallService extends GetxService {
     isMuted.value = next;
   }
 
+  /// Toggle audio routing between the external loudspeaker and the earpiece.
+  /// `setEnableSpeakerphone` is the correct Agora VoIP-routing call for the
+  /// communication profile and needs no extra permissions.
+  Future<void> toggleSpeaker() async {
+    final engine = _engine;
+    if (engine == null) return;
+    final next = !isSpeakerOn.value;
+    await engine.setEnableSpeakerphone(next);
+    isSpeakerOn.value = next;
+  }
+
   // ─────────────────────────────────────────────────────────────
   //  Signaling
   // ─────────────────────────────────────────────────────────────
@@ -198,8 +222,10 @@ class CallService extends GetxService {
       avatarUrl: from['avatarUrl'] as String?,
     );
     endReason.value = null;
+    lastError.value = null;
     startedAt.value = null;
     isMuted.value = false;
+    isSpeakerOn.value = false;
     status.value = CallStatus.ringing;
 
     _openCallUi();
@@ -228,7 +254,10 @@ class CallService extends GetxService {
     try {
       await _joinAgora();
     } catch (e) {
-      debugPrint('CallService: joinAgora failed - $e');
+      // Caller's own join failed (was mislabeled 'mic-denied' before). Surface
+      // the real reason and notify the callee so neither side hangs.
+      debugPrint('CallService: joinAgora failed (caller) - $e');
+      lastError.value ??= '$e';
       _emit('call:end', {'toUserId': _peerUserId, 'callId': _callId});
       _endWith('failed');
     }
@@ -281,6 +310,10 @@ class CallService extends GetxService {
         if (status.value == CallStatus.active) _endWith('ended');
       },
       onError: (err, msg) {
+        // Surface the Agora error code (e.g. errInvalidToken, errTokenExpired,
+        // errJoinChannelRejected) instead of a silent print, so join/token
+        // failures are diagnosable from the call state.
+        lastError.value = '$err: $msg';
         debugPrint('CallService: Agora error $err - $msg');
       },
     ));
@@ -301,6 +334,8 @@ class CallService extends GetxService {
     if (isMuted.value) {
       await engine.muteLocalAudioStream(true);
     }
+    // Apply the speaker-routing intent (default: earpiece for a phone call).
+    await engine.setEnableSpeakerphone(isSpeakerOn.value);
   }
 
   /// Fetch a short-lived Agora token for the current call from the backend.
@@ -334,18 +369,26 @@ class CallService extends GetxService {
     final engine = _engine;
     _engine = null;
     if (engine != null) {
-      try {
-        await engine.leaveChannel();
-      } catch (_) {}
-      try {
-        await engine.release();
-      } catch (_) {}
+      // Tear the engine down OFF the current call stack. `_endWith` can be invoked
+      // from inside an Agora native event handler (onUserOffline / onError), and
+      // calling release() / leaveChannel() synchronously from within such a
+      // callback can deadlock or hard-crash the app on Android. Scheduling it as a
+      // fresh event-loop task lets the native callback unwind first.
+      Future(() async {
+        try {
+          await engine.leaveChannel();
+        } catch (_) {}
+        try {
+          await engine.release();
+        } catch (_) {}
+      });
     }
 
     _callId = null;
     _peerUserId = null;
     _isCaller = false;
     isMuted.value = false;
+    isSpeakerOn.value = false;
     startedAt.value = null;
     endReason.value = reason;
     status.value = CallStatus.ended;

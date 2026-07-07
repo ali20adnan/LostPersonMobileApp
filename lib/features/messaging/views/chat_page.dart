@@ -69,11 +69,19 @@ class ChatPage extends GetView<ChatController> {
                     children: [
                       if (showDivider) _NewMessagesDivider(isDark: isDark),
                       if (showDate) _DateSeparator(date: msg.sentAt, isDark: isDark),
-                      _MessageBubble(
-                        message: msg,
-                        isMe: isMe,
-                        isDark: isDark,
-                      ),
+                      if (msg.isCall)
+                        _CallLogCard(
+                          message: msg,
+                          isMe: isMe,
+                          isDark: isDark,
+                          onRedial: () => controller.redialFromCallLog(),
+                        )
+                      else
+                        _MessageBubble(
+                          message: msg,
+                          isMe: isMe,
+                          isDark: isDark,
+                        ),
                     ],
                   );
                 },
@@ -708,6 +716,152 @@ class _DateSeparator extends StatelessWidget {
 
   bool _sameDay(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
+}
+
+/// WhatsApp-style call-log entry rendered inside the conversation. Centered,
+/// theme-aware (works in both light and dark), tap to re-dial.
+class _CallLogCard extends StatelessWidget {
+  final ChatMessage message;
+  final bool isMe; // true → I placed the call (outgoing)
+  final bool isDark;
+  final VoidCallback onRedial;
+
+  const _CallLogCard({
+    required this.message,
+    required this.isMe,
+    required this.isDark,
+    required this.onRedial,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final outcome = message.callOutcome ?? 'missed';
+    final outgoing = isMe;
+    final visuals = _visualsFor(outcome, outgoing);
+
+    final time = _formatTime(message.sentAt);
+    final duration = outcome == 'completed'
+        ? _formatDuration(message.callDurationSeconds ?? 0)
+        : null;
+    final subtitle = duration != null ? '$time · $duration' : time;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: Center(
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: onRedial,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.cardDark : AppColors.surface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isDark ? AppColors.cardBorderDark : AppColors.cardBorder,
+                ),
+                boxShadow: isDark ? null : AppColors.cardShadow,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: visuals.color.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(visuals.icon, size: 18, color: visuals.color),
+                  ),
+                  const Gap(10),
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        visuals.label,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: isDark
+                              ? AppColors.textOnDark
+                              : AppColors.textPrimary,
+                        ),
+                      ),
+                      const Gap(2),
+                      Text(
+                        subtitle,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: AppColors.textLight,
+                          fontFeatures: [FontFeature.tabularFigures()],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Gap(12),
+                  Icon(
+                    PhosphorIcons.phone(PhosphorIconsStyle.fill),
+                    size: 16,
+                    color: AppColors.primary,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  _CallVisuals _visualsFor(String outcome, bool outgoing) {
+    switch (outcome) {
+      case 'completed':
+        return _CallVisuals(
+          icon: outgoing
+              ? PhosphorIcons.phoneOutgoing()
+              : PhosphorIcons.phoneIncoming(),
+          color: AppColors.success,
+          label: outgoing ? 'مكالمة صادرة' : 'مكالمة واردة',
+        );
+      case 'rejected':
+        return _CallVisuals(
+          icon: PhosphorIcons.phoneSlash(),
+          color: outgoing ? AppColors.textLight : AppColors.error,
+          label: outgoing ? 'تم رفض المكالمة' : 'مكالمة مرفوضة',
+        );
+      case 'missed':
+      default:
+        return _CallVisuals(
+          icon: outgoing
+              ? PhosphorIcons.phoneOutgoing()
+              : PhosphorIcons.phoneX(),
+          color: outgoing ? AppColors.textLight : AppColors.error,
+          label: outgoing ? 'لم يتم الرد' : 'مكالمة فائتة',
+        );
+    }
+  }
+
+  String _formatTime(DateTime dt) {
+    final h = dt.hour.toString().padLeft(2, '0');
+    final m = dt.minute.toString().padLeft(2, '0');
+    return '$h:$m';
+  }
+
+  String _formatDuration(int seconds) {
+    final m = seconds ~/ 60;
+    final s = (seconds % 60).toString().padLeft(2, '0');
+    return '$m:$s';
+  }
+}
+
+class _CallVisuals {
+  final IconData icon;
+  final Color color;
+  final String label;
+  const _CallVisuals({required this.icon, required this.color, required this.label});
 }
 
 /// Typing dots animation
