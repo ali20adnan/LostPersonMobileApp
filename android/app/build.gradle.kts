@@ -94,21 +94,13 @@ android {
         }
     }
 
-    // Voice-only calling: the app uses Agora audio only (enableAudio +
-    // channelProfileCommunication, no video/media player). Strip the unused
-    // Agora video/AR/media native extensions to shrink the APK. These are
-    // loaded on demand by the SDK and are never referenced by voice calls.
-    packaging {
-        jniLibs {
-            excludes += listOf(
-                "**/libagora_clear_vision_extension.so",
-                "**/libagora_lip_sync_extension.so",
-                "**/libagora_segmentation_extension.so",
-                "**/libagora_spatial_audio_extension.so",
-                "**/libagora_ffmpeg.so"
-            )
-        }
-    }
+    // NOTE: previously stripped several Agora native extensions
+    // (clear_vision/lip_sync/segmentation/spatial_audio/ffmpeg .so) to shrink the
+    // APK on the assumption they're never used by voice-only calls. That is a
+    // native-crash risk: if the SDK dlopen()s a stripped lib during
+    // initialize()/joinChannel(), the app hard-crashes to the home screen — the
+    // observed "call answered → whole app closes" on mobile. Ship all bundled
+    // Agora libs; re-introduce excludes only if proven safe via a crash log.
 }
 
 flutter {

@@ -7,6 +7,7 @@ import 'package:speech_translator_app/core/utils/app_snackbar.dart';
 
 import '../../../app/services/audio_service.dart';
 import '../../../app/services/audio_storage_service.dart';
+import '../../../app/services/call_service.dart';
 import '../../../app/services/libre_translate_service.dart';
 import '../../../app/services/permission_service.dart';
 import '../../../app/services/soniox_service.dart';
@@ -254,6 +255,20 @@ class TranslatorController extends GetxController {
 
   Future<void> startRecording() async {
     if (isRecording.value) return;
+
+    // A voice call and live translation both need exclusive mic ownership; two
+    // native audio engines on the mic at once hard-crash the app. Refuse to
+    // start translation while a call is in progress.
+    if (Get.isRegistered<CallService>() && Get.find<CallService>().inCall) {
+      AppSnackbar.glass(
+        'تنبيه',
+        'لا يمكن بدء الترجمة أثناء مكالمة جارية',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.orange.withValues(alpha: 0.8),
+        colorText: Colors.white,
+      );
+      return;
+    }
 
     try {
       isInitializing.value = true;

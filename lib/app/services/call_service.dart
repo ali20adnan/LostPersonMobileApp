@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+import '../../features/translator/controllers/translator_controller.dart';
 import '../routes/app_routes.dart';
 import 'api_service.dart';
 import 'call_sound_service.dart';
@@ -55,6 +56,19 @@ class CallService extends GetxService {
   // ── Agora objects ─────────────────────────────────────────────
   RtcEngine? _engine;
   Timer? _ringTimer;
+  /// Pending teardown of the previous engine (leaveChannel + release run off the
+  /// call stack). A new join awaits this so two native engines never coexist —
+  /// creating a fresh engine before the old one's native release() finishes can
+  /// hard-crash the app on Android.
+  Future<void>? _engineTeardown;
+
+  /// Monotonic call generation. Bumped whenever the current call is set up or
+  /// torn down (_endWith / _dismissSilently / new call). An in-flight _joinAgora
+  /// captures it on entry and re-checks it AFTER EVERY await so a join that was
+  /// superseded (e.g. this device lost a simultaneous-answer race and got
+  /// call:handled mid-join) backs out silently — disposing its own engine —
+  /// instead of publishing a dead engine or emitting stray signals.
+  int _callGen = 0;
 
   // ── ringtones / SFX ───────────────────────────────────────────
   final CallSoundService _sound = CallSoundService();
@@ -80,6 +94,7 @@ class CallService extends GetxService {
     if (inCall) return;
     if (!Get.isRegistered<SocketService>()) return;
 
+    _callGen++;
     _callId = _generateCallId(toUserId);
     _peerUserId = toUserId;
     _isCaller = true;
@@ -127,9 +142,14 @@ class CallService extends GetxService {
     // Tell the caller we accepted so they join too.
     _emit('call:accept', {'toUserId': _peerUserId, 'callId': _callId});
 
+    final gen = _callGen;
     try {
       await _joinAgora();
     } catch (e) {
+      // Only report a REAL failure of the still-current attempt. If the call was
+      // dismissed/ended while joining (call:handled, remote end), stay silent —
+      // emitting call:end here would carry stale/null fields.
+      if (gen != _callGen) return;
       // A join failure here (bad/absent Agora token, engine init failure) means
       // the callee can't participate — tell the caller so it doesn't hang, and
       // record why so the "failed" state is diagnosable.
@@ -211,6 +231,8 @@ class CallService extends GetxService {
 
     socket.on('call:incoming', _listenerId, (data) => _onIncoming(_asMap(data)));
     socket.on('call:accepted', _listenerId, (data) => _onAccepted(_asMap(data)));
+    // This account handled the call on another device → dismiss our ring quietly.
+    socket.on('call:handled', _listenerId, (data) => _onHandledElsewhere(_asMap(data)));
     socket.on('call:rejected', _listenerId, (data) => _onRemoteEnd(_asMap(data), 'rejected'));
     socket.on('call:canceled', _listenerId, (data) => _onRemoteEnd(_asMap(data), 'canceled'));
     socket.on('call:busy', _listenerId, (data) => _onRemoteEnd(_asMap(data), 'busy'));
@@ -226,6 +248,7 @@ class CallService extends GetxService {
       return;
     }
     final from = _asMap(data['from']);
+    _callGen++;
     _callId = data['callId'] as String?;
     _peerUserId = from['id'] as int?;
     _isCaller = false;
@@ -266,9 +289,11 @@ class CallService extends GetxService {
     }
 
     status.value = CallStatus.connecting;
+    final gen = _callGen;
     try {
       await _joinAgora();
     } catch (e) {
+      if (gen != _callGen) return; // superseded while joining — stay silent
       // Caller's own join failed (was mislabeled 'mic-denied' before). Surface
       // the real reason and notify the callee so neither side hangs.
       debugPrint('CallService: joinAgora failed (caller) - $e');
@@ -280,9 +305,65 @@ class CallService extends GetxService {
 
   void _onRemoteEnd(Map<String, dynamic> data, String reason) {
     final callId = data['callId'];
-    if (callId != null && callId != _callId) return;
+    // The server always stamps callId; treat a missing one as non-matching so a
+    // stray relay can never tear down whatever call happens to be current.
+    if (callId == null || callId != _callId) return;
     if (status.value == CallStatus.idle) return;
+    // A live call may only be ended by an explicit hang-up. Stray pre-answer
+    // signals — a ghost session's reject/busy, a stale timeout — must never kill
+    // it. While connecting, 'canceled' stays honored too (cancel-vs-accept race
+    // relayed by old servers; new servers map it to 'ended').
+    if (status.value == CallStatus.active && reason != 'ended') return;
+    if (status.value == CallStatus.connecting &&
+        reason != 'ended' &&
+        reason != 'canceled') {
+      return;
+    }
     _endWith(reason);
+  }
+
+  /// The same account answered/declined this call on ANOTHER device. Dismiss the
+  /// incoming ring here silently — no busy/ended tone and no "missed" state, since
+  /// this device didn't miss anything; the call is simply owned elsewhere. Only
+  /// applies while still ringing (never interrupt a call already active here).
+  void _onHandledElsewhere(Map<String, dynamic> data) {
+    final callId = data['callId'];
+    if (callId == null || callId != _callId) return;
+    // Dismiss while ringing (another device answered/declined) OR while connecting
+    // (this device lost a simultaneous-answer race). Never touch an already-active
+    // call — the winning device is excluded server-side and never receives this.
+    if (status.value != CallStatus.ringing &&
+        status.value != CallStatus.connecting) {
+      return;
+    }
+    _dismissSilently();
+  }
+
+  void _dismissSilently() {
+    _callGen++; // invalidate any in-flight _joinAgora for this call
+    _ringTimer?.cancel();
+    _ringTimer = null;
+    _sound.stopRinging();
+    // If we already started joining Agora (lost the answer race while connecting),
+    // tear the engine down off the call stack — same deferred pattern as _endWith.
+    final engine = _engine;
+    _engine = null;
+    if (engine != null) {
+      _disposeEngineDeferred(engine);
+    }
+    _callId = null;
+    _peerUserId = null;
+    _isCaller = false;
+    isMuted.value = false;
+    isSpeakerOn.value = false;
+    startedAt.value = null;
+    endReason.value = null;
+    lastError.value = null;
+    status.value = CallStatus.idle;
+    peer.value = null;
+    if (Get.currentRoute == AppRoutes.call) {
+      Get.back();
+    }
   }
 
   // ─────────────────────────────────────────────────────────────
@@ -293,7 +374,41 @@ class CallService extends GetxService {
   /// OTHER peer joins (see [onUserJoined]). May throw if the token fetch or
   /// engine init fails.
   Future<void> _joinAgora() async {
+    // Generation captured on entry: if the call is dismissed/ended (or replaced)
+    // while any await below is in flight, we back out silently — see _callGen.
+    final gen = _callGen;
+
+    // Never let two native audio engines own the mic at once: release the live
+    // translation recorder (record/AudioRecord) before Agora initializes.
+    // Simultaneous mic ownership hard-crashes the app on Android — the reason
+    // mobile↔any calls closed the whole app while web↔web (one browser audio
+    // session) was unaffected.
+    await _releaseConflictingAudio();
+
+    // Wait for any previous engine's deferred teardown to finish, then make sure
+    // no live engine lingers, so createAgoraRtcEngine() never runs over another
+    // native engine instance.
+    final pending = _engineTeardown;
+    _engineTeardown = null;
+    if (pending != null) {
+      try {
+        await pending;
+      } catch (_) {}
+    }
+    final stale = _engine;
+    if (stale != null) {
+      _engine = null;
+      try {
+        await stale.leaveChannel();
+      } catch (_) {}
+      try {
+        await stale.release();
+      } catch (_) {}
+    }
+    if (gen != _callGen) return; // call went away while we were preparing
+
     final creds = await _fetchAgoraToken();
+    if (gen != _callGen) return; // superseded during the token fetch
     if (creds == null) {
       throw StateError('agora token unavailable');
     }
@@ -305,13 +420,27 @@ class CallService extends GetxService {
       throw StateError('agora token malformed');
     }
 
+    // The engine stays LOCAL until fully joined: _endWith/_dismissSilently tear
+    // down via _engine, and publishing a half-initialized engine would let a
+    // concurrent deferred teardown race the in-flight native calls (the
+    // two-native-engines hard-crash class). If we get superseded mid-join, WE
+    // dispose this engine ourselves.
     final engine = createAgoraRtcEngine();
-    _engine = engine;
-    await engine.initialize(RtcEngineContext(
-      appId: appId,
-      channelProfile: ChannelProfileType.channelProfileCommunication,
-    ));
-    await engine.enableAudio();
+    try {
+      await engine.initialize(RtcEngineContext(
+        appId: appId,
+        channelProfile: ChannelProfileType.channelProfileCommunication,
+      ));
+      await engine.enableAudio();
+    } catch (e) {
+      _disposeEngineDeferred(engine);
+      if (gen != _callGen) return; // superseded: stay silent, no call:end
+      rethrow;
+    }
+    if (gen != _callGen) {
+      _disposeEngineDeferred(engine);
+      return;
+    }
 
     engine.registerEventHandler(RtcEngineEventHandler(
       onUserJoined: (connection, remoteUid, elapsed) {
@@ -335,17 +464,30 @@ class CallService extends GetxService {
       },
     ));
 
-    await engine.joinChannel(
-      token: token,
-      channelId: channel,
-      uid: uid,
-      options: const ChannelMediaOptions(
-        clientRoleType: ClientRoleType.clientRoleBroadcaster,
-        channelProfile: ChannelProfileType.channelProfileCommunication,
-        publishMicrophoneTrack: true,
-        autoSubscribeAudio: true,
-      ),
-    );
+    try {
+      await engine.joinChannel(
+        token: token,
+        channelId: channel,
+        uid: uid,
+        options: const ChannelMediaOptions(
+          clientRoleType: ClientRoleType.clientRoleBroadcaster,
+          channelProfile: ChannelProfileType.channelProfileCommunication,
+          publishMicrophoneTrack: true,
+          autoSubscribeAudio: true,
+        ),
+      );
+    } catch (e) {
+      _disposeEngineDeferred(engine);
+      if (gen != _callGen) return; // superseded: stay silent, no call:end
+      rethrow;
+    }
+    if (gen != _callGen) {
+      // Dismissed while joining (e.g. lost a simultaneous-answer race): leave
+      // the channel we just entered and stay silent.
+      _disposeEngineDeferred(engine);
+      return;
+    }
+    _engine = engine; // fully joined and still current → publish for teardown
 
     // Apply mute + speaker-routing intent. These are NON-FATAL: a routing hiccup
     // (some devices/Agora builds return an error from setEnableSpeakerphone) must
@@ -382,11 +524,52 @@ class CallService extends GetxService {
     return status.isGranted;
   }
 
+  /// Dispose an engine that never became (or no longer is) `_engine`, off the
+  /// current call stack — same deferred pattern as `_endWith`, and chained into
+  /// `_engineTeardown` so the next `_joinAgora` awaits it before creating a new
+  /// native engine.
+  void _disposeEngineDeferred(RtcEngine engine) {
+    final previous = _engineTeardown;
+    _engineTeardown = Future(() async {
+      if (previous != null) {
+        try {
+          await previous;
+        } catch (_) {}
+      }
+      try {
+        await engine.leaveChannel();
+      } catch (_) {}
+      try {
+        await engine.release();
+      } catch (_) {}
+    });
+  }
+
+  /// Stop the live-translation recorder (if running) and let its native audio
+  /// session fully release before Agora grabs the mic. The translator captures
+  /// the mic via the `record` package with no OS-level audio-session
+  /// coordination, so an overlapping Agora init is a native crash on Android.
+  Future<void> _releaseConflictingAudio() async {
+    try {
+      if (!Get.isRegistered<TranslatorController>()) return;
+      final translator = Get.find<TranslatorController>();
+      if (translator.isRecording.value) {
+        await translator.stopRecording();
+        // `record` resets AudioRecord to idle ~100ms after stop(); wait a touch
+        // longer so the mic is provably free before Agora initializes.
+        await Future.delayed(const Duration(milliseconds: 250));
+      }
+    } catch (e) {
+      debugPrint('CallService: _releaseConflictingAudio failed - $e');
+    }
+  }
+
   // ─────────────────────────────────────────────────────────────
   //  Teardown
   // ─────────────────────────────────────────────────────────────
 
   Future<void> _endWith(String reason) async {
+    _callGen++; // invalidate any in-flight _joinAgora for this call
     // Capture call-scoped facts BEFORE the fields below are reset, so the right
     // teardown tone can be chosen.
     final wasActive = status.value == CallStatus.active;
@@ -412,16 +595,10 @@ class CallService extends GetxService {
       // Tear the engine down OFF the current call stack. `_endWith` can be invoked
       // from inside an Agora native event handler (onUserOffline / onError), and
       // calling release() / leaveChannel() synchronously from within such a
-      // callback can deadlock or hard-crash the app on Android. Scheduling it as a
-      // fresh event-loop task lets the native callback unwind first.
-      Future(() async {
-        try {
-          await engine.leaveChannel();
-        } catch (_) {}
-        try {
-          await engine.release();
-        } catch (_) {}
-      });
+      // callback can deadlock or hard-crash the app on Android. The deferred
+      // teardown is stored so the next `_joinAgora` awaits it before creating a
+      // new engine.
+      _disposeEngineDeferred(engine);
     }
 
     _callId = null;
@@ -477,6 +654,7 @@ class CallService extends GetxService {
       for (final event in [
         'call:incoming',
         'call:accepted',
+        'call:handled',
         'call:rejected',
         'call:canceled',
         'call:busy',
