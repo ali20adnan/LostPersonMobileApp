@@ -93,6 +93,22 @@ android {
             enableSplit = true
         }
     }
+
+    // Voice-only calling: the app uses Agora audio only (enableAudio +
+    // channelProfileCommunication, no video/media player). Strip the unused
+    // Agora video/AR/media native extensions to shrink the APK. These are
+    // loaded on demand by the SDK and are never referenced by voice calls.
+    packaging {
+        jniLibs {
+            excludes += listOf(
+                "**/libagora_clear_vision_extension.so",
+                "**/libagora_lip_sync_extension.so",
+                "**/libagora_segmentation_extension.so",
+                "**/libagora_spatial_audio_extension.so",
+                "**/libagora_ffmpeg.so"
+            )
+        }
+    }
 }
 
 flutter {

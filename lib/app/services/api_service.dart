@@ -12,6 +12,13 @@ import '../../core/constants/api_constants.dart';
 /// HTTP API client service for communicating with the backend
 class ApiService extends GetxService {
   static const _tokenKey = 'jwt_access_token';
+
+  // Endpoints whose 401 must NEVER tear down the session. A 401 here means
+  // "this specific request was rejected", not "the user is logged out". Without
+  // this, a failed Agora-token fetch mid-call wiped the token and reset the whole
+  // app to /login — ejecting BOTH peers the instant a call was answered.
+  static const _sessionSafe401Paths = <String>['/agora-token'];
+
   // first_unlock keeps the token readable at app launch (incl. right after a
   // reboot, before the first manual unlock) so the saved session survives.
   final _storage = const FlutterSecureStorage(
@@ -19,14 +26,22 @@ class ApiService extends GetxService {
   );
   final _client = http.Client();
 
+  // Guards against concurrent 401s all firing `Get.offAllNamed('/login')` at
+  // once. Re-armed on the next successful `saveToken` (i.e. a fresh login).
+  bool _isLoggingOut = false;
+
   String get _baseUrl => ApiConstants.apiBaseUrl;
 
   // ── Token Management ──────────────────────────────────────────
 
   Future<String?> getToken() => _storage.read(key: _tokenKey);
 
-  Future<void> saveToken(String token) =>
-      _storage.write(key: _tokenKey, value: token);
+  Future<void> saveToken(String token) {
+    // A fresh login re-arms the logout guard so a future session expiry can
+    // eject again.
+    _isLoggingOut = false;
+    return _storage.write(key: _tokenKey, value: token);
+  }
 
   Future<void> deleteToken() => _storage.delete(key: _tokenKey);
 
@@ -214,28 +229,48 @@ class ApiService extends GetxService {
     return Uri.parse('$url?${parts.join('&')}');
   }
 
-  ApiResponse _handleResponse(http.Response response) {
+  Future<ApiResponse> _handleResponse(http.Response response) async {
     debugPrint(
         'ApiService: ${response.request?.method} ${response.request?.url} → ${response.statusCode}');
 
     if (response.statusCode == 401) {
+      final path = response.request?.url.path ?? '';
+
       // A 401 from the login endpoint itself means wrong credentials; surface
       // a clear message and let the LoginPage stay mounted (redirecting to
       // /login while already on it would dispose the AuthController and its
       // TextEditingControllers, replacing the inputs with the global
       // ErrorWidget.builder fallback).
-      final isLoginRequest =
-          response.request?.url.path.endsWith('/auth/login') ?? false;
-      if (isLoginRequest) {
+      if (path.endsWith('/auth/login')) {
         return ApiResponse.error(
             'اسم المستخدم أو كلمة المرور غير صحيحة',
             statusCode: 401);
       }
-      // Token expired or invalid → redirect to login
-      deleteToken();
-      Get.offAllNamed('/login');
-      return ApiResponse.error('انتهت صلاحية الجلسة، يرجى تسجيل الدخول مجدداً',
-          statusCode: 401);
+
+      // (1) Session-safe endpoints (e.g. /agora-token): a 401 here rejects THIS
+      // request only — never the whole session. Surface the error and let the
+      // caller handle it (a failed call token just ends the call gracefully).
+      if (_sessionSafe401Paths.any(path.endsWith)) {
+        return ApiResponse.error('تعذّر إتمام العملية', statusCode: 401);
+      }
+
+      // (2) A 401 from /auth/me is authoritative — the session really is gone.
+      // (Handling it here also prevents the probe in (3) from recursing.)
+      if (path.endsWith('/auth/me')) {
+        await _forceLogout();
+        return ApiResponse.error('انتهت صلاحية الجلسة، يرجى تسجيل الدخول مجدداً',
+            statusCode: 401);
+      }
+
+      // (3) Any other 401 → verify the session with a lightweight /auth/me probe
+      // before tearing it down, so a single endpoint's rejection doesn't eject
+      // the user mid-flow (e.g. mid-call). Only a genuine session expiry logs out.
+      if (await _isSessionExpired()) {
+        await _forceLogout();
+        return ApiResponse.error('انتهت صلاحية الجلسة، يرجى تسجيل الدخول مجدداً',
+            statusCode: 401);
+      }
+      return ApiResponse.error('تعذّر إتمام العملية', statusCode: 401);
     }
 
     dynamic data;
@@ -259,6 +294,33 @@ class ApiService extends GetxService {
     }
 
     return ApiResponse.error(message, statusCode: response.statusCode);
+  }
+
+  /// Probe the session with a lightweight authenticated request to /auth/me.
+  /// Returns true ONLY when the token is genuinely rejected (a real 401), so a
+  /// single endpoint's 401 never ejects a user whose session is still valid.
+  /// The probe bypasses `_handleResponse` (raw request) to avoid recursion, and
+  /// treats network/timeout errors as "not expired" so a transient blip never
+  /// destroys the session.
+  Future<bool> _isSessionExpired() async {
+    try {
+      final uri = _buildUri('/auth/me');
+      final response = await _client
+          .get(uri, headers: await _headers())
+          .timeout(const Duration(seconds: 10));
+      return response.statusCode == 401;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Tear down the session and return to /login. Idempotent within a session:
+  /// concurrent 401s only trigger one navigation reset (re-armed on next login).
+  Future<void> _forceLogout() async {
+    if (_isLoggingOut) return;
+    _isLoggingOut = true;
+    await deleteToken();
+    Get.offAllNamed('/login');
   }
 
   @override
