@@ -62,25 +62,13 @@ class _NewChatSheetState extends State<NewChatSheet> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
-    return Container(
+    // Background, rounded corners AND the (single, functional) drag handle all
+    // come from the app-wide BottomSheetTheme — the sheet only sizes itself.
+    return SizedBox(
       height: MediaQuery.of(context).size.height * 0.6,
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
       child: Column(
         children: [
-          const SizedBox(height: 8),
-          Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
           Padding(
             padding: const EdgeInsets.all(16),
             child: Row(

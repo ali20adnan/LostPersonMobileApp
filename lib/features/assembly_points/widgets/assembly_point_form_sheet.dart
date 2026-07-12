@@ -42,8 +42,15 @@ class AssemblyPointFormSheet extends StatefulWidget {
 }
 
 class _AssemblyPointFormSheetState extends State<AssemblyPointFormSheet> {
+  static const _minSize = 0.3;
+  static const _maxSize = 0.9;
+
   final _controller = Get.find<AssemblyPointsController>();
   final _formKey = GlobalKey<FormState>();
+
+  /// Drives the sheet size so the drag handle ACTUALLY resizes the panel
+  /// (same pattern as the points-list sheet).
+  final _sheetCtrl = DraggableScrollableController();
 
   late final TextEditingController _nameCtrl;
   late final TextEditingController _placeCtrl;
@@ -95,10 +102,28 @@ class _AssemblyPointFormSheetState extends State<AssemblyPointFormSheet> {
 
   @override
   void dispose() {
+    _sheetCtrl.dispose();
     _nameCtrl.dispose();
     _placeCtrl.dispose();
     _descCtrl.dispose();
     super.dispose();
+  }
+
+  /// Finger tracks the sheet size 1:1 — up expands, down shrinks.
+  void _onHandleDragUpdate(DragUpdateDetails d) {
+    if (!_sheetCtrl.isAttached) return;
+    final h = MediaQuery.of(context).size.height;
+    final s = (_sheetCtrl.size - d.delta.dy / h).clamp(_minSize, _maxSize);
+    _sheetCtrl.jumpTo(s);
+  }
+
+  /// A decisive downward fling at (or near) the minimum closes the panel —
+  /// an explicit gesture, so form input isn't lost by accident.
+  void _onHandleDragEnd(DragEndDetails d) {
+    if (!_sheetCtrl.isAttached) return;
+    if (_sheetCtrl.size <= _minSize + 0.02 && (d.primaryVelocity ?? 0) > 300) {
+      widget.onClose();
+    }
   }
 
   Future<void> _submit() async {
@@ -174,44 +199,66 @@ class _AssemblyPointFormSheetState extends State<AssemblyPointFormSheet> {
     final textColor = isDark ? AppColors.textOnDark : AppColors.textPrimary;
     final muted = textColor.withValues(alpha: 0.6);
     final viewInsets = MediaQuery.of(context).viewInsets.bottom;
-    final maxH = MediaQuery.of(context).size.height * 0.6;
 
-    return Padding(
-      padding: EdgeInsets.only(bottom: viewInsets),
-      child: Container(
-        constraints: BoxConstraints(maxHeight: maxH + 24),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.surfaceDark : AppColors.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.18),
-              blurRadius: 20,
-              offset: const Offset(0, -4),
-            ),
-          ],
-        ),
-        padding: const EdgeInsets.fromLTRB(20, 10, 20, 16),
-        child: SingleChildScrollView(
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Grab handle
-                Center(
+    // Non-modal resizable sheet: opens at exactly HALF the screen, drags
+    // between 30% and 90% via the handle, and the map above stays fully
+    // interactive (tapping it places/moves the draft pin).
+    return DraggableScrollableSheet(
+      controller: _sheetCtrl,
+      initialChildSize: 0.5,
+      minChildSize: _minSize,
+      maxChildSize: _maxSize,
+      builder: (context, scrollController) {
+        return Container(
+          decoration: BoxDecoration(
+            // Same surface + top radius as the app's themed bottom sheets.
+            color: isDark ? AppColors.surfaceDark : AppColors.surface,
+            borderRadius:
+                const BorderRadius.vertical(top: Radius.circular(28)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.18),
+                blurRadius: 20,
+                offset: const Offset(0, -4),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              // THE functional drag handle — wired to the sheet's resize
+              // controller: drag up/down to grow/shrink, fling down at the
+              // minimum to close. Same look as the theme's handle.
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onVerticalDragUpdate: _onHandleDragUpdate,
+                onVerticalDragEnd: _onHandleDragEnd,
+                child: Container(
+                  width: double.infinity,
+                  color: Colors.transparent,
+                  padding: const EdgeInsets.only(top: 12, bottom: 8),
+                  alignment: Alignment.center,
                   child: Container(
                     width: 40,
                     height: 4,
-                    margin: const EdgeInsets.only(bottom: 12),
                     decoration: BoxDecoration(
-                      color: textColor.withValues(alpha: 0.2),
+                      color:
+                          isDark ? AppColors.dividerDark : AppColors.divider,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
                 ),
-                // Header: title + live coordinates + close
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  controller: scrollController,
+                  padding: EdgeInsets.fromLTRB(20, 0, 20, 16 + viewInsets),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Header: title + live coordinates + close
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -278,53 +325,72 @@ class _AssemblyPointFormSheetState extends State<AssemblyPointFormSheet> {
                 const Gap(12),
                 _volunteersSection(isDark, textColor),
                 const Gap(14),
+                // Compact action row: plain text buttons (no .icon — its
+                // icon+label row is what used to break/wrap at narrow widths).
                 Row(
                   children: [
                     Expanded(
                       child: OutlinedButton(
                         onPressed: _submitting ? null : widget.onClose,
                         style: OutlinedButton.styleFrom(
-                          minimumSize: const Size.fromHeight(50),
+                          minimumSize: const Size.fromHeight(44),
+                          foregroundColor: isDark
+                              ? AppColors.textOnDarkSecondary
+                              : AppColors.textSecondary,
+                          side: BorderSide(
+                              color: isDark
+                                  ? AppColors.dividerDark
+                                  : AppColors.divider),
                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14)),
+                              borderRadius: BorderRadius.circular(12)),
                         ),
-                        child: const Text('إلغاء'),
+                        child:
+                            const Text('إلغاء', style: TextStyle(fontSize: 14)),
                       ),
                     ),
                     const Gap(10),
                     Expanded(
                       flex: 2,
-                      child: SizedBox(
-                        height: 50,
-                        child: ElevatedButton.icon(
-                          onPressed: _submitting ? null : _submit,
-                          icon: _submitting
-                              ? const SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: CircularProgressIndicator(
-                                      strokeWidth: 2, color: Colors.white),
-                                )
-                              : Icon(PhosphorIcons.check()),
-                          label: Text(
-                              widget.isEdit ? 'حفظ التعديلات' : 'إنشاء النقطة',
-                              style: const TextStyle(fontSize: 16)),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.accent,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14)),
-                          ),
+                      child: ElevatedButton(
+                        onPressed: _submitting ? null : _submit,
+                        style: ElevatedButton.styleFrom(
+                          minimumSize: const Size.fromHeight(44),
+                          backgroundColor: AppColors.accent,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
                         ),
+                        child: _submitting
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2, color: Colors.white),
+                              )
+                            : Text(
+                                widget.isEdit
+                                    ? 'حفظ التعديلات'
+                                    : 'إنشاء النقطة',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700),
+                              ),
                       ),
                     ),
                   ],
                 ),
-              ],
-            ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 

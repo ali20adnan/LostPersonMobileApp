@@ -258,7 +258,7 @@ class _PanelHeader extends StatelessWidget {
             onPressed: () {
               HapticFeedback.mediumImpact();
               controller.isMessagingPanelOpen.value = false;
-              _showNewChatDialog();
+              _showNewChatDialog(context);
             },
             icon: Container(
               padding: const EdgeInsets.all(6),
@@ -275,8 +275,14 @@ class _PanelHeader extends StatelessWidget {
     );
   }
 
-  void _showNewChatDialog() {
-    Get.bottomSheet(const NewChatSheet(), isScrollControlled: true);
+  void _showNewChatDialog(BuildContext context) {
+    // showModalBottomSheet (not Get.bottomSheet) so the app-wide
+    // BottomSheetTheme applies — including the single functional drag handle.
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => const NewChatSheet(),
+    );
   }
 }
 

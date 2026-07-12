@@ -121,7 +121,7 @@ class ConversationsPage extends GetView<ConversationsController> {
         child: FloatingActionButton(
           onPressed: () {
             HapticFeedback.mediumImpact();
-            _showNewChatDialog();
+            _showNewChatDialog(context);
           },
           backgroundColor: Colors.transparent,
           elevation: 0,
@@ -224,8 +224,14 @@ class ConversationsPage extends GetView<ConversationsController> {
     );
   }
 
-  void _showNewChatDialog() {
-    Get.bottomSheet(const NewChatSheet(), isScrollControlled: true);
+  void _showNewChatDialog(BuildContext context) {
+    // showModalBottomSheet (not Get.bottomSheet) so the app-wide
+    // BottomSheetTheme applies — including the single functional drag handle.
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => const NewChatSheet(),
+    );
   }
 }
 

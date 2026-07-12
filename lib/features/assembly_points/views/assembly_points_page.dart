@@ -133,11 +133,25 @@ class _AssemblyPointsPageState extends State<AssemblyPointsPage> {
         AppSnackbar.glass('إذن مطلوب', 'يتطلب الوصول إلى الموقع');
         return;
       }
+      // timeLimit so a GPS that can't get a fix fails fast instead of leaving
+      // the button spinning forever.
       final pos = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high);
+        desiredAccuracy: LocationAccuracy.high,
+        timeLimit: const Duration(seconds: 15),
+      );
       final me = LatLng(pos.latitude, pos.longitude);
       if (mounted) setState(() => _myLocation = me);
-      _mapController.move(me, 16);
+      // NEVER move the camera to a target outside _samarraBounds: the map's
+      // CameraConstraint.contain cannot satisfy such a move and flutter_map
+      // 7.x spins on the constraint solver — freezing the UI thread (the
+      // "app isn't responding" ANR when the user is physically outside
+      // Samarra). Show a hint instead.
+      if (_samarraBounds.contains(me)) {
+        _mapController.move(me, 16);
+      } else {
+        AppSnackbar.glass(
+            'خارج النطاق', 'موقعك الحالي خارج نطاق خريطة سامراء');
+      }
     } catch (_) {
       AppSnackbar.glass('خطأ', 'فشل تحديد موقعك الحالي');
     } finally {
@@ -244,6 +258,10 @@ class _AssemblyPointsPageState extends State<AssemblyPointsPage> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      // The theme's drag handle only drags the MODAL (dismiss); this sheet is
+      // a resizable DraggableScrollableSheet, so it draws its OWN handle wired
+      // to the resize controller instead — exactly one, functional.
+      showDragHandle: false,
       backgroundColor: isDark ? AppColors.surfaceDark : AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -313,8 +331,9 @@ class _AssemblyPointsPageState extends State<AssemblyPointsPage> {
                     ),
                   ],
                 ),
-              // Info popup above the selected point (web parity).
-              Obx(() => MarkerLayer(markers: _popupMarkers(isDark))),
+              // NOTE: the selected-point info card is deliberately NOT a map
+              // marker — it lives in the page Stack (screen space) below, so
+              // panning/rotating the map never tilts or drags it.
               // Draggable draft pin while the form is open.
               if (_formOpen && _draft != null)
                 DragMarkers(
@@ -425,25 +444,60 @@ class _AssemblyPointsPageState extends State<AssemblyPointsPage> {
               child: Center(child: Obx(() => _listPill(isDark))),
             ),
 
-          // ── Create / edit panel (non-modal, slides up) ──
+          // ── Selected-point info card (SCREEN space, not a map marker) ──
+          // Anchored to the screen so panning/rotating the map never tilts or
+          // drags it. The translucent full-screen barrier closes it on any tap
+          // outside the card; map pan/zoom gestures still reach the map (only
+          // competing taps are claimed by the barrier).
+          if (!_formOpen)
+            Obx(() {
+              final p = _controller.selectedPoint;
+              if (p == null || _controller.placingMode.value) {
+                return const SizedBox.shrink();
+              }
+              return Positioned.fill(
+                child: Stack(
+                  children: [
+                    Positioned.fill(
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.translucent,
+                        onTap: () => _controller.select(null),
+                      ),
+                    ),
+                    Positioned(
+                      left: 16,
+                      right: 16,
+                      bottom: controlsBottom + 64,
+                      child: Center(
+                        child: _PointPopup(point: p, isDark: isDark)
+                            .animate()
+                            .fadeIn(duration: 180.ms)
+                            .slideY(
+                              begin: 0.06,
+                              end: 0,
+                              duration: 220.ms,
+                              curve: Curves.easeOutCubic,
+                            ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+
+          // ── Create / edit panel (non-modal resizable sheet) ──
+          // Positioned.fill gives the DraggableScrollableSheet inside the
+          // full-stack constraints it needs; the area above the sheet stays
+          // hit-transparent so map taps still place the draft pin.
           if (_formOpen)
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
+            Positioned.fill(
               child: AssemblyPointFormSheet(
                 key: ValueKey(_editing?.id ?? 'new'),
                 existing: _editing,
                 latitude: _draft?.latitude,
                 longitude: _draft?.longitude,
                 onClose: _closeForm,
-              )
-                  .animate()
-                  .slideY(
-                      begin: 1,
-                      end: 0,
-                      duration: 250.ms,
-                      curve: Curves.easeOutCubic),
+              ),
             ),
         ],
       ),
@@ -473,23 +527,6 @@ class _AssemblyPointsPageState extends State<AssemblyPointsPage> {
         ),
       );
     }).toList();
-  }
-
-  List<Marker> _popupMarkers(bool isDark) {
-    if (_controller.placingMode.value) return const [];
-    final id = _controller.selectedId.value;
-    if (id == null) return const [];
-    final p = _controller.points.firstWhereOrNull((x) => x.id == id);
-    if (p == null) return const [];
-    return [
-      Marker(
-        point: LatLng(p.latitude, p.longitude),
-        width: 260,
-        height: 320,
-        alignment: Alignment.bottomCenter,
-        child: _PointPopup(point: p, isDark: isDark),
-      ),
-    ];
   }
 
   // ── Small UI pieces ────────────────────────────────────────────
@@ -860,7 +897,7 @@ class _MyLocationDot extends StatelessWidget {
 
 // ── Points list sheet (mirrors the web side panel: header + rows with
 //    inline actions) ───────────────────────────────────────────────
-class _PointsListSheet extends StatelessWidget {
+class _PointsListSheet extends StatefulWidget {
   final AssemblyPointsController controller;
   final bool canManage;
   final void Function(AssemblyPoint) onSelect;
@@ -880,26 +917,92 @@ class _PointsListSheet extends StatelessWidget {
   });
 
   @override
+  State<_PointsListSheet> createState() => _PointsListSheetState();
+}
+
+class _PointsListSheetState extends State<_PointsListSheet> {
+  static const _minSize = 0.35;
+  static const _maxSize = 0.92;
+
+  /// Drives the sheet's size so the drag handle can ACTUALLY resize it —
+  /// the theme's modal handle only dismisses, it never expands/shrinks.
+  final _sheetCtrl = DraggableScrollableController();
+  late final TextEditingController _searchCtrl;
+
+  AssemblyPointsController get controller => widget.controller;
+  bool get canManage => widget.canManage;
+  void Function(AssemblyPoint) get onSelect => widget.onSelect;
+  void Function(AssemblyPoint) get onEdit => widget.onEdit;
+  void Function(AssemblyPoint) get onToggle => widget.onToggle;
+  void Function(AssemblyPoint) get onDelete => widget.onDelete;
+  void Function(AssemblyPoint) get onNavigate => widget.onNavigate;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchCtrl = TextEditingController(text: controller.searchQuery.value);
+  }
+
+  @override
+  void dispose() {
+    _sheetCtrl.dispose();
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  /// Finger tracks the sheet size 1:1 — up expands, down shrinks.
+  void _onHandleDragUpdate(DragUpdateDetails d, double screenHeight) {
+    if (!_sheetCtrl.isAttached) return;
+    final newSize =
+        (_sheetCtrl.size - d.delta.dy / screenHeight).clamp(_minSize, _maxSize);
+    _sheetCtrl.jumpTo(newSize);
+  }
+
+  /// A downward fling while at (or near) the minimum closes the sheet.
+  void _onHandleDragEnd(DragEndDetails d) {
+    if (!_sheetCtrl.isAttached) return;
+    if (_sheetCtrl.size <= _minSize + 0.02 &&
+        (d.primaryVelocity ?? 0) > 300) {
+      Navigator.of(context).pop();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? AppColors.textOnDark : AppColors.textPrimary;
-    final searchCtrl = TextEditingController(text: controller.searchQuery.value);
+    final screenHeight = MediaQuery.of(context).size.height;
 
     return DraggableScrollableSheet(
+      controller: _sheetCtrl,
       expand: false,
       initialChildSize: 0.6,
-      minChildSize: 0.35,
-      maxChildSize: 0.92,
+      minChildSize: _minSize,
+      maxChildSize: _maxSize,
       builder: (context, scrollController) {
         return Column(
           children: [
-            const Gap(10),
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: textColor.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(2),
+            // THE functional drag handle: wired to the sheet's resize
+            // controller — drag up/down to expand/shrink, fling down at the
+            // minimum to close. (Theme handle is disabled for this sheet.)
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onVerticalDragUpdate: (d) =>
+                  _onHandleDragUpdate(d, screenHeight),
+              onVerticalDragEnd: _onHandleDragEnd,
+              child: Container(
+                width: double.infinity,
+                color: Colors.transparent,
+                padding: const EdgeInsets.only(top: 12, bottom: 6),
+                alignment: Alignment.center,
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: textColor.withValues(alpha: 0.25),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
               ),
             ),
             // Header (title + count + refresh)
@@ -940,7 +1043,7 @@ class _PointsListSheet extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
               child: TextField(
-                controller: searchCtrl,
+                controller: _searchCtrl,
                 textDirection: TextDirection.rtl,
                 onChanged: controller.updateSearch,
                 style: TextStyle(color: textColor),
