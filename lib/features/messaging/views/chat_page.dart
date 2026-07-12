@@ -25,68 +25,95 @@ class ChatPage extends GetView<ChatController> {
       appBar: _buildAppBar(context, isDark),
       body: Column(
         children: [
-          // Messages list
+          // Messages list + floating "new messages below" arrow
           Expanded(
-            child: Obx(() {
-              if (controller.isLoading.value) {
-                return Center(
-                  child: LoadingAnimationWidget.staggeredDotsWave(
-                    color: AppColors.primary,
-                    size: 40,
-                  ),
-                );
-              }
-
-              final msgs = controller.messages;
-              if (msgs.isEmpty) {
-                return _buildEmptyState(isDark);
-              }
-
-              final showUnreadDivider = controller.initialUnreadCount > 0 &&
-                  controller.initialUnreadCount < msgs.length;
-              final unreadBoundary = controller.unreadBoundary;
-
-              return ScrollablePositionedList.builder(
-                itemScrollController: controller.itemScrollController,
-                itemPositionsListener: controller.itemPositionsListener,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                // +1 sentinel item at the end so scrollTo can reliably land
-                // past the last bubble (alignment 0.0 on the sentinel pins
-                // it to the viewport top → bubble fully visible above).
-                itemCount: msgs.length + 1,
-                itemBuilder: (context, index) {
-                  if (index == msgs.length) {
-                    return const SizedBox(height: 1);
+            child: Stack(
+              children: [
+                Obx(() {
+                  if (controller.isLoading.value) {
+                    return Center(
+                      child: LoadingAnimationWidget.staggeredDotsWave(
+                        color: AppColors.primary,
+                        size: 40,
+                      ),
+                    );
                   }
-                  final msg = msgs[index];
-                  final isMe = msg.senderId == controller.currentUserId;
-                  final showDate = index == 0 ||
-                      !_sameDay(msgs[index - 1].sentAt, msg.sentAt);
-                  final showDivider =
-                      showUnreadDivider && index == unreadBoundary;
 
-                  return Column(
-                    children: [
-                      if (showDivider) _NewMessagesDivider(isDark: isDark),
-                      if (showDate) _DateSeparator(date: msg.sentAt, isDark: isDark),
-                      if (msg.isCall)
-                        _CallLogCard(
-                          message: msg,
-                          isMe: isMe,
-                          isDark: isDark,
-                          onRedial: () => controller.redialFromCallLog(),
-                        )
-                      else
-                        _MessageBubble(
-                          message: msg,
-                          isMe: isMe,
-                          isDark: isDark,
-                        ),
-                    ],
+                  final msgs = controller.messages;
+                  if (msgs.isEmpty) {
+                    return _buildEmptyState(isDark);
+                  }
+
+                  final showUnreadDivider = controller.initialUnreadCount > 0 &&
+                      controller.initialUnreadCount < msgs.length;
+                  final unreadBoundary = controller.unreadBoundary;
+
+                  return ScrollablePositionedList.builder(
+                    itemScrollController: controller.itemScrollController,
+                    itemPositionsListener: controller.itemPositionsListener,
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    // +1 sentinel item at the end so scrollTo can reliably land
+                    // past the last bubble (alignment 0.0 on the sentinel pins
+                    // it to the viewport top → bubble fully visible above).
+                    itemCount: msgs.length + 1,
+                    itemBuilder: (context, index) {
+                      if (index == msgs.length) {
+                        return const SizedBox(height: 1);
+                      }
+                      final msg = msgs[index];
+                      final isMe = msg.senderId == controller.currentUserId;
+                      final showDate = index == 0 ||
+                          !_sameDay(msgs[index - 1].sentAt, msg.sentAt);
+                      final showDivider =
+                          showUnreadDivider && index == unreadBoundary;
+
+                      return Column(
+                        children: [
+                          if (showDivider) _NewMessagesDivider(isDark: isDark),
+                          if (showDate)
+                            _DateSeparator(date: msg.sentAt, isDark: isDark),
+                          if (msg.isCall)
+                            _CallLogCard(
+                              message: msg,
+                              isMe: isMe,
+                              isDark: isDark,
+                              onRedial: () => controller.redialFromCallLog(),
+                            )
+                          else
+                            _MessageBubble(
+                              message: msg,
+                              isMe: isMe,
+                              isDark: isDark,
+                            ),
+                        ],
+                      );
+                    },
                   );
-                },
-              );
-            }),
+                }),
+                // Floating bottom-center arrow: appears while unseen messages
+                // sit below the viewport, hides once the user reaches them.
+                Positioned(
+                  bottom: 12,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: Obx(() {
+                      if (!controller.showScrollToBottom.value) {
+                        return const SizedBox.shrink();
+                      }
+                      return _ScrollToBottomButton(
+                        count: controller.newMessagesBelow.value,
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          controller.scrollToLatest();
+                        },
+                      );
+                    }),
+                  ),
+                ),
+              ],
+            ),
           ),
 
           // Typing indicator
@@ -629,6 +656,82 @@ class _ImageViewerPage extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+/// Small floating circle at the bottom-center of the messages area: a down
+/// arrow with a live badge of unseen messages below the viewport. Tapping it
+/// scrolls to the latest message. Shown/hidden by ChatController based on the
+/// list's visible positions.
+class _ScrollToBottomButton extends StatelessWidget {
+  final int count;
+  final VoidCallback onTap;
+
+  const _ScrollToBottomButton({required this.count, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        // Room for the badge overflowing the circle's top edge.
+        padding: const EdgeInsets.only(top: 6),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                gradient: AppColors.heroGradient,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.35),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Icon(
+                PhosphorIcons.caretDown(),
+                color: Colors.white,
+                size: 22,
+              ),
+            ),
+            if (count > 0)
+              Positioned(
+                top: -6,
+                right: -4,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: AppColors.error,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.white, width: 1.5),
+                  ),
+                  constraints: const BoxConstraints(minWidth: 20),
+                  child: Text(
+                    count > 99 ? '99+' : '$count',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      height: 1.2,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    ).animate().fadeIn(duration: 200.ms).scale(
+          begin: const Offset(0.8, 0.8),
+          duration: 200.ms,
+          curve: Curves.easeOutBack,
+        );
   }
 }
 

@@ -174,6 +174,21 @@ class ChatMessage {
     return null;
   }
 
+  /// Short label for a call-log entry when shown as a conversation's last
+  /// message (list previews). Direction is derived from [senderId] — the
+  /// server always stores the CALLER as the sender.
+  String callPreviewLabel({required int currentUserId}) {
+    final outgoing = senderId == currentUserId;
+    switch (callOutcome) {
+      case 'completed':
+        return outgoing ? 'مكالمة صادرة' : 'مكالمة واردة';
+      case 'rejected':
+        return outgoing ? 'تم رفض المكالمة' : 'مكالمة مرفوضة';
+      default:
+        return outgoing ? 'لم يتم الرد' : 'مكالمة فائتة';
+    }
+  }
+
   factory ChatMessage.fromJson(Map<String, dynamic> json) {
     final sender = json['sender'] as Map<String, dynamic>?;
     final rawCall = json['callData'] ?? json['call_data'];

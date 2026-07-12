@@ -13,9 +13,14 @@ import '../models/assembly_point_model.dart';
 class AssemblyPointsRepository {
   final ApiService _api = Get.find<ApiService>();
 
-  /// Get a (paginated) list of assembly points. Defaults to a large page so a
-  /// single call returns every point for the map.
-  Future<PaginatedAssemblyPoints> getPoints({
+  /// Get ONE page of assembly points. `limit` must respect the backend's
+  /// shared `PaginationDto` cap (`@Max(100)`) — anything above it is rejected
+  /// with 400 by the global ValidationPipe (a former `limit=200` request here
+  /// is exactly why the map/list showed no data while the web worked).
+  ///
+  /// Returns `null` on failure so callers can tell "request failed" apart
+  /// from "there really are no points".
+  Future<PaginatedAssemblyPoints?> getPoints({
     int page = 1,
     int limit = 100,
   }) async {
@@ -46,7 +51,27 @@ class AssemblyPointsRepository {
 
     debugPrint(
         'AssemblyPointsRepository: getPoints failed - ${response.errorMessage}');
-    return PaginatedAssemblyPoints.empty();
+    return null;
+  }
+
+  /// Every assembly point (for the map + list), fetched page by page within
+  /// the backend's 100-per-page cap. Returns `null` if any page fails.
+  Future<List<AssemblyPoint>?> getAllPoints() async {
+    const perPage = 100;
+    const maxPages = 10; // safety cap — far beyond the expected point count
+    final all = <AssemblyPoint>[];
+    var page = 1;
+    while (true) {
+      final result = await getPoints(page: page, limit: perPage);
+      if (result == null) return null;
+      all.addAll(result.items);
+      if (result.items.isEmpty ||
+          page >= result.totalPages ||
+          page >= maxPages) {
+        return all;
+      }
+      page++;
+    }
   }
 
   /// Fetch the list of volunteers for the assign picker

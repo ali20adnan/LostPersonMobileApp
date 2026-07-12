@@ -272,10 +272,10 @@ class _AssemblyPointsPageState extends State<AssemblyPointsPage> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final topPad = MediaQuery.of(context).padding.top;
-    final bottomPad = MediaQuery.of(context).padding.bottom;
-    // Bottom controls must clear the floating nav bar (height 72 + 12 margin
-    // + bottom safe-area) — keep them above the home indicator on iOS.
-    final controlsBottom = 110 + bottomPad;
+    // The nav bar is now DOCKED and the Scaffold body ends above it (no
+    // extendBody), so bottom controls only need a small breathing margin —
+    // the old `110 + bottomPad` floating-bar clearance would be dead space.
+    const controlsBottom = 16.0;
 
     return Scaffold(
       backgroundColor: Colors.transparent,

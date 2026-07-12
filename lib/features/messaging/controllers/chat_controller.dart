@@ -29,6 +29,18 @@ class ChatController extends GetxController {
   final itemScrollController = ItemScrollController();
   final itemPositionsListener = ItemPositionsListener.create();
 
+  /// Whether the floating "new messages below" arrow is visible.
+  final showScrollToBottom = false.obs;
+
+  /// Live count of unseen messages below the viewport: seeded with the unread
+  /// snapshot when the view anchors at the divider, incremented by socket
+  /// arrivals while the user is scrolled up, reset once they reach the bottom.
+  final newMessagesBelow = 0.obs;
+
+  /// Whether the newest message is currently on screen (derived from
+  /// [itemPositionsListener]); gates auto-scroll on incoming messages.
+  bool _atBottom = true;
+
   late final int conversationId;
   ChatConversation? conversation;
 
@@ -71,6 +83,39 @@ class ChatController extends GetxController {
     _loadConversation();
     _setupSocketListeners();
     messageFocusNode.addListener(_onMessageFocusChanged);
+    itemPositionsListener.itemPositions.addListener(_onScrollPositionsChanged);
+  }
+
+  /// Track whether the newest message is on screen. The chat has no pixel
+  /// ScrollController — visibility comes from the positioned-list's item
+  /// positions: "at bottom" means the last real message (or the 1px sentinel
+  /// after it) is among the visible items. Reaching the bottom clears the
+  /// unseen counter and hides the floating arrow.
+  void _onScrollPositionsChanged() {
+    final positions = itemPositionsListener.itemPositions.value;
+    if (positions.isEmpty || messages.isEmpty) return;
+    var maxIndex = -1;
+    for (final p in positions) {
+      if (p.index > maxIndex) maxIndex = p.index;
+    }
+    _atBottom = maxIndex >= messages.length - 1;
+    if (_atBottom) {
+      if (newMessagesBelow.value != 0) newMessagesBelow.value = 0;
+      if (showScrollToBottom.value) showScrollToBottom.value = false;
+    } else {
+      final shouldShow = newMessagesBelow.value > 0;
+      if (showScrollToBottom.value != shouldShow) {
+        showScrollToBottom.value = shouldShow;
+      }
+    }
+  }
+
+  /// Jump to the newest message (floating-arrow tap). Hides the arrow
+  /// immediately; the positions listener re-confirms once the scroll lands.
+  void scrollToLatest() {
+    showScrollToBottom.value = false;
+    newMessagesBelow.value = 0;
+    _scrollToBottom();
   }
 
   /// Scroll to the latest message whenever the input gains focus, so the
@@ -107,6 +152,15 @@ class ChatController extends GetxController {
       messages.assignAll(history);
       _scrollToInitialPosition();
 
+      // Anchored above the fold with unread messages below → surface them via
+      // the floating arrow right away. If everything actually fits on screen,
+      // the positions listener fires after the jump and clears this again.
+      if (initialUnreadCount > 0 && messages.isNotEmpty) {
+        newMessagesBelow.value = initialUnreadCount.clamp(0, messages.length);
+        showScrollToBottom.value = true;
+        _atBottom = false;
+      }
+
       // Join conversation room
       if (Get.isRegistered<SocketService>()) {
         Get.find<SocketService>()
@@ -138,7 +192,16 @@ class ChatController extends GetxController {
           // Avoid duplicates (e.g. from image upload REST + socket broadcast)
           if (!messages.any((m) => m.id == message.id)) {
             messages.add(message);
-            _scrollToBottom();
+            // Own messages and messages arriving while the user is already at
+            // the bottom keep the familiar auto-scroll. While reading older
+            // messages, don't yank the view down — surface the arrival via
+            // the floating arrow + live counter instead.
+            if (_atBottom || message.senderId == currentUserId) {
+              _scrollToBottom();
+            } else {
+              newMessagesBelow.value++;
+              showScrollToBottom.value = true;
+            }
           }
           _markAsRead();
         }
@@ -349,6 +412,8 @@ class ChatController extends GetxController {
 
   @override
   void onClose() {
+    itemPositionsListener.itemPositions
+        .removeListener(_onScrollPositionsChanged);
     messageFocusNode.removeListener(_onMessageFocusChanged);
     messageFocusNode.dispose();
     messageController.dispose();

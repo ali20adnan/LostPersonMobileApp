@@ -461,7 +461,9 @@ class _PanelConversationTile extends StatelessWidget {
                       if (lastMsg != null) ...[
                         const SizedBox(height: 3),
                         Text(
-                          lastMsg.content ?? '\u{1F4F7} صورة',
+                          lastMsg.isCall
+                              ? '📞 ${lastMsg.callPreviewLabel(currentUserId: currentUserId)}'
+                              : (lastMsg.content ?? '\u{1F4F7} صورة'),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.bodySmall?.copyWith(

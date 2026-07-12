@@ -33,7 +33,8 @@ class HomePage extends GetView<HomeController> {
           // Transparent so the app-wide SacredBackground (mounted in main.dart)
           // shows through beneath all four tabs.
           backgroundColor: Colors.transparent,
-          extendBody: true,
+          // extendBody is deliberately OFF: the body must end ABOVE the docked
+          // nav bar so no page content ever renders (or hides) behind the tabs.
           body: Stack(
             children: [
               // Main content with a directional shared-axis slide between tabs:
@@ -121,30 +122,36 @@ class HomePage extends GetView<HomeController> {
             ],
           ),
 
-          // ── Floating Bottom Navigation Bar ──────────────────────
+          // ── Docked Bottom Navigation Bar ─────────────────────────
+          // Full-width and flush to the screen's bottom edge. The bottom
+          // safe-area (gesture/home-indicator strip) is part of the bar's
+          // background — inner padding keeps the 72px row above it.
           bottomNavigationBar: Obx(
-            () => Container(
-              margin: EdgeInsets.fromLTRB(16, 0, 16, bottomPadding + 12),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(24),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                  child: Container(
-                    height: 72,
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? AppColors.surfaceDark.withValues(alpha: 0.9)
-                          : Colors.white.withValues(alpha: 0.9),
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(
+            () => ClipRRect(
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(20)),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                child: Container(
+                  height: 72 + bottomPadding,
+                  padding: EdgeInsets.only(bottom: bottomPadding),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? AppColors.surfaceDark.withValues(alpha: 0.9)
+                        : Colors.white.withValues(alpha: 0.9),
+                    borderRadius:
+                        const BorderRadius.vertical(top: Radius.circular(20)),
+                    border: Border(
+                      top: BorderSide(
                         color: isDark
                             ? AppColors.accent.withValues(alpha: 0.3)
                             : AppColors.accent.withValues(alpha: 0.25),
                         width: 1.5,
                       ),
-                      boxShadow: AppColors.bottomNavShadow,
                     ),
-                    child: Row(
+                    boxShadow: AppColors.bottomNavShadow,
+                  ),
+                  child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         _NavItem(
@@ -190,8 +197,7 @@ class HomePage extends GetView<HomeController> {
                     ),
                   ),
                 ),
-              ),
-            ).animate().slideY(
+              ).animate().slideY(
                   begin: 1,
                   end: 0,
                   duration: 500.ms,

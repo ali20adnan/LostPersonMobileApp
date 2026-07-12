@@ -243,19 +243,6 @@ class _ConversationTile extends StatelessWidget {
     required this.onTap,
   });
 
-  /// Short label for a call-log entry shown as the conversation's last message.
-  String _callPreviewLabel(ChatMessage msg) {
-    final outgoing = msg.senderId == currentUserId;
-    switch (msg.callOutcome) {
-      case 'completed':
-        return outgoing ? 'مكالمة صادرة' : 'مكالمة واردة';
-      case 'rejected':
-        return outgoing ? 'تم رفض المكالمة' : 'مكالمة مرفوضة';
-      default:
-        return outgoing ? 'لم يتم الرد' : 'مكالمة فائتة';
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final displayName = conversation.displayName(currentUserId);
@@ -359,7 +346,7 @@ class _ConversationTile extends StatelessWidget {
                         const Gap(4),
                         Text(
                           lastMsg.isCall
-                              ? '📞 ${_callPreviewLabel(lastMsg)}'
+                              ? '📞 ${lastMsg.callPreviewLabel(currentUserId: currentUserId)}'
                               : (lastMsg.content ?? '📷 صورة'),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,

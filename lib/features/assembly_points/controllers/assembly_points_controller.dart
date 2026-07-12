@@ -81,8 +81,16 @@ class AssemblyPointsController extends GetxController {
     isLoading.value = true;
     hasError.value = false;
     try {
-      final result = await _repo.getPoints(limit: 200);
-      points.assignAll(result.items);
+      // Paged within the backend's 100-per-page cap (a single limit=200
+      // request used to be rejected with 400 and silently looked like
+      // "no points"). null = request failed → show the error state instead
+      // of a misleading empty list.
+      final result = await _repo.getAllPoints();
+      if (result == null) {
+        hasError.value = true;
+      } else {
+        points.assignAll(result);
+      }
     } catch (e) {
       hasError.value = true;
       debugPrint('AssemblyPointsController: loadPoints error - $e');
