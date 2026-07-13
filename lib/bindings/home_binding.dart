@@ -10,6 +10,7 @@ import '../features/assembly_points/controllers/assembly_points_controller.dart'
 import '../features/translator/controllers/translator_controller.dart';
 import '../features/ocr_reader/controllers/ocr_reader_controller.dart';
 import '../features/missing_persons/controllers/missing_persons_controller.dart';
+import '../features/missing_persons/controllers/map_missing_persons_controller.dart';
 import '../features/incident_reporting/controllers/incidents_list_controller.dart';
 import '../features/messaging/controllers/conversations_controller.dart';
 import '../data/repositories/conversation_repository.dart';
@@ -44,6 +45,9 @@ class HomeBinding extends Bindings {
 
     // Assembly-points map controller (home tab 0)
     Get.put(AssemblyPointsController());
+
+    // Missing-person markers shown on the same map.
+    Get.put(MapMissingPersonsController());
 
     // Register LibreTranslateService before OCR controller (which depends on it)
     if (!Get.isRegistered<LibreTranslateService>()) {

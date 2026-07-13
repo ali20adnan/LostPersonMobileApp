@@ -76,6 +76,39 @@ class MissingPersonsRepository {
     return PaginatedReports.empty();
   }
 
+  /// All missing-person reports that have coordinates (NOT paginated), for the
+  /// map view. Mirrors the web's `GET /missing-persons/map`. Returns null on
+  /// failure so callers can tell "request failed" from "no results".
+  /// Filtered to status == 'missing' (server-side via query + client guard).
+  Future<List<MissingPersonReport>?> getMapPoints() async {
+    final response = await _api.get(
+      '${ApiConstants.missingPersonReports}/map',
+      multiQueryParams: {
+        'status': ['missing'],
+      },
+    );
+
+    if (response.isSuccess && response.data is Map<String, dynamic>) {
+      try {
+        final items =
+            (response.data as Map<String, dynamic>)['items'] as List? ?? [];
+        return items
+            .whereType<Map<String, dynamic>>()
+            .map(MissingPersonReport.fromJson)
+            .where((r) => r.isMissing && r.coordinates != null)
+            .toList();
+      } catch (e, stack) {
+        debugPrint('MissingPersonsRepository: getMapPoints parse error - $e');
+        debugPrint('$stack');
+        return null;
+      }
+    }
+
+    debugPrint(
+        'MissingPersonsRepository: getMapPoints failed - ${response.errorMessage}');
+    return null;
+  }
+
   /// Get a single report by ID
   Future<MissingPersonReport?> getReport(int id) async {
     final response =

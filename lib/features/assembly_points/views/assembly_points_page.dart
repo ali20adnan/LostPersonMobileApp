@@ -11,10 +11,13 @@ import 'package:latlong2/latlong.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../app/routes/app_routes.dart';
 import '../../../app/themes/app_colors.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/utils/app_snackbar.dart';
 import '../../../data/models/assembly_point_model.dart';
+import '../../../data/models/missing_person_report_model.dart';
+import '../../missing_persons/controllers/map_missing_persons_controller.dart';
 import '../assembly_point_visuals.dart';
 import '../controllers/assembly_points_controller.dart';
 import '../widgets/assembly_point_form_sheet.dart';
@@ -45,6 +48,7 @@ class _AssemblyPointsPageState extends State<AssemblyPointsPage> {
   );
 
   final _controller = Get.find<AssemblyPointsController>();
+  final _mpController = Get.find<MapMissingPersonsController>();
   final _mapController = MapController();
   bool _loadingGps = false;
 
@@ -319,6 +323,9 @@ class _AssemblyPointsPageState extends State<AssemblyPointsPage> {
               ),
               // Plain colored dots (web parity).
               Obx(() => MarkerLayer(markers: _buildMarkers())),
+              // Missing-person markers (photo circle + name pill, web parity).
+              // Rendered AFTER the dots so photos draw above them.
+              Obx(() => MarkerLayer(markers: _buildMissingPersonMarkers())),
               // "You are here" dot (only after the GPS button is used).
               if (_myLocation != null)
                 MarkerLayer(
@@ -529,6 +536,37 @@ class _AssemblyPointsPageState extends State<AssemblyPointsPage> {
     }).toList();
   }
 
+  /// Missing-person markers (photo circle + name pill), mirroring the web map.
+  /// Tapping one opens that person's detail page. Hidden while placing a point
+  /// so the photos never compete for the tap that drops the draft pin.
+  List<Marker> _buildMissingPersonMarkers() {
+    if (_controller.placingMode.value) return const [];
+    return _mpController.persons
+        .where((r) => r.coordinates != null)
+        .map((r) {
+      final c = r.coordinates!;
+      return Marker(
+        key: ValueKey('mp_${r.id}'),
+        point: LatLng(c['latitude']!, c['longitude']!),
+        width: 130,
+        height: 78,
+        // Anchor the coordinate at the marker's bottom center so the photo
+        // floats above the point (like the web's bottom-center icon anchor).
+        alignment: Alignment.bottomCenter,
+        child: GestureDetector(
+          onTap: () {
+            HapticFeedback.selectionClick();
+            Get.toNamed(
+              AppRoutes.missingPersonDetail,
+              arguments: {'reportId': r.id},
+            );
+          },
+          child: _MissingPersonMarker(report: r),
+        ),
+      );
+    }).toList();
+  }
+
   // ── Small UI pieces ────────────────────────────────────────────
 
   Widget _placingBanner(bool isDark) {
@@ -690,6 +728,90 @@ class _MarkerDot extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+// ── Missing-person marker (circular photo + name pill, web parity) ──
+class _MissingPersonMarker extends StatelessWidget {
+  final MissingPersonReport report;
+  const _MissingPersonMarker({required this.report});
+
+  @override
+  Widget build(BuildContext context) {
+    final photoUrl = report.primaryPhotoUrl;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 52,
+          height: 52,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: const Color(0xFFF3F4F6),
+            border: Border.all(color: Colors.white, width: 3),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.35),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: ClipOval(
+            child: (photoUrl != null && photoUrl.isNotEmpty)
+                ? CachedNetworkImage(
+                    imageUrl: photoUrl,
+                    fit: BoxFit.cover,
+                    alignment: Alignment.topCenter,
+                    placeholder: (context, url) => const _MarkerPhotoFallback(),
+                    errorWidget: (context, url, error) =>
+                        const _MarkerPhotoFallback(),
+                  )
+                : const _MarkerPhotoFallback(),
+          ),
+        ),
+        const Gap(4),
+        Container(
+          constraints: const BoxConstraints(maxWidth: 120),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.75),
+            borderRadius: BorderRadius.circular(999),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.3),
+                blurRadius: 3,
+                offset: const Offset(0, 1),
+              ),
+            ],
+          ),
+          child: Text(
+            report.fullName ?? '',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// Placeholder shown when a missing-person photo is missing or fails to load.
+class _MarkerPhotoFallback extends StatelessWidget {
+  const _MarkerPhotoFallback();
+
+  @override
+  Widget build(BuildContext context) {
+    return const ColoredBox(
+      color: Color(0xFFF3F4F6),
+      child: Icon(Icons.person, color: Color(0xFF9CA3AF), size: 28),
     );
   }
 }
