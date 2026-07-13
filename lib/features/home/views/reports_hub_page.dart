@@ -66,13 +66,17 @@ class _ReportsHubPageState extends State<ReportsHubPage> {
           BoxShadow(color: Color(0x33000000), blurRadius: 12, offset: Offset(0, 4)),
         ],
       ),
-      padding: EdgeInsets.fromLTRB(16, topPad + 20, 16, 14),
-      child: Row(
+      padding: EdgeInsets.fromLTRB(16, topPad + 12, 16, 16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // Reserve space for HomePage's floating notification / messaging icons.
-          const SizedBox(width: 52),
-          Expanded(child: _segmented()),
-          const SizedBox(width: 52),
+          // Empty band reserving space for HomePage's floating icons
+          // (notification + call on the left, messaging on the right) so the
+          // toggle below never overlaps them.
+          const SizedBox(height: 48),
+          const SizedBox(height: 14),
+          // Full-width toggle on its own row — no overlap with the edge icons.
+          _segmented(),
         ],
       ),
     );
@@ -120,22 +124,23 @@ class _ReportsHubPageState extends State<ReportsHubPage> {
           curve: Curves.easeOutCubic,
           margin: const EdgeInsets.all(4),
           decoration: BoxDecoration(
-            color: selected ? Colors.white : Colors.transparent,
+            // Active segment filled with a single flat gold — no diagonal
+            // gradient or glow, so it reads as one clean even pill. Inactive
+            // stays transparent. White text reads on both.
+            color: selected ? AppColors.accent : Colors.transparent,
             borderRadius: BorderRadius.circular(18),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon,
-                  size: 18,
-                  color: selected ? AppColors.primary : Colors.white),
+              Icon(icon, size: 18, color: Colors.white),
               const SizedBox(width: 6),
               Text(
                 label,
                 style: TextStyle(
-                  fontWeight: FontWeight.bold,
+                  fontWeight: selected ? FontWeight.bold : FontWeight.w500,
                   fontSize: 13,
-                  color: selected ? AppColors.primary : Colors.white,
+                  color: Colors.white,
                 ),
               ),
               if (badge > 0) ...[
@@ -144,7 +149,7 @@ class _ReportsHubPageState extends State<ReportsHubPage> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                   decoration: BoxDecoration(
-                    color: selected ? AppColors.accent : Colors.white,
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
@@ -152,7 +157,7 @@ class _ReportsHubPageState extends State<ReportsHubPage> {
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
-                      color: selected ? Colors.white : AppColors.primary,
+                      color: selected ? AppColors.accent : AppColors.primary,
                     ),
                   ),
                 ),
