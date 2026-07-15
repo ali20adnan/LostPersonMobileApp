@@ -14,6 +14,7 @@ import '../../../app/services/soniox_service.dart';
 import '../../../app/services/storage_service.dart';
 import '../../../app/services/tts_service.dart';
 import '../../../core/constants/language_constants.dart';
+import '../../../core/utils/language_detector.dart';
 import '../../../data/models/conversation_model.dart';
 import '../../../data/models/language_model.dart';
 import '../../../data/models/translation_model.dart';
@@ -55,6 +56,11 @@ class TranslatorController extends GetxController {
   Timer? _textDebounce;
   bool _suppressInputListener = false;
 
+  // While a smart paste sets both languages at once, this stops the language
+  // `ever` workers from firing extra translations that would race the single
+  // authoritative `source: 'auto'` translation the paste drives itself.
+  bool _suppressLangReaction = false;
+
   // Stream subscriptions
   StreamSubscription? _transcriptionSubscription;
   StreamSubscription? _translationSubscription;
@@ -76,11 +82,13 @@ class TranslatorController extends GetxController {
 
     // Re-translate text when languages change (text mode only)
     ever(sourceLanguage, (_) {
+      if (_suppressLangReaction) return;
       if (!isRecording.value && inputText.value.trim().isNotEmpty) {
         _runTextTranslation();
       }
     });
     ever(targetLanguage, (_) {
+      if (_suppressLangReaction) return;
       if (!isRecording.value && inputText.value.trim().isNotEmpty) {
         _runTextTranslation();
       }
@@ -130,11 +138,19 @@ class TranslatorController extends GetxController {
         Timer(const Duration(milliseconds: 500), _runTextTranslation);
   }
 
-  Future<void> _runTextTranslation() async {
+  /// Translate the current input into the target language.
+  ///
+  /// [overrideSource] forces a specific source code for this run only, without
+  /// touching the source-language pill. Smart-paste passes `'auto'` so the
+  /// translation backend verifies the language server-side even when the local
+  /// detector's guess (shown in the pill) is uncertain.
+  Future<void> _runTextTranslation({String? overrideSource}) async {
     final text = inputText.value.trim();
     if (text.isEmpty) return;
     if (isRecording.value) return;
-    if (sourceLanguage.value.code == targetLanguage.value.code) {
+    final source = overrideSource ?? sourceLanguage.value.code;
+    final target = targetLanguage.value.code;
+    if (source == target && source != 'auto') {
       currentTranslation.value = text;
       return;
     }
@@ -143,8 +159,8 @@ class TranslatorController extends GetxController {
     try {
       final result = await _libreTranslateService.translate(
         text: text,
-        source: sourceLanguage.value.code,
-        target: targetLanguage.value.code,
+        source: source,
+        target: target,
       );
       if (text == inputText.value.trim()) {
         currentTranslation.value = result;
@@ -477,9 +493,72 @@ class TranslatorController extends GetxController {
     Get.to(() => const TranslatorVoicePage());
   }
 
-  Future<void> pasteAndOpenText() async {
-    await pasteFromClipboard();
+  /// Smart paste: read the clipboard, detect its language on-device, aim the
+  /// translation at Arabic (or at the other selected language when the pasted
+  /// text is already Arabic), then open the text page and translate.
+  ///
+  /// Detection is hybrid: the local [LanguageDetector] updates the source pill
+  /// instantly, while the first translation runs with `source: 'auto'` so the
+  /// backend verifies the language and the result stays correct even if the
+  /// local guess is off.
+  Future<void> smartPaste() async {
+    if (isRecording.value) return;
+
+    final data = await Clipboard.getData(Clipboard.kTextPlain);
+    final text = data?.text?.trim();
+    if (text == null || text.isEmpty) {
+      AppSnackbar.glass(
+        'الحافظة فارغة',
+        'لا يوجد نص في الحافظة للصقه',
+        snackPosition: SnackPosition.TOP,
+      );
+      return;
+    }
+
+    // 1) Instant on-device detection drives the source pill. Fall back to
+    //    Arabic when the text has no detectable letters.
+    final detected =
+        LanguageDetector.detect(text) ?? LanguageConstants.arabic;
+    final target = _resolveSmartTarget(detected);
+
+    _suppressLangReaction = true;
+    sourceLanguage.value = detected;
+    targetLanguage.value = target;
+    _suppressLangReaction = false;
+    _storageService.saveSourceLanguage(detected.code);
+    _storageService.saveTargetLanguage(target.code);
+
+    // 2) Drop the text in without waking the debounced listener, then drive
+    //    one immediate translation with server-side auto-detect.
+    _suppressInputListener = true;
+    inputController.value = TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: text.length),
+    );
+    _suppressInputListener = false;
+    inputText.value = text;
+
     openTextPage();
+    _textDebounce?.cancel();
+    _runTextTranslation(overrideSource: 'auto');
+  }
+
+  /// Decide the target language for a smart paste.
+  ///
+  /// Foreign text → Arabic. Arabic text → the other currently-selected
+  /// language (so an Arabic user can reply outward), falling back to English
+  /// when both current slots are Arabic.
+  Language _resolveSmartTarget(Language detected) {
+    if (detected.code != LanguageConstants.arabic.code) {
+      return LanguageConstants.arabic;
+    }
+    if (targetLanguage.value.code != LanguageConstants.arabic.code) {
+      return targetLanguage.value;
+    }
+    if (sourceLanguage.value.code != LanguageConstants.arabic.code) {
+      return sourceLanguage.value;
+    }
+    return LanguageConstants.english;
   }
 
   Future<void> openLanguagePicker({required bool isSource}) async {

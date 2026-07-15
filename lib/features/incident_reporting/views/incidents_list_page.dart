@@ -27,6 +27,15 @@ class IncidentsListPage extends GetView<IncidentsListController> {
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: embedded ? null : _buildAppBar(),
+      // Floating "new incident report" button — bottom-start (left in RTL).
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      floatingActionButton: FloatingActionButton(
+        heroTag: 'fab_incidents',
+        onPressed: controller.navigateToCreateReport,
+        backgroundColor: AppColors.accent,
+        foregroundColor: Colors.white,
+        child: Icon(PhosphorIcons.plus()),
+      ),
       body: Column(
         children: [
           // Search + filter section

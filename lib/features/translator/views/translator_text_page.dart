@@ -65,12 +65,7 @@ class TranslatorTextPage extends GetView<TranslatorController> {
                     child: _buildInputCard(isDark),
                   ),
                 ),
-                const Gap(8),
-                AnimatedAppear(
-                  delay: const Duration(milliseconds: 140),
-                  child: _buildSwapButton(isDark),
-                ),
-                const Gap(8),
+                const Gap(12),
                 Expanded(
                   flex: 5,
                   child: AnimatedAppear(
@@ -100,15 +95,9 @@ class TranslatorTextPage extends GetView<TranslatorController> {
             ),
           ),
         ),
-        const Gap(8),
-        Icon(
-          PhosphorIcons.arrowsLeftRight(),
-          size: 18,
-          color: isDark
-              ? AppColors.textOnDarkSecondary
-              : AppColors.textSecondary,
-        ),
-        const Gap(8),
+        const Gap(12),
+        _buildSwapButton(isDark),
+        const Gap(12),
         Expanded(
           child: Obx(
             () => _languagePill(
@@ -173,35 +162,34 @@ class TranslatorTextPage extends GetView<TranslatorController> {
     );
   }
 
-  // ── Center swap button (mirror source ↔ target) ────────────────
+  // ── Language swap button (mirror source ↔ target) ──────────────
+  // Sits between the two language pills; blue gradient background.
   Widget _buildSwapButton(bool isDark) {
-    return Center(
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(20),
-          onTap: () {
-            HapticFeedback.lightImpact();
-            controller.swapLanguages();
-          },
-          child: Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              gradient: AppColors.heroGradient,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.3),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: const Icon(
-              Icons.swap_vert_rounded,
-              color: Colors.white,
-              size: 22,
-            ),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: () {
+          HapticFeedback.lightImpact();
+          controller.swapLanguages();
+        },
+        child: Container(
+          padding: const EdgeInsets.all(9),
+          decoration: BoxDecoration(
+            gradient: AppColors.heroGradient,
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.3),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Icon(
+            PhosphorIcons.arrowsLeftRight(),
+            color: Colors.white,
+            size: 18,
           ),
         ),
       ),

@@ -24,6 +24,11 @@ class ChatController extends GetxController {
   final isTyping = false.obs; // remote user typing
   final typingUserName = ''.obs;
 
+  /// Image picked but not yet sent. Held here so the user can add an optional
+  /// caption (or remove it) before sending — mirrors the web composer, which
+  /// stages the file and waits instead of uploading on selection.
+  final stagedImage = Rxn<XFile>();
+
   final messageController = TextEditingController();
   final messageFocusNode = FocusNode();
   final itemScrollController = ItemScrollController();
@@ -142,8 +147,10 @@ class ChatController extends GetxController {
       final lastReadAt = conversation?.myLastReadAt;
       if (lastReadAt != null) {
         initialUnreadCount = history
-            .where((m) =>
-                m.senderId != currentUserId && m.sentAt.isAfter(lastReadAt))
+            .where(
+              (m) =>
+                  m.senderId != currentUserId && m.sentAt.isAfter(lastReadAt),
+            )
             .length;
       } else {
         initialUnreadCount = 0;
@@ -163,8 +170,9 @@ class ChatController extends GetxController {
 
       // Join conversation room
       if (Get.isRegistered<SocketService>()) {
-        Get.find<SocketService>()
-            .emit('joinConversation', {'conversationId': conversationId});
+        Get.find<SocketService>().emit('joinConversation', {
+          'conversationId': conversationId,
+        });
       }
 
       // Mark messages as read
@@ -233,18 +241,31 @@ class ChatController extends GetxController {
     });
   }
 
-  /// Send a text message via REST API (guaranteed delivery)
+  /// Send the composed message via REST API (guaranteed delivery). Handles
+  /// three cases with a single entry point (mirrors the web composer): a
+  /// staged image with an optional caption, or a plain text message.
   Future<void> sendMessage() async {
     final text = messageController.text.trim();
-    if (text.isEmpty) return;
+    final image = stagedImage.value;
+    if (text.isEmpty && image == null) return; // nothing to send
 
-    messageController.clear();
     isSending.value = true;
     _stopTypingNow();
 
     try {
-      final sentMessage = await _repo.sendMessage(conversationId, text);
+      final sentMessage = image != null
+          ? await _repo.uploadMessageImage(
+              conversationId,
+              image.path,
+              content: text.isEmpty ? null : text,
+            )
+          : await _repo.sendMessage(conversationId, text);
+
       if (sentMessage != null) {
+        // Clear the composer only on success so a failed send/upload lets the
+        // user retry without re-typing or re-picking.
+        messageController.clear();
+        stagedImage.value = null;
         // Add locally if not already delivered via socket
         if (!messages.any((m) => m.id == sentMessage.id)) {
           messages.add(sentMessage);
@@ -303,32 +324,22 @@ class ChatController extends GetxController {
     });
   }
 
-  /// Pick and send an image
-  Future<void> pickAndSendImage() async {
+  /// Pick an image from the gallery and stage it for review. Nothing is
+  /// uploaded here — the file waits in [stagedImage] until the user presses
+  /// send (see [sendMessage]), optionally with a caption typed meanwhile.
+  Future<void> pickImage() async {
     final file = await _picker.pickImage(
       source: ImageSource.gallery,
       maxWidth: 1024,
       imageQuality: 80,
     );
     if (file == null) return;
-
-    isSending.value = true;
-    try {
-      final sentMessage =
-          await _repo.uploadMessageImage(conversationId, file.path);
-      if (sentMessage != null) {
-        // Add locally if not already present (socket may also deliver it)
-        if (!messages.any((m) => m.id == sentMessage.id)) {
-          messages.add(sentMessage);
-          _scrollToBottom();
-        }
-      }
-    } catch (e) {
-      debugPrint('ChatController: Error sending image - $e');
-    } finally {
-      isSending.value = false;
-    }
+    stagedImage.value = file;
+    messageFocusNode.requestFocus(); // invite an optional caption
   }
+
+  /// Discard the staged image without sending.
+  void clearStagedImage() => stagedImage.value = null;
 
   /// Mark messages as read
   void _markAsRead() {
@@ -396,10 +407,7 @@ class ChatController extends GetxController {
       } else {
         // Land with the last read message at the bottom of the viewport;
         // unread messages will appear when the user scrolls down.
-        itemScrollController.jumpTo(
-          index: total - unread - 1,
-          alignment: 1.0,
-        );
+        itemScrollController.jumpTo(index: total - unread - 1, alignment: 1.0);
       }
     });
   }
@@ -412,8 +420,9 @@ class ChatController extends GetxController {
 
   @override
   void onClose() {
-    itemPositionsListener.itemPositions
-        .removeListener(_onScrollPositionsChanged);
+    itemPositionsListener.itemPositions.removeListener(
+      _onScrollPositionsChanged,
+    );
     messageFocusNode.removeListener(_onMessageFocusChanged);
     messageFocusNode.dispose();
     messageController.dispose();

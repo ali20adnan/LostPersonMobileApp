@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:speech_translator_app/core/utils/app_snackbar.dart';
 
+import '../../../app/routes/app_routes.dart';
 import '../../../app/services/auth_service.dart';
 import '../../../app/services/socket_service.dart';
 import '../../../data/models/missing_person_report_model.dart';
@@ -54,6 +55,9 @@ class MissingPersonsController extends GetxController {
   void updateSearch(String q) {
     searchQuery.value = q;
   }
+
+  /// Open the "report a missing person" form (from the page's floating button).
+  void navigateToCreateReport() => Get.toNamed(AppRoutes.missingPersonForm);
 
   @override
   void onInit() {

@@ -4,17 +4,16 @@ import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:gap/gap.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../../../app/themes/app_colors.dart';
-import '../../../app/routes/app_routes.dart';
 import '../../../app/services/unread_count_service.dart';
 import '../controllers/home_controller.dart';
 import '../../notifications/views/notification_overlay.dart';
 import '../../notifications/controllers/notifications_controller.dart';
 import '../../calls/views/call_history_overlay.dart';
+import '../../calls/controllers/call_history_controller.dart';
 import '../../messaging/controllers/conversations_controller.dart';
 import '../../messaging/views/messaging_overlay.dart';
 
@@ -59,12 +58,12 @@ class HomePage extends GetView<HomeController> {
                   )),
 
               // Tap barrier to close notification overlay (hidden on profile)
-              Obx(() => controller.currentIndex.value != 3
+              Obx(() => controller.currentIndex.value != 4
                   ? const NotificationDismissBarrier()
                   : const SizedBox.shrink()),
 
               // Tap barrier to close the call-history overlay (hidden on profile)
-              Obx(() => controller.currentIndex.value != 3
+              Obx(() => controller.currentIndex.value != 4
                   ? const CallHistoryDismissBarrier()
                   : const SizedBox.shrink()),
 
@@ -72,7 +71,7 @@ class HomePage extends GetView<HomeController> {
               // White-glass variant everywhere EXCEPT the light-theme translator
               // tab (index 0), where the button uses the dark-theme navy fill so
               // it reads as a solid blue chip. Dark theme stays white-glass.
-              Obx(() => controller.currentIndex.value != 3
+              Obx(() => controller.currentIndex.value != 4
                   ? Positioned(
                       top: MediaQuery.of(context).padding.top + 16,
                       left: 12,
@@ -88,7 +87,7 @@ class HomePage extends GetView<HomeController> {
               // Call-history bell — sits just to the right of the notification
               // bell; its dropdown ([CallHistoryPanel]) is rendered below so it
               // spans the screen width.
-              Obx(() => controller.currentIndex.value != 3
+              Obx(() => controller.currentIndex.value != 4
                   ? Positioned(
                       top: MediaQuery.of(context).padding.top + 16,
                       left: 64,
@@ -97,7 +96,7 @@ class HomePage extends GetView<HomeController> {
                   : const SizedBox.shrink()),
 
               // Call-history dropdown panel (screen-wide, below the bells).
-              Obx(() => controller.currentIndex.value != 3
+              Obx(() => controller.currentIndex.value != 4
                   ? Positioned(
                       top: MediaQuery.of(context).padding.top + 16 + 52,
                       left: 12,
@@ -107,7 +106,7 @@ class HomePage extends GetView<HomeController> {
                   : const SizedBox.shrink()),
 
               // Floating messaging icon at top-right (hidden on profile)
-              Obx(() => controller.currentIndex.value != 3
+              Obx(() => controller.currentIndex.value != 4
                   ? Positioned(
                       top: MediaQuery.of(context).padding.top + 16,
                       right: 12,
@@ -169,29 +168,28 @@ class HomePage extends GetView<HomeController> {
                           isSelected: controller.currentIndex.value == 1,
                           onTap: () => _onTabTap(1),
                         ),
-                        // Center FAB
-                        _CenterFab(
-                          isDark: isDark,
-                          onTap: () {
-                            HapticFeedback.mediumImpact();
-                            _closeOverlays();
-                            _showReportTypeSheet(context);
-                          },
+                        _NavItem(
+                          icon: PhosphorIcons.users(),
+                          activeIcon:
+                              PhosphorIcons.users(PhosphorIconsStyle.fill),
+                          label: 'المفقودين',
+                          isSelected: controller.currentIndex.value == 2,
+                          onTap: () => _onTabTap(2),
                         ),
                         _NavItem(
                           icon: PhosphorIcons.fileText(),
                           activeIcon: PhosphorIcons.fileText(),
-                          label: 'البلاغات',
-                          isSelected: controller.currentIndex.value == 2,
+                          label: 'الحوادث',
+                          isSelected: controller.currentIndex.value == 3,
                           badgeCount: _getAlertsBadge() + _getReportsBadge(),
-                          onTap: () => _onTabTap(2),
+                          onTap: () => _onTabTap(3),
                         ),
                         _NavItem(
                           icon: PhosphorIcons.user(),
                           activeIcon: PhosphorIcons.user(),
                           label: 'حسابي',
-                          isSelected: controller.currentIndex.value == 3,
-                          onTap: () => _onTabTap(3),
+                          isSelected: controller.currentIndex.value == 4,
+                          onTap: () => _onTabTap(4),
                         ),
                       ],
                     ),
@@ -226,6 +224,10 @@ class HomePage extends GetView<HomeController> {
       final nc = Get.find<NotificationsController>();
       if (nc.isOverlayOpen.value) nc.isOverlayOpen.value = false;
     }
+    if (Get.isRegistered<CallHistoryController>()) {
+      final cc = Get.find<CallHistoryController>();
+      if (cc.isOverlayOpen.value) cc.isOverlayOpen.value = false;
+    }
     if (Get.isRegistered<ConversationsController>()) {
       final mc = Get.find<ConversationsController>();
       if (mc.isMessagingPanelOpen.value) mc.isMessagingPanelOpen.value = false;
@@ -242,89 +244,6 @@ class HomePage extends GetView<HomeController> {
     return Get.find<UnreadCountService>().reportsUnread.value;
   }
 
-  void _showReportTypeSheet(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: isDark ? AppColors.surfaceDark : AppColors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (_) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'نوع الإبلاغ',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: isDark ? AppColors.textOnDark : AppColors.textPrimary,
-              ),
-            ),
-            const Gap(16),
-            ListTile(
-              leading: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  gradient: AppColors.heroGradient,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(PhosphorIcons.warningCircle(), color: Colors.white),
-              ),
-              title: Text('بلاغ عادي',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: isDark ? AppColors.textOnDark : AppColors.textPrimary,
-                  )),
-              subtitle: Text('إبلاغ عن حادثة أو طوارئ',
-                  style: TextStyle(
-                    color: isDark
-                        ? AppColors.textOnDarkSecondary
-                        : AppColors.textSecondary,
-                  )),
-              onTap: () {
-                Navigator.pop(context);
-                Get.toNamed(AppRoutes.incidentReporting);
-              },
-            ),
-            Divider(
-              height: 1,
-              color: isDark ? AppColors.dividerDark : AppColors.divider,
-            ),
-            ListTile(
-              leading: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  gradient: AppColors.accentGradient,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(PhosphorIcons.users(), color: Colors.white),
-              ),
-              title: Text('إبلاغ عن مفقود',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: isDark ? AppColors.textOnDark : AppColors.textPrimary,
-                  )),
-              subtitle: Text('الإبلاغ عن شخص مفقود',
-                  style: TextStyle(
-                    color: isDark
-                        ? AppColors.textOnDarkSecondary
-                        : AppColors.textSecondary,
-                  )),
-              onTap: () {
-                Navigator.pop(context);
-                Get.toNamed(AppRoutes.missingPersonForm);
-              },
-            ),
-            const Gap(8),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 // ── Navigation Item ──────────────────────────────────────────────
@@ -355,7 +274,7 @@ class _NavItem extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
         curve: Curves.easeOutCubic,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected
               ? AppColors.accent.withValues(alpha: 0.12)
@@ -406,41 +325,6 @@ class _NavItem extends StatelessWidget {
               child: Text(label),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-// ── Center FAB inside nav bar ────────────────────────────────────
-class _CenterFab extends StatelessWidget {
-  final bool isDark;
-  final VoidCallback onTap;
-
-  const _CenterFab({required this.isDark, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 48,
-        height: 48,
-        decoration: BoxDecoration(
-          gradient: AppColors.accentGradient,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.accent.withValues(alpha: 0.35),
-              blurRadius: 16,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Icon(
-          PhosphorIcons.plus(),
-          color: Colors.white,
-          size: 24,
         ),
       ),
     );

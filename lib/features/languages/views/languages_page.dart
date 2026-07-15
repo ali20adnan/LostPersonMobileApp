@@ -7,6 +7,7 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../../app/services/storage_service.dart';
 import '../../../app/themes/app_colors.dart';
 import '../../../core/constants/language_constants.dart';
+import '../../../core/utils/icon_direction.dart';
 import '../../../core/widgets/shared/animated_list_item.dart';
 import '../../../core/widgets/shared/motion/animated_appear.dart';
 import '../../../data/models/language_model.dart';
@@ -195,7 +196,9 @@ class _LanguagesPageState extends State<LanguagesPage> {
               width: 28,
               child: isSelected
                   ? Icon(
-                      PhosphorIcons.check(PhosphorIconsStyle.bold),
+                      // `.ltr` clears Phosphor's matchTextDirection flag so the
+                      // checkmark isn't mirrored under the page's RTL direction.
+                      PhosphorIcons.check(PhosphorIconsStyle.bold).ltr,
                       size: 20,
                       color: AppColors.accent,
                     )

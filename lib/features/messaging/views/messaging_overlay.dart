@@ -9,7 +9,6 @@ import '../../../app/themes/app_colors.dart';
 import '../controllers/conversations_controller.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../data/models/chat_models.dart';
-import '../../notifications/controllers/notifications_controller.dart';
 import 'new_chat_sheet.dart';
 
 /// Wraps [child] in a backdrop blur for the glass variants. The light-theme
@@ -43,10 +42,7 @@ class MessagingOverlay extends StatelessWidget {
       return GestureDetector(
         onTap: () {
           HapticFeedback.lightImpact();
-          if (Get.isRegistered<NotificationsController>()) {
-            final nc = Get.find<NotificationsController>();
-            if (nc.isOverlayOpen.value) nc.isOverlayOpen.value = false;
-          }
+          // toggleMessagingPanel() closes the sibling overlays on open.
           controller.toggleMessagingPanel();
         },
         child: Container(

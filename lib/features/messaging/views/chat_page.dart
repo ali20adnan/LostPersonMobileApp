@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -44,15 +46,18 @@ class ChatPage extends GetView<ChatController> {
                     return _buildEmptyState(isDark);
                   }
 
-                  final showUnreadDivider = controller.initialUnreadCount > 0 &&
+                  final showUnreadDivider =
+                      controller.initialUnreadCount > 0 &&
                       controller.initialUnreadCount < msgs.length;
                   final unreadBoundary = controller.unreadBoundary;
 
                   return ScrollablePositionedList.builder(
                     itemScrollController: controller.itemScrollController,
                     itemPositionsListener: controller.itemPositionsListener,
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     // +1 sentinel item at the end so scrollTo can reliably land
                     // past the last bubble (alignment 0.0 on the sentinel pins
                     // it to the viewport top → bubble fully visible above).
@@ -63,7 +68,8 @@ class ChatPage extends GetView<ChatController> {
                       }
                       final msg = msgs[index];
                       final isMe = msg.senderId == controller.currentUserId;
-                      final showDate = index == 0 ||
+                      final showDate =
+                          index == 0 ||
                           !_sameDay(msgs[index - 1].sentAt, msg.sentAt);
                       final showDivider =
                           showUnreadDivider && index == unreadBoundary;
@@ -123,11 +129,7 @@ class ChatPage extends GetView<ChatController> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               child: Row(
                 children: [
-                  SizedBox(
-                    width: 24,
-                    height: 16,
-                    child: _TypingDots(),
-                  ),
+                  SizedBox(width: 24, height: 16, child: _TypingDots()),
                   const Gap(8),
                   Text(
                     '${controller.typingUserName.value} يكتب...',
@@ -177,7 +179,10 @@ class ChatPage extends GetView<ChatController> {
         final avatarUrl = controller.conversation == null
             ? null
             : ApiConstants.resolveAvatarUrl(
-                controller.conversation!.displayAvatarUrl(controller.currentUserId));
+                controller.conversation!.displayAvatarUrl(
+                  controller.currentUserId,
+                ),
+              );
         return Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -190,8 +195,7 @@ class ChatPage extends GetView<ChatController> {
                   height: 36,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    gradient:
-                        avatarUrl == null ? AppColors.heroGradient : null,
+                    gradient: avatarUrl == null ? AppColors.heroGradient : null,
                     border: Border.all(
                       color: Colors.white.withValues(alpha: 0.4),
                       width: 1.5,
@@ -202,8 +206,7 @@ class ChatPage extends GetView<ChatController> {
                       ? Image.network(
                           avatarUrl,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) =>
-                              _initialBadge(initial),
+                          errorBuilder: (_, __, ___) => _initialBadge(initial),
                         )
                       : _initialBadge(initial),
                 ),
@@ -212,11 +215,13 @@ class ChatPage extends GetView<ChatController> {
             const Gap(10),
             Flexible(
               child: isLoading
-                  ? Text('جاري التحميل...',
+                  ? Text(
+                      'جاري التحميل...',
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.8),
                         fontSize: 14,
-                      ))
+                      ),
+                    )
                   : Text(
                       displayName,
                       overflow: TextOverflow.ellipsis,
@@ -249,8 +254,9 @@ class ChatPage extends GetView<ChatController> {
       if (conv == null || conv.isGroup) return const SizedBox.shrink();
       if (!Get.isRegistered<CallService>()) return const SizedBox.shrink();
 
-      final others =
-          conv.participants.where((p) => p.userId != controller.currentUserId);
+      final others = conv.participants.where(
+        (p) => p.userId != controller.currentUserId,
+      );
       if (others.isEmpty) return const SizedBox.shrink();
       final other = others.first;
 
@@ -262,14 +268,14 @@ class ChatPage extends GetView<ChatController> {
         onPressed: busy
             ? null
             : () => call.startCall(
-                  conversationId: conv.id,
-                  toUserId: other.userId,
-                  callee: CallPeer(
-                    id: other.userId,
-                    fullName: other.fullName,
-                    avatarUrl: other.avatarUrl,
-                  ),
+                conversationId: conv.id,
+                toUserId: other.userId,
+                callee: CallPeer(
+                  id: other.userId,
+                  fullName: other.fullName,
+                  avatarUrl: other.avatarUrl,
                 ),
+              ),
       );
     });
   }
@@ -278,44 +284,53 @@ class ChatPage extends GetView<ChatController> {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                gradient: AppColors.heroGradient,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.3),
-                    blurRadius: 24,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: Icon(PhosphorIcons.chatText(),
-                  size: 48, color: Colors.white),
-            ),
-            const Gap(24),
-            Text(
-              'ابدأ المحادثة',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: isDark ? AppColors.textOnDark : AppColors.textPrimary,
-              ),
-            ),
-            const Gap(8),
-            Text(
-              'أرسل رسالة للبدء',
-              style: TextStyle(
-                fontSize: 14,
-                color: AppColors.textSecondary,
-              ),
-            ),
-          ],
-        ).animate().fadeIn(duration: 400.ms).scale(begin: const Offset(0.9, 0.9)),
+        child:
+            Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        gradient: AppColors.heroGradient,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withValues(alpha: 0.3),
+                            blurRadius: 24,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        PhosphorIcons.chatText(),
+                        size: 48,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const Gap(24),
+                    Text(
+                      'ابدأ المحادثة',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: isDark
+                            ? AppColors.textOnDark
+                            : AppColors.textPrimary,
+                      ),
+                    ),
+                    const Gap(8),
+                    Text(
+                      'أرسل رسالة للبدء',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                )
+                .animate()
+                .fadeIn(duration: 400.ms)
+                .scale(begin: const Offset(0.9, 0.9)),
       ),
     );
   }
@@ -335,86 +350,154 @@ class ChatPage extends GetView<ChatController> {
       ),
       child: SafeArea(
         top: false,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // Image button
-            Container(
-              margin: const EdgeInsets.only(bottom: 4),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: IconButton(
-                onPressed: controller.pickAndSendImage,
-                icon: Icon(PhosphorIcons.image(), color: AppColors.primary, size: 22),
-                tooltip: 'إرسال صورة',
-              ),
-            ),
-            const Gap(6),
-
-            // Text input
-            Expanded(
-              child: Container(
-                constraints: const BoxConstraints(maxHeight: 120),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.cardDark
-                      : AppColors.surfaceSunken,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: isDark ? AppColors.cardBorderDark : AppColors.cardBorder,
-                  ),
-                ),
-                child: TextField(
-                  controller: controller.messageController,
-                  focusNode: controller.messageFocusNode,
-                  maxLines: null,
-                  textInputAction: TextInputAction.newline,
-                  onChanged: (_) => controller.onTyping(),
-                  style: TextStyle(
-                    color: isDark ? AppColors.textOnDark : AppColors.textPrimary,
-                  ),
-                  decoration: InputDecoration(
-                    hintText: 'اكتب رسالة...',
-                    hintStyle: TextStyle(color: AppColors.textLight),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 10),
-                  ),
-                ),
-              ),
-            ),
-            const Gap(6),
-
-            // Send button
-            Obx(() => Container(
-                  margin: const EdgeInsets.only(bottom: 4),
-                  decoration: BoxDecoration(
-                    gradient: AppColors.heroGradient,
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.primary.withValues(alpha: 0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
+            // Staged image preview (shown after picking, before sending)
+            Obx(() {
+              final img = controller.stagedImage.value;
+              if (img == null) return const SizedBox.shrink();
+              return Padding(
+                padding: const EdgeInsets.only(left: 8, right: 8, bottom: 8),
+                child: Align(
+                  alignment: Alignment.centerRight, // RTL: start edge
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.file(
+                          File(img.path),
+                          width: 72,
+                          height: 72,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      Positioned(
+                        top: -6,
+                        left: -6, // top-start corner in RTL, mirrors the web X
+                        child: GestureDetector(
+                          onTap: controller.clearStagedImage,
+                          child: Container(
+                            decoration: const BoxDecoration(
+                              color: AppColors.error,
+                              shape: BoxShape.circle,
+                            ),
+                            padding: const EdgeInsets.all(3),
+                            child: Icon(
+                              PhosphorIcons.x(),
+                              size: 14,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
                       ),
                     ],
                   ),
-                  child: IconButton(
-                    onPressed: controller.isSending.value
-                        ? null
-                        : () {
-                            HapticFeedback.lightImpact();
-                            controller.sendMessage();
-                          },
-                    icon: controller.isSending.value
-                        ? LoadingAnimationWidget.staggeredDotsWave(
-                            color: Colors.white, size: 20)
-                        : Icon(PhosphorIcons.paperPlaneTilt(),
-                            color: Colors.white, size: 22),
+                ),
+              );
+            }),
+
+            // Composer row
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                // Image button
+                Container(
+                  margin: const EdgeInsets.only(bottom: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                )),
+                  child: IconButton(
+                    onPressed: controller.pickImage,
+                    icon: Icon(
+                      PhosphorIcons.image(),
+                      color: AppColors.primary,
+                      size: 22,
+                    ),
+                    tooltip: 'إرسال صورة',
+                  ),
+                ),
+                const Gap(6),
+
+                // Text input
+                Expanded(
+                  child: Container(
+                    constraints: const BoxConstraints(maxHeight: 120),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? AppColors.cardDark
+                          : AppColors.surfaceSunken,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: isDark
+                            ? AppColors.cardBorderDark
+                            : AppColors.cardBorder,
+                      ),
+                    ),
+                    child: TextField(
+                      controller: controller.messageController,
+                      focusNode: controller.messageFocusNode,
+                      maxLines: null,
+                      textInputAction: TextInputAction.newline,
+                      onChanged: (_) => controller.onTyping(),
+                      style: TextStyle(
+                        color: isDark
+                            ? AppColors.textOnDark
+                            : AppColors.textPrimary,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: 'اكتب رسالة...',
+                        hintStyle: TextStyle(color: AppColors.textLight),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 10,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const Gap(6),
+
+                // Send button
+                Obx(
+                  () => Container(
+                    margin: const EdgeInsets.only(bottom: 4),
+                    decoration: BoxDecoration(
+                      gradient: AppColors.heroGradient,
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withValues(alpha: 0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: IconButton(
+                      onPressed: controller.isSending.value
+                          ? null
+                          : () {
+                              HapticFeedback.lightImpact();
+                              controller.sendMessage();
+                            },
+                      icon: controller.isSending.value
+                          ? LoadingAnimationWidget.staggeredDotsWave(
+                              color: Colors.white,
+                              size: 20,
+                            )
+                          : Icon(
+                              PhosphorIcons.paperPlaneTilt(),
+                              color: Colors.white,
+                              size: 22,
+                            ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),
@@ -672,62 +755,67 @@ class _ScrollToBottomButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        // Room for the badge overflowing the circle's top edge.
-        padding: const EdgeInsets.only(top: 6),
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                gradient: AppColors.heroGradient,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.35),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Icon(
-                PhosphorIcons.caretDown(),
-                color: Colors.white,
-                size: 22,
-              ),
-            ),
-            if (count > 0)
-              Positioned(
-                top: -6,
-                right: -4,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          onTap: onTap,
+          child: Container(
+            // Room for the badge overflowing the circle's top edge.
+            padding: const EdgeInsets.only(top: 6),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
                   decoration: BoxDecoration(
-                    color: AppColors.error,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.white, width: 1.5),
+                    gradient: AppColors.heroGradient,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withValues(alpha: 0.35),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
-                  constraints: const BoxConstraints(minWidth: 20),
-                  child: Text(
-                    count > 99 ? '99+' : '$count',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      height: 1.2,
-                    ),
+                  child: Icon(
+                    PhosphorIcons.caretDown(),
+                    color: Colors.white,
+                    size: 22,
                   ),
                 ),
-              ),
-          ],
-        ),
-      ),
-    ).animate().fadeIn(duration: 200.ms).scale(
+                if (count > 0)
+                  Positioned(
+                    top: -6,
+                    right: -4,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.error,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.white, width: 1.5),
+                      ),
+                      constraints: const BoxConstraints(minWidth: 20),
+                      child: Text(
+                        count > 99 ? '99+' : '$count',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          height: 1.2,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        )
+        .animate()
+        .fadeIn(duration: 200.ms)
+        .scale(
           begin: const Offset(0.8, 0.8),
           duration: 200.ms,
           curve: Curves.easeOutBack,
@@ -799,9 +887,7 @@ class _DateSeparator extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
           decoration: BoxDecoration(
-            color: isDark
-                ? AppColors.cardDark
-                : AppColors.primarySoft,
+            color: isDark ? AppColors.cardDark : AppColors.primarySoft,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
@@ -862,7 +948,9 @@ class _CallLogCard extends StatelessWidget {
                 color: isDark ? AppColors.cardDark : AppColors.surface,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: isDark ? AppColors.cardBorderDark : AppColors.cardBorder,
+                  color: isDark
+                      ? AppColors.cardBorderDark
+                      : AppColors.cardBorder,
                 ),
                 boxShadow: isDark ? null : AppColors.cardShadow,
               ),
@@ -964,7 +1052,11 @@ class _CallVisuals {
   final IconData icon;
   final Color color;
   final String label;
-  const _CallVisuals({required this.icon, required this.color, required this.label});
+  const _CallVisuals({
+    required this.icon,
+    required this.color,
+    required this.label,
+  });
 }
 
 /// Typing dots animation

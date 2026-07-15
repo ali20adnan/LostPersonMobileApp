@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -51,6 +53,10 @@ class _AssemblyPointsPageState extends State<AssemblyPointsPage> {
   final _mpController = Get.find<MapMissingPersonsController>();
   final _mapController = MapController();
   bool _loadingGps = false;
+
+  /// Current map rotation in degrees. Drives the compass reset button, which
+  /// only appears while the map is turned away from north (Google-Maps style).
+  double _bearing = 0;
 
   /// The user's last known GPS position, shown as a "you are here" dot.
   LatLng? _myLocation;
@@ -123,6 +129,13 @@ class _AssemblyPointsPageState extends State<AssemblyPointsPage> {
   void _zoom(double delta) {
     final z = (_mapController.camera.zoom + delta).clamp(11.0, 18.0);
     _mapController.move(_mapController.camera.center, z);
+  }
+
+  /// Re-level the map to face north (bearing 0), like Google Maps' compass.
+  void _resetBearing() {
+    HapticFeedback.lightImpact();
+    _mapController.rotate(0);
+    setState(() => _bearing = 0);
   }
 
   Future<void> _goToMyLocation() async {
@@ -315,6 +328,15 @@ class _AssemblyPointsPageState extends State<AssemblyPointsPage> {
               cameraConstraint:
                   CameraConstraint.contain(bounds: _samarraBounds),
               onTap: (_, latLng) => _onMapTap(latLng),
+              onMapEvent: (event) {
+                // Keep the compass button in sync with the map's rotation.
+                // Only rebuild when the bearing actually changes (panning/
+                // zooming leaves rotation untouched, so this stays cheap).
+                final rot = event.camera.rotation;
+                if (rot != _bearing) {
+                  setState(() => _bearing = rot);
+                }
+              },
             ),
             children: [
               TileLayer(
@@ -398,6 +420,11 @@ class _AssemblyPointsPageState extends State<AssemblyPointsPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                // Compass reset — only while the map is turned off-north.
+                if (_bearing.abs() > 0.5) ...[
+                  _compassFab(isDark),
+                  const Gap(12),
+                ],
                 _smallFab(
                   icon: Icons.add,
                   color: isDark ? AppColors.surfaceDark : Colors.white,
@@ -669,6 +696,32 @@ class _AssemblyPointsPageState extends State<AssemblyPointsPage> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  /// Compass reset FAB (mirrors Google Maps). The needle counter-rotates by
+  /// the current bearing so its red tip keeps pointing at true north; tapping
+  /// re-levels the map to north.
+  Widget _compassFab(bool isDark) {
+    return GestureDetector(
+      onTap: _resetBearing,
+      child: Container(
+        width: 48,
+        height: 48,
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.surfaceDark : Colors.white,
+          shape: BoxShape.circle,
+          boxShadow: AppColors.cardShadow,
+        ),
+        child: Transform.rotate(
+          angle: _bearing * math.pi / 180,
+          child: const Icon(
+            Icons.navigation,
+            color: Color(0xFFE53935),
+            size: 24,
+          ),
         ),
       ),
     );

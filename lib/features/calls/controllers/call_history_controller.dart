@@ -6,6 +6,8 @@ import '../../../app/services/auth_service.dart';
 import '../../../app/services/call_service.dart';
 import '../../../app/services/socket_service.dart';
 import '../../../core/constants/api_constants.dart';
+import '../../notifications/controllers/notifications_controller.dart';
+import '../../messaging/controllers/conversations_controller.dart';
 
 /// One row in the comprehensive call history — a persisted `call`-type message
 /// resolved to the OTHER party plus this user's direction/outcome.
@@ -111,7 +113,21 @@ class CallHistoryController extends GetxController {
 
   void toggleOverlay() {
     isOverlayOpen.value = !isOverlayOpen.value;
-    if (isOverlayOpen.value) loadCalls();
+    if (isOverlayOpen.value) {
+      _closeSiblingOverlays();
+      loadCalls();
+    }
+  }
+
+  /// Only one floating overlay (notifications / call history / messaging) may
+  /// be open at a time — close the others whenever this one opens.
+  void _closeSiblingOverlays() {
+    if (Get.isRegistered<NotificationsController>()) {
+      Get.find<NotificationsController>().isOverlayOpen.value = false;
+    }
+    if (Get.isRegistered<ConversationsController>()) {
+      Get.find<ConversationsController>().isMessagingPanelOpen.value = false;
+    }
   }
 
   Future<void> loadCalls({int page = 1, int limit = 40}) async {

@@ -5,6 +5,8 @@ import '../../../app/services/auth_service.dart';
 import '../../../app/services/socket_service.dart';
 import '../../../data/models/chat_models.dart';
 import '../../../data/repositories/conversation_repository.dart';
+import '../../notifications/controllers/notifications_controller.dart';
+import '../../calls/controllers/call_history_controller.dart';
 
 /// Controller for conversations list (messaging tab)
 class ConversationsController extends GetxController {
@@ -20,6 +22,18 @@ class ConversationsController extends GetxController {
 
   void toggleMessagingPanel() {
     isMessagingPanelOpen.value = !isMessagingPanelOpen.value;
+    if (isMessagingPanelOpen.value) _closeSiblingOverlays();
+  }
+
+  /// Only one floating overlay (notifications / call history / messaging) may
+  /// be open at a time — close the others whenever this one opens.
+  void _closeSiblingOverlays() {
+    if (Get.isRegistered<NotificationsController>()) {
+      Get.find<NotificationsController>().isOverlayOpen.value = false;
+    }
+    if (Get.isRegistered<CallHistoryController>()) {
+      Get.find<CallHistoryController>().isOverlayOpen.value = false;
+    }
   }
 
   @override

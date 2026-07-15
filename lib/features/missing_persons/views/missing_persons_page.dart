@@ -25,6 +25,15 @@ class MissingPersonsPage extends GetView<MissingPersonsController> {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
+      // Floating "report a missing person" button — bottom-start (left in RTL).
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      floatingActionButton: FloatingActionButton(
+        heroTag: 'fab_missing',
+        onPressed: controller.navigateToCreateReport,
+        backgroundColor: AppColors.accent,
+        foregroundColor: Colors.white,
+        child: Icon(PhosphorIcons.plus()),
+      ),
       body: CustomScrollView(
         slivers: [
           if (!embedded) _buildSliverAppBar(isDark),

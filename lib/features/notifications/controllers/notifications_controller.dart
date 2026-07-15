@@ -8,6 +8,8 @@ import '../../../data/models/alert_model.dart';
 import '../../../data/repositories/alert_repository.dart';
 import '../services/app_notifications_service.dart';
 import 'notifications_page_controller.dart';
+import '../../calls/controllers/call_history_controller.dart';
+import '../../messaging/controllers/conversations_controller.dart';
 
 /// Controller for the floating notifications overlay.
 ///
@@ -169,8 +171,20 @@ class NotificationsController extends GetxController {
   void toggleOverlay() {
     isOverlayOpen.value = !isOverlayOpen.value;
     if (isOverlayOpen.value) {
+      _closeSiblingOverlays();
       loadAlerts();
       loadUnreadCount();
+    }
+  }
+
+  /// Only one floating overlay (notifications / call history / messaging) may
+  /// be open at a time — close the others whenever this one opens.
+  void _closeSiblingOverlays() {
+    if (Get.isRegistered<CallHistoryController>()) {
+      Get.find<CallHistoryController>().isOverlayOpen.value = false;
+    }
+    if (Get.isRegistered<ConversationsController>()) {
+      Get.find<ConversationsController>().isMessagingPanelOpen.value = false;
     }
   }
 

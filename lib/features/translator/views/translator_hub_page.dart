@@ -113,7 +113,7 @@ class TranslatorHubPage extends GetView<TranslatorController> {
         borderRadius: BorderRadius.circular(20),
         onTap: () {
           HapticFeedback.lightImpact();
-          controller.pasteAndOpenText();
+          controller.smartPaste();
         },
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
