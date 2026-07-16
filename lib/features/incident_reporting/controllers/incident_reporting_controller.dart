@@ -26,7 +26,7 @@ class IncidentReportingController extends GetxController {
   // Observable state
   final selectedType = Rx<ReportType>(ReportType.emergency);
   final selectedCategory = Rx<ReportCategory?>(null);
-  final selectedSeverity = Rx<ReportSeverity>(ReportSeverity.medium);
+  final selectedSeverity = Rx<ReportSeverity>(ReportSeverity.low);
   final selectedMediaFiles = <XFile>[].obs;
   final currentLocation = Rx<Position?>(null);
   final isSubmitting = false.obs;
@@ -365,7 +365,7 @@ class IncidentReportingController extends GetxController {
     currentLocation.value = null;
     selectedType.value = ReportType.emergency;
     selectedCategory.value = null;
-    selectedSeverity.value = ReportSeverity.medium;
+    selectedSeverity.value = ReportSeverity.low;
   }
 
   @override
