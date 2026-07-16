@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../../../app/themes/app_colors.dart';
+import '../../../core/widgets/theme_reveal.dart';
 import '../controllers/settings_controller.dart';
 
 class SettingsPage extends GetView<SettingsController> {
@@ -121,9 +122,22 @@ class SettingsPage extends GetView<SettingsController> {
                   iconGradient: AppColors.heroGradient,
                   title: 'الوضع الداكن',
                   subtitle: isDark ? 'مفعل' : 'معطل',
-                  trailing: _buildSwitch(isDark, isDark, onChanged: (v) {
-                    HapticFeedback.lightImpact();
-                    controller.toggleDarkMode(v);
+                  // Builder يمنحنا سياق المفتاح نفسه لنجعل مركزه نقطة انطلاق
+                  // دائرة كشف الثيم الجديد (ThemeReveal).
+                  trailing: Builder(builder: (switchContext) {
+                    return _buildSwitch(isDark, isDark, onChanged: (v) {
+                      HapticFeedback.lightImpact();
+                      final box =
+                          switchContext.findRenderObject() as RenderBox?;
+                      final origin = box != null && box.hasSize
+                          ? box.localToGlobal(box.size.center(Offset.zero))
+                          : MediaQuery.sizeOf(switchContext)
+                              .center(Offset.zero);
+                      ThemeReveal.run(
+                        origin: origin,
+                        changeTheme: () => controller.toggleDarkMode(v),
+                      );
+                    });
                   }),
                 ),
                 _buildDivider(isDark),
